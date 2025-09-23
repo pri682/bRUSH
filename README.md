@@ -1,4 +1,4 @@
-# Sketch!
+# bRUSH!
 > Outline a brief description of your project.
 > Live demo [_here_](https://www.example.com). <!-- If you have the project hosted somewhere, include the link here. -->
 ## Table of Contents
@@ -18,12 +18,12 @@
 ## Description  
 
 **Who are we?**  
-Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/Dr-DefiChain?tab=overview&from=2024-12-01&to=2024-12-31) we created Sketch! The new social media app.  
+Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/Dr-DefiChain?tab=overview&from=2024-12-01&to=2024-12-31) we created bRUSH! The new social media app.  
 
 **What are we creating?**  
 In short, this is a mobile social media app that aims at connecting everyone to their creative side as well as connect people closer. The app is aimed at anyone ages 12 to 22 though we believe it will be enjoyable even among families, sharing drawings with your parents.  
 
-Sketch! is a mobile app inspired by BeReal, where all users world wide get a notification at the same time letting them know it is time to skecth! what are they sketching? whatever the random, funny, bizzare, weird promt was generated for that day! every user, world wide - will all be drawing THE SAME THING at the SAME TIME talk about synchronization.... (sorry, bad programmer joke).  
+bRUSH! is a mobile app inspired by BeReal, where all users world wide get a notification at the same time letting them know it is time to skecth! what are they bRUSHing? whatever the random, funny, bizzare, weird promt was generated for that day! every user, world wide - will all be drawing THE SAME THING at the SAME TIME talk about synchronization.... (sorry, bad programmer joke).  
 
 Users will have a pre determined amount of time to complete their daily drawing. before they have to submit it.  
 
@@ -32,7 +32,7 @@ After a user has submitted their drawing, they are presented with all of their f
 each user is granted medals they can award each day.  
 A gold medal can be awarded once per day, to the user's favorite drawing.  
 A silver medal can be awarded once per day for the user's second favorite drawing.  
-And of course a bronze medal can be awarded once per day for the user's third favorite sketch.  
+And of course a bronze medal can be awarded once per day for the user's third favorite bRUSH.  
 
 In addition, every user is given an unlimited number of "participation medals" which they can award to all the drawings they hated.... Just kidding... they can be awarded to the drawings the user recognizes as impressive, but simply we'rent in the top 3 that day in the user's opinion.  
 
@@ -46,9 +46,9 @@ Now, you might be hearing all of this... and wonder- but why? what's the point..
 
 Well... According to a recent research, About 45% of students world wide report wishing they had more opportunities to express themselves creatively or artistically but can't. It was also found that 80% of people believe unlocking creativity is critical to economic growth. [1]  
 
-Our platform is just the place to do so. People of all ages could take their very own twist at our random sketch prompts, and truly express themselves in them. While the app aims to be fun and easy going, it also enables those students craving to express themselves the platform to do so, without being jujged.  
+Our platform is just the place to do so. People of all ages could take their very own twist at our random bRUSH prompts, and truly express themselves in them. While the app aims to be fun and easy going, it also enables those students craving to express themselves the platform to do so, without being jujged.  
 
-Sketch! Aims to connect people, unlock creative thinking, and bring more color to the world (literally).  
+bRUSH! Aims to connect people, unlock creative thinking, and bring more color to the world (literally).  
 
 
 
@@ -58,26 +58,72 @@ Sketch! Aims to connect people, unlock creative thinking, and bring more color t
 - XCode (for iOS deployment)
 - Firebase Authentication
 - Firebase Cloud Storage
-- Firebase Firestore
+- Firebase  Firestore (cloud NoSQL database for app data)
 - Gemini API (Google AI)
+- Expo (if you use it for development and testing)
 - More as we see fit...
 
 ## Features
-List the ready features here:
+
+Currently in progress as of September 23, 2025:
 - Login: Secure sign in and profile creation (Using Google Firebase User Authentication)
-- Sketch: Draw your very own take on a fun unique prompt and save the sketch locally or on the cloud (using Google Firebase)
-- Customize: customize your own profile by editing your information, and showcasing your favorite sketches of your own!
+- bRUSH: Draw your very own take on a fun unique prompt and save the bRUSH locally or on the cloud (using Google Firebase)
+- Customize: customize your own profile by editing your information, and showcasing your favorite bRUSHes of your own!
 
 <!--
 ## Screenshots
 ![Example screenshot](./img/screenshot.png)
 <!-- If you have screenshots you'd like to share, include them here. -->
 
-<!--
-## Setup
-What are the project requirements/dependencies? Where are they listed? A requirements.txt or a Pipfile.lock file perhaps? Where is it located?
 
-Proceed to describe how to install / setup one's local environment / get started with the project.
+## Setup
+
+### Requirements
+- Node.js (LTS version recommended)
+- npm or yarn
+- Expo CLI (for React Native development)
+- Android Studio (for Android emulation) or Xcode (for iOS emulation, Mac only)
+- A Firebase project (for Authentication, Firestore, and Cloud Storage)
+
+### Installation
+
+1. Clone the repository:
+	```sh
+	git clone <your-repo-url>
+	cd brush/client
+	```
+
+2. Install dependencies:
+	```sh
+	npm install
+	```
+	or
+	```sh
+	yarn install
+	```
+
+3. Install Expo CLI globally (if not already installed):
+	```sh
+	npm install -g expo-cli
+	```
+
+4. Set up Firebase:
+	- Create a Firebase project at [Firebase Console](https://console.firebase.google.com/).
+	- Enable Authentication, Firestore, and Cloud Storage.
+	- Download your `google-services.json` (Android) and/or `GoogleService-Info.plist` (iOS) and place them in the appropriate directories.
+	- Update your Firebase config in the project as needed.
+
+5. Start the development server:
+	```sh
+	npx expo start
+	```
+	or
+	```sh
+	expo start
+	```
+
+6. Run the app:
+	- Use an emulator (Android Studio/Xcode) or scan the QR code with the Expo Go app on your device.
 
 
 ## Usage
