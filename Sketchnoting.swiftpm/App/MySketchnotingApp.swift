@@ -1,5 +1,6 @@
 import SwiftUI
 import PencilKit // Keep this if any of your files in the *current* module use PencilKit
+import UserNotifications
 
 // DELETE the following lines:
 // import Home
@@ -11,6 +12,12 @@ import PencilKit // Keep this if any of your files in the *current* module use P
 @main
 struct MySketchnotingApp: App {
     @StateObject var dataModel = DataModel() // This file is now in Shared/Models
+    
+    init() {
+            // Request notification permission as soon as the app launches
+            NotificationManager.shared.requestPermission()
+            NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
+        }
     
     var body: some Scene {
         WindowGroup {

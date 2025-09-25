@@ -61,6 +61,20 @@ struct DrawingView: View {
     
     func shareDrawing() {
         isSharing = true
+        NotificationManager.shared.clearBadge()
+
+        // Reset deadline to tomorrow at 8 PM
+        if let newDeadline = Calendar.current.date(
+            bySettingHour: 20,
+            minute: 0,
+            second: 0,
+            of: Date().addingTimeInterval(86400)) {
+            
+            UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
+        }
+
+        // Reschedule tomorrow’s notifications (24h + 12h reminders)
+        NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
     }
 }
 
