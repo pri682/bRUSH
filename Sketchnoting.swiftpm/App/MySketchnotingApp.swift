@@ -1,55 +1,64 @@
 import SwiftUI
+import PencilKit // Keep this if any of your files in the *current* module use PencilKit
+
+// DELETE the following lines:
+// import Home
+// import Friends
+// import Drawings
+// import Leaderboard
+// import Profile
 
 @main
 struct MySketchnotingApp: App {
-    @StateObject var dataModel = DataModel()
+    @StateObject var dataModel = DataModel() // This file is now in Shared/Models
     
     var body: some Scene {
         WindowGroup {
             TabView {
-                // Home Tab
+                // Home Tab (Uses the new HomeView)
                 NavigationStack {
-                    Text("Home")
+                    HomeView() // Works without import because it's in the same module
                 }
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
 
-                // Friends Tab
+                // Friends Tab (Uses the new FriendsView)
                 NavigationStack {
-                    Text("Friends")
+                    FriendsView()
                 }
                 .tabItem {
                     Label("Friends", systemImage: "person.2")
                 }
 
-                // Drawings Tab (center, with ring highlight)
+                // Drawings Tab (Uses the renamed DrawingsGridView)
                 NavigationStack {
-                    GridView()
+                    DrawingsGridView()
                 }
                 .tabItem {
+                    // It's best to move this custom Vstack to the new TabIconOverlay.swift in Shared/Utilities
                     VStack {
                         Image(systemName: "pencil.and.outline")
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.accentColor, lineWidth: 2)
-                                    .frame(width: 32, height: 32)
-                            )
-                        Text("Drawings")
+                             .overlay(
+                                 Circle()
+                                     .stroke(Color.accentColor, lineWidth: 2)
+                                     .frame(width: 32, height: 32)
+                             )
+                         Text("Drawings")
                     }
                 }
 
-                // Leaderboard Tab
+                // Leaderboard Tab (Uses the new LeaderboardView)
                 NavigationStack {
-                    Text("Leaderboard")
+                    LeaderboardView()
                 }
                 .tabItem {
                     Label("Leaderboard", systemImage: "trophy")
                 }
 
-                // Profile Tab
+                // Profile Tab (Uses the new ProfileView)
                 NavigationStack {
-                    Text("Profile")
+                    ProfileView()
                 }
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")

@@ -1,7 +1,8 @@
-//
-//  HomeView.swift
-//  DoodleOver
-//
-//  Created by Meidad Troper on 9/25/25.
-//
+import SwiftUI
 
+struct HomeView: View {
+    var body: some View {
+        Text("Welcome Home!")
+            .font(.largeTitle)
+    }
+}

@@ -1,7 +1,8 @@
-//
-//  FriendsView.swift
-//  DoodleOver
-//
-//  Created by Meidad Troper on 9/25/25.
-//
+import SwiftUI
 
+struct FriendsView: View {
+    var body: some View {
+        Text("Your Friends List")
+            .font(.largeTitle)
+    }
+}
