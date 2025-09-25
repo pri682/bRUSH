@@ -1,6 +1,7 @@
 import SwiftUI
 
-struct GridView: View {
+// RENAME: The struct name must match what you call in MySketchnotingApp.swift
+struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
     
     private static let columns = 3
@@ -65,8 +66,10 @@ struct GridView: View {
     }
 }
 
-struct GridView_Previews: PreviewProvider {   static var previews: some View {
-    GridView().environmentObject(DataModel())
-        .previewDevice("iPad (8th generation)")
-}
+// RENAME: The preview struct must also be updated
+struct DrawingsGridView_Previews: PreviewProvider {
+    static var previews: some View {
+        DrawingsGridView().environmentObject(DataModel())
+             .previewDevice("iPad (8th generation)")
+    }
 }

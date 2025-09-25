@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,20 +19,10 @@
 		D01025022A5D9E200093200F /* bubbles.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D01024FC2A5D9E200093200F /* bubbles.jpg */; };
 		D01025032A5D9E200093200F /* animals.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D01024FD2A5D9E200093200F /* animals.jpg */; };
 		D01025042A5D9E200093200F /* frames.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D01024FE2A5D9E200093200F /* frames.jpg */; };
-		D03377CD2A475E8C00E22B1E /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377B72A475E8C00E22B1E /* DetailView.swift */; };
-		D03377CE2A475E8C00E22B1E /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377B82A475E8C00E22B1E /* DataModel.swift */; };
-		D03377CF2A475E8C00E22B1E /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377B92A475E8C00E22B1E /* Item.swift */; };
 		D03377D02A475E8C00E22B1E /* MySketchnotingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377BA2A475E8C00E22B1E /* MySketchnotingApp.swift */; };
-		D03377D12A475E8C00E22B1E /* DrawingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377BB2A475E8C00E22B1E /* DrawingView.swift */; };
 		D03377D52A475E8C00E22B1E /* intro.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D03377C02A475E8C00E22B1E /* intro.jpg */; };
 		D03377DA2A475E8C00E22B1E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D03377C52A475E8C00E22B1E /* Assets.xcassets */; };
-		D03377DB2A475E8C00E22B1E /* FileManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377C62A475E8C00E22B1E /* FileManagerExtensions.swift */; };
 		D03377DC2A475E8C00E22B1E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D03377C72A475E8C00E22B1E /* README.md */; };
-		D03377DD2A475E8C00E22B1E /* GridItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377C82A475E8C00E22B1E /* GridItemView.swift */; };
-		D03377DE2A475E8C00E22B1E /* GridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377C92A475E8C00E22B1E /* GridView.swift */; };
-		D03377DF2A475E8C00E22B1E /* PKCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377CA2A475E8C00E22B1E /* PKCanvas.swift */; };
-		D03377E02A475E8C00E22B1E /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377CB2A475E8C00E22B1E /* ShareSheet.swift */; };
-		D03377E12A475E8C00E22B1E /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03377CC2A475E8C00E22B1E /* PhotoPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,23 +38,18 @@
 		D01024FC2A5D9E200093200F /* bubbles.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = bubbles.jpg; sourceTree = "<group>"; };
 		D01024FD2A5D9E200093200F /* animals.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = animals.jpg; sourceTree = "<group>"; };
 		D01024FE2A5D9E200093200F /* frames.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = frames.jpg; sourceTree = "<group>"; };
-		D03377B72A475E8C00E22B1E /* DetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
-		D03377B82A475E8C00E22B1E /* DataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
-		D03377B92A475E8C00E22B1E /* Item.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		D03377BA2A475E8C00E22B1E /* MySketchnotingApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MySketchnotingApp.swift; sourceTree = "<group>"; };
-		D03377BB2A475E8C00E22B1E /* DrawingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawingView.swift; sourceTree = "<group>"; };
 		D03377C02A475E8C00E22B1E /* intro.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = intro.jpg; sourceTree = "<group>"; };
 		D03377C52A475E8C00E22B1E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		D03377C62A475E8C00E22B1E /* FileManagerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileManagerExtensions.swift; sourceTree = "<group>"; };
 		D03377C72A475E8C00E22B1E /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		D03377C82A475E8C00E22B1E /* GridItemView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GridItemView.swift; sourceTree = "<group>"; };
-		D03377C92A475E8C00E22B1E /* GridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GridView.swift; sourceTree = "<group>"; };
-		D03377CA2A475E8C00E22B1E /* PKCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PKCanvas.swift; sourceTree = "<group>"; };
-		D03377CB2A475E8C00E22B1E /* ShareSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
-		D03377CC2A475E8C00E22B1E /* PhotoPicker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
 		D03377E22A47620700E22B1E /* DoodleOver-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "DoodleOver-Info.plist"; sourceTree = "<group>"; };
 		D0C786B42A42FBBA00EF6F60 /* DoodleOver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DoodleOver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		10B464E52E85F1BE0018D7FE /* Features */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); name = Features; path = ../Sketchnoting.swiftpm/App/Features; sourceTree = "<group>"; };
+		10B464EB2E85F22D0018D7FE /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D0C786B12A42FBBA00EF6F60 /* Frameworks */ = {
@@ -80,20 +65,10 @@
 		D03377B62A475E8C00E22B1E /* App */ = {
 			isa = PBXGroup;
 			children = (
-				D03377B72A475E8C00E22B1E /* DetailView.swift */,
-				D03377B82A475E8C00E22B1E /* DataModel.swift */,
-				D03377B92A475E8C00E22B1E /* Item.swift */,
 				D03377BA2A475E8C00E22B1E /* MySketchnotingApp.swift */,
-				D03377BB2A475E8C00E22B1E /* DrawingView.swift */,
 				D03377BC2A475E8C00E22B1E /* Resources */,
 				D03377C52A475E8C00E22B1E /* Assets.xcassets */,
-				D03377C62A475E8C00E22B1E /* FileManagerExtensions.swift */,
 				D03377C72A475E8C00E22B1E /* README.md */,
-				D03377C82A475E8C00E22B1E /* GridItemView.swift */,
-				D03377C92A475E8C00E22B1E /* GridView.swift */,
-				D03377CA2A475E8C00E22B1E /* PKCanvas.swift */,
-				D03377CB2A475E8C00E22B1E /* ShareSheet.swift */,
-				D03377CC2A475E8C00E22B1E /* PhotoPicker.swift */,
 			);
 			name = App;
 			path = ../Sketchnoting.swiftpm/App;
@@ -123,8 +98,10 @@
 			isa = PBXGroup;
 			children = (
 				D03377E22A47620700E22B1E /* DoodleOver-Info.plist */,
+				10B464E52E85F1BE0018D7FE /* Features */,
 				D03377B62A475E8C00E22B1E /* App */,
 				D0C786B52A42FBBA00EF6F60 /* Products */,
+				10B464EB2E85F22D0018D7FE /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -150,6 +127,10 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				10B464E52E85F1BE0018D7FE /* Features */,
+				10B464EB2E85F22D0018D7FE /* Shared */,
 			);
 			name = DoodleOver;
 			productName = DoodleOver;
@@ -219,17 +200,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D03377D12A475E8C00E22B1E /* DrawingView.swift in Sources */,
-				D03377DD2A475E8C00E22B1E /* GridItemView.swift in Sources */,
-				D03377DB2A475E8C00E22B1E /* FileManagerExtensions.swift in Sources */,
-				D03377CF2A475E8C00E22B1E /* Item.swift in Sources */,
-				D03377CE2A475E8C00E22B1E /* DataModel.swift in Sources */,
-				D03377CD2A475E8C00E22B1E /* DetailView.swift in Sources */,
-				D03377E02A475E8C00E22B1E /* ShareSheet.swift in Sources */,
 				D03377D02A475E8C00E22B1E /* MySketchnotingApp.swift in Sources */,
-				D03377DE2A475E8C00E22B1E /* GridView.swift in Sources */,
-				D03377E12A475E8C00E22B1E /* PhotoPicker.swift in Sources */,
-				D03377DF2A475E8C00E22B1E /* PKCanvas.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
