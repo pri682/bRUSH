@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseAuth // Assuming this is present in your full file
 
 public enum AuthError: LocalizedError {
     case invalidCredentials
@@ -9,7 +10,8 @@ public enum AuthError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidCredentials: return "Invalid email or password."
+        // 💡 FIX: Set the message to be user-friendly for invalid credentials
+        case .invalidCredentials: return "Invalid username or password."
         case .userAlreadyExists: return "An account with this email already exists."
         case .notAuthenticated: return "Not authenticated."
         case .backend(let message): return message
@@ -69,7 +71,6 @@ final class AuthService: ObservableObject {
     private let provider: AuthProviding
 
     init(provider: AuthProviding? = nil) {
-        // NOTE: FirebaseAuthProvider must exist elsewhere in your project for this to compile with FirebaseAuth
         #if canImport(FirebaseAuth)
         let chosen: AuthProviding = provider ?? FirebaseAuthProvider()
         #else
@@ -78,21 +79,52 @@ final class AuthService: ObservableObject {
         self.provider = chosen
         self.user = chosen.currentUser
     }
-
-    @MainActor
-    // 💡 FIX: Mark the method as 'throws'
-    func signIn(email: String, password: String) async throws {
-        // 💡 FIX: Removed the internal do-catch block, errors will now propagate up
-        let u = try await provider.signIn(email: email, password: password)
-        self.user = u
+    
+    // 💡 NEW HELPER: Maps cryptic system/Firebase errors to user-friendly AuthErrors.
+    private func mapAuthError(_ error: Error) -> Error {
+        let description = error.localizedDescription
+        
+        // Target the cryptic message you reported, as well as common password/email errors.
+        if description.contains("malformed or has expired") ||
+           description.contains("wrong password") ||
+           description.contains("no user record") {
+            return AuthError.invalidCredentials
+        }
+        
+        // Map invalid email format (if not caught by ViewModel validation)
+        if description.contains("email address is badly formatted") {
+            return AuthError.backend("Invalid email address.")
+        }
+        
+        // If it's already one of our custom errors, return it directly.
+        if let authError = error as? AuthError {
+            return authError
+        }
+        
+        // If it's any other error (like network failure), use the default backend case.
+        return AuthError.backend(description)
     }
 
     @MainActor
-    // 💡 FIX: Mark the method as 'throws'
+    func signIn(email: String, password: String) async throws {
+        // 💡 FIX: Wrap in do/catch to intercept and map the provider's error
+        do {
+            let u = try await provider.signIn(email: email, password: password)
+            self.user = u
+        } catch {
+            throw mapAuthError(error) // Re-throw the mapped error
+        }
+    }
+
+    @MainActor
     func signUp(email: String, password: String) async throws {
-        // 💡 FIX: Removed the internal do-catch block, errors will now propagate up
-        let u = try await provider.signUp(email: email, password: password)
-        self.user = u
+        // 💡 FIX: Wrap in do/catch to intercept and map the provider's error
+        do {
+            let u = try await provider.signUp(email: email, password: password)
+            self.user = u
+        } catch {
+            throw mapAuthError(error) // Re-throw the mapped error
+        }
     }
 
     @MainActor
