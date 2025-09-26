@@ -14,7 +14,7 @@ struct ProfileView: View {
                             .font(.title.bold())
                             .multilineTextAlignment(.center)
                             
-                        Button("Sign Out") {
+                        Button("Sign Out!") {
                             viewModel.signOut()
                         }
                         .buttonStyle(.bordered)
