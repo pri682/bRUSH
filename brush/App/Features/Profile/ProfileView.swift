@@ -1,80 +1,76 @@
-
 import SwiftUI
+import Combine
+import FirebaseAuth
+
 
 struct ProfileView: View {
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var isSignUp: Bool = false
-    @StateObject private var auth = AuthService.shared
+    @StateObject private var viewModel = ProfileViewModel()
 
     var body: some View {
         NavigationStack {
             Group {
-                if let user = auth.user {
+                if let user = viewModel.user {
                     VStack(spacing: 16) {
                         Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email)")")
                             .font(.title.bold())
                             .multilineTextAlignment(.center)
-                    }
+                        
                     .padding()
                 } else {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(isSignUp ? "Create an account" : "Sign in")
+                    VStack(spacing: 20) {
+                        Spacer()
+
+                        Text(viewModel.isSignUp ? "Create an account" : "Sign in")
                             .font(.title2.bold())
 
-                        TextField("Email", text: $email)
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .textInputAutocapitalization(.never)
-                            .disableAutocorrection(true)
-                            .padding(12)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        InputField(
+                            placeholder: "Email",
+                            text: $viewModel.email,
+                            isSecure: false
+                        )
 
-                        SecureField("Password", text: $password)
-                            .textContentType(.password)
-                            .padding(12)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        InputField(
+                            placeholder: "Password",
+                            text: $viewModel.password,
+                            isSecure: true
+                        )
 
                         Button {
                             Task {
-                                if isSignUp {
-                                    await auth.signUp(email: email, password: password)
+                                if viewModel.isSignUp {
+                                    await viewModel.signUp()
                                 } else {
-                                    await auth.signIn(email: email, password: password)
+                                    await viewModel.signIn()
                                 }
                             }
                         } label: {
-                            Text(isSignUp ? "Sign Up" : "Sign In")
+                            Text(viewModel.isSignUp ? "Sign Up" : "Sign In")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
 
-                        Button {
-                            Task { await auth.signInWithGoogle() }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "g.circle")
-                                Text("Continue with Google")
-                            }
-                            .frame(maxWidth: .infinity)
+                        DividerWithText("or")
+
+                        GoogleSignInButton {
+                            Task { await viewModel.signInWithGoogle() }
                         }
-                        .buttonStyle(.bordered)
+
+                        Spacer()
 
                         Button {
-                            isSignUp.toggle()
+                            viewModel.toggleSignUp()
                         } label: {
                             HStack {
-                                Text(isSignUp ? "Already have an account?" : "New here?")
-                                Text(isSignUp ? "Sign In" : "Create one")
+                                Text(viewModel.isSignUp ? "Already have an account?" : "Don’t have an account?")
+                                Text(viewModel.isSignUp ? "Sign In" : "Sign Up")
                                     .fontWeight(.semibold)
                             }
-                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.plain)
-                        .padding(.top, 4)
+                        .padding(.bottom, 12)
                     }
+                    .frame(maxWidth: 340)
                     .padding()
                 }
             }
