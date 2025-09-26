@@ -23,12 +23,12 @@ class NotificationManager {
         let center = UNUserNotificationCenter.current()
         
         // Remove old requests so they don't pile up
-        center.removePendingNotificationRequests(withIdentifiers: ["DailyDoodleStart", "DailyDoodleHalf"])
+        center.removePendingNotificationRequests(withIdentifiers: ["DailyBrushStart", "DailyBrushHalf"])
         
         // --- First reminder (start of the 24h window) ---
         let startContent = UNMutableNotificationContent()
-        startContent.title = "✏️ Daily Doodle Reminder"
-        startContent.body = "You have 24 hours to complete today’s doodle!"
+        startContent.title = "🖌️ Daily Brush Reminder"
+        startContent.body = "You have 24 hours to complete today’s brush!"
         startContent.sound = .default
         startContent.badge = NSNumber(value: 1)
         
@@ -37,13 +37,13 @@ class NotificationManager {
         startComponents.minute = minute
         
         let startTrigger = UNCalendarNotificationTrigger(dateMatching: startComponents, repeats: true)
-        let startRequest = UNNotificationRequest(identifier: "DailyDoodleStart", content: startContent, trigger: startTrigger)
+        let startRequest = UNNotificationRequest(identifier: "DailyBrushStart", content: startContent, trigger: startTrigger)
         center.add(startRequest)
         
         // --- Second reminder (12h before deadline) ---
         let halfContent = UNMutableNotificationContent()
         halfContent.title = "⏳ 12 Hours Left!"
-        halfContent.body = "Only 12 hours remain to finish today’s doodle. Don’t miss your streak!"
+        halfContent.body = "Only 12 hours remain to finish today’s brush. Don’t miss your streak!"
         halfContent.sound = .default
         halfContent.badge = NSNumber(value: 1)
         
@@ -52,7 +52,7 @@ class NotificationManager {
             
             let halfComponents = Calendar.current.dateComponents([.hour, .minute], from: halfDate)
             let halfTrigger = UNCalendarNotificationTrigger(dateMatching: halfComponents, repeats: true)
-            let halfRequest = UNNotificationRequest(identifier: "DailyDoodleHalf", content: halfContent, trigger: halfTrigger)
+            let halfRequest = UNNotificationRequest(identifier: "DailyBrushHalf", content: halfContent, trigger: halfTrigger)
             center.add(halfRequest)
         }
     }
@@ -61,7 +61,7 @@ class NotificationManager {
     func clearBadge() {
         UIApplication.shared.applicationIconBadgeNumber = 0
         UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: ["DailyDoodleStart", "DailyDoodleHalf"])
+            .removePendingNotificationRequests(withIdentifiers: ["DailyBrushStart", "DailyBrushHalf"])
     }
     
     // Debug: schedule a test notification in 30 seconds
@@ -72,9 +72,10 @@ class NotificationManager {
         content.sound = .default
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 30, repeats: false)
-        let request = UNNotificationRequest(identifier: "TestDoodle", content: content, trigger: trigger)
+        let request = UNNotificationRequest(identifier: "TestBrush", content: content, trigger: trigger)
         
         UNUserNotificationCenter.current().add(request)
         print("✅ Scheduled test notification in 30 seconds")
     }
 }
+

@@ -332,7 +332,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "DoodleOver-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Doodle Over";
+				INFOPLIST_KEY_CFBundleDisplayName = Brush;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "To use images from Photos and save your drawings in Recents album.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "To use images from Photos and save your drawings in Recents album.";
@@ -365,7 +365,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "DoodleOver-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Doodle Over";
+				INFOPLIST_KEY_CFBundleDisplayName = Brush;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "To use images from Photos and save your drawings in Recents album.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "To use images from Photos and save your drawings in Recents album.";
