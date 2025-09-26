@@ -55,9 +55,9 @@ struct ProfileView: View {
 
                         DividerWithText("or")
 
-                        GoogleSignInButton {
-                            Task { await viewModel.signInWithGoogle() }
-                        }
+//                        GoogleSignInButton {
+//                            Task { await viewModel.signInWithGoogle() }
+//                        }
 
                         Spacer()
 
