@@ -34,8 +34,7 @@ struct MySketchnotingApp: App {
 
                 // 3. Drawings Tab
                 NavigationStack {
-                    // DrawingsGridView() // Assuming this is the correct view name
-                    Text("Drawings Grid Placeholder") // Placeholder if DrawingsGridView is not ready
+                    //DrawingsGridView()
                 }
                 .tabItem {
                     // It's best to move this custom Vstack to a reusable struct
