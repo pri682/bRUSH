@@ -15,8 +15,11 @@ struct ProfileView: View {
                             .font(.title.bold())
                             .multilineTextAlignment(.center)
                         
+                        
+                    }
                     .padding()
-                } else {
+                }
+                    else {
                     VStack(spacing: 20) {
                         Spacer()
 
