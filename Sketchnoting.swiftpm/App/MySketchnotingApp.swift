@@ -2,13 +2,6 @@ import SwiftUI
 import PencilKit // Keep this if any of your files in the *current* module use PencilKit
 import UserNotifications
 
-// DELETE the following lines:
-// import Home
-// import Friends
-// import Drawings
-// import Leaderboard
-// import Profile
-
 @main
 struct MySketchnotingApp: App {
     @StateObject var dataModel = DataModel() // This file is now in Shared/Models
@@ -71,6 +64,7 @@ struct MySketchnotingApp: App {
                     Label("Profile", systemImage: "person.crop.circle")
                 }
             }
+            .tint(BrushTheme.pink)
             .environmentObject(dataModel)
         }
     }
