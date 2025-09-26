@@ -1,5 +1,6 @@
 import Foundation
 import PencilKit
+import Combine
 
 class DataModel: ObservableObject {
     
