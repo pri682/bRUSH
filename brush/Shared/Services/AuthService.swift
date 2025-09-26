@@ -69,6 +69,7 @@ final class AuthService: ObservableObject {
     private let provider: AuthProviding
 
     init(provider: AuthProviding? = nil) {
+        // NOTE: FirebaseAuthProvider must exist elsewhere in your project for this to compile with FirebaseAuth
         #if canImport(FirebaseAuth)
         let chosen: AuthProviding = provider ?? FirebaseAuthProvider()
         #else
@@ -79,23 +80,19 @@ final class AuthService: ObservableObject {
     }
 
     @MainActor
-    func signIn(email: String, password: String) async {
-        do {
-            let u = try await provider.signIn(email: email, password: password)
-            self.user = u
-        } catch {
-            print("Auth signIn error: \(error)")
-        }
+    // 💡 FIX: Mark the method as 'throws'
+    func signIn(email: String, password: String) async throws {
+        // 💡 FIX: Removed the internal do-catch block, errors will now propagate up
+        let u = try await provider.signIn(email: email, password: password)
+        self.user = u
     }
 
     @MainActor
-    func signUp(email: String, password: String) async {
-        do {
-            let u = try await provider.signUp(email: email, password: password)
-            self.user = u
-        } catch {
-            print("Auth signUp error: \(error)")
-        }
+    // 💡 FIX: Mark the method as 'throws'
+    func signUp(email: String, password: String) async throws {
+        // 💡 FIX: Removed the internal do-catch block, errors will now propagate up
+        let u = try await provider.signUp(email: email, password: password)
+        self.user = u
     }
 
     @MainActor
@@ -112,7 +109,6 @@ final class AuthService: ObservableObject {
         }
     }
 
-    // Intentionally keeping signOut method but UI will not expose it yet
     @MainActor
     func signOut() async {
         do {
