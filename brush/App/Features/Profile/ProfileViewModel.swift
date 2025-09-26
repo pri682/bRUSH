@@ -33,5 +33,14 @@ class ProfileViewModel: ObservableObject {
 //        self.user = auth.user
 //    }
     
+    func signOut() {
+            Task {
+                await auth.signOut()
+                await MainActor.run {
+                    self.user = nil
+                }
+            }
+        }
+    
     
 }
