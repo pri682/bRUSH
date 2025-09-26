@@ -28,10 +28,10 @@ class ProfileViewModel: ObservableObject {
         self.user = auth.user
     }
 
-    func signInWithGoogle() async {
-        await auth.signInWithGoogle()
-        self.user = auth.user
-    }
+//    func signInWithGoogle() async {
+//        await auth.signInWithGoogle()
+//        self.user = auth.user
+//    }
     
     
 }
