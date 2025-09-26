@@ -1,7 +1,6 @@
 import SwiftUI
 import Combine
-import FirebaseAuth
-
+import FirebaseAuth // You may not need this if all logic is in ViewModel/AuthService
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
@@ -11,25 +10,36 @@ struct ProfileView: View {
             Group {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
-                        Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email)")")
+                        Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email ?? "user")")")
                             .font(.title.bold())
                             .multilineTextAlignment(.center)
-                        
+                            
                         Button("Sign Out") {
-                            viewModel.signOut() }
-                            .buttonStyle(.bordered)
-                            .foregroundColor(.red)
-                            .padding(.top, 8)
+                            viewModel.signOut()
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.red)
+                        .padding(.top, 8)
                     }
                     .padding()
                 }
-                    else {
+                else {
                     VStack(spacing: 20) {
                         Spacer()
 
                         Text(viewModel.isSignUp ? "Create an account" : "Sign in")
                             .font(.title2.bold())
 
+                        // 💡 FIX: Error Message Display
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                                .transition(.opacity) // Add a nice fade effect
+                        }
+
+                        // NOTE: InputField must be defined elsewhere
                         InputField(
                             placeholder: "Email",
                             text: $viewModel.email,
@@ -57,11 +67,15 @@ struct ProfileView: View {
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
 
+                        // NOTE: DividerWithText must be defined elsewhere
                         DividerWithText("or")
 
-//                        GoogleSignInButton {
-//                            Task { await viewModel.signInWithGoogle() }
-//                        }
+                        // Google Sign-In button (commented out, as in original code)
+                        /*
+                        GoogleSignInButton {
+                            Task { await viewModel.signInWithGoogle() }
+                        }
+                        */
 
                         Spacer()
 
