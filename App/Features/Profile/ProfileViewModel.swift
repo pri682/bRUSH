@@ -58,7 +58,25 @@ class ProfileViewModel: ObservableObject {
             }
         }
     }
-}
+    
+    func deleteProfile() async {
+            errorMessage = nil
+            do {
+                try await auth.deleteUser()
+                // Clear local state on successful deletion
+                self.user = nil
+                self.email = ""
+                self.password = ""
+            } catch {
+                self.errorMessage = error.localizedDescription
+                // NOTE: Deletion often fails if the user hasn't recently signed in.
+                // Firebase requires re-authentication, which we're not prompting for here.
+                // The error message will guide the user (e.g., "requires recent login").
+            }
+        }
+    }
+
+
 
 // 💡 NEW: Add AuthError case for email validation
 public extension AuthError {

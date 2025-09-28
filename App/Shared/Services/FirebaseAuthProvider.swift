@@ -2,16 +2,18 @@ import Foundation
 import UIKit
 
 import FirebaseAuth
-
 import FirebaseCore
-
 import GoogleSignIn
 
+// NOTE: You must ensure 'AuthProviding' and 'GoogleSignInProviding' protocols
+// (and 'AuthError' and 'AppUser' types) are available in the scope where this file is used.
+// Assuming they are available from AuthService.swift or similar.
 
 #if canImport(FirebaseAuth) && canImport(FirebaseCore)
 final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
     var currentUser: AppUser? {
         if let u = Auth.auth().currentUser {
+            // Note: u.email can be nil if signed in via phone/anonymous, using "" as fallback.
             return AppUser(id: u.uid, email: u.email ?? "", displayName: u.displayName)
         }
         return nil
@@ -23,6 +25,8 @@ final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
         }
     }
 
+    // MARK: - AuthProviding Methods
+    
     func signIn(email: String, password: String) async throws -> AppUser {
         let result = try await signInEmail(email: email, password: password)
         let u = result.user
@@ -38,7 +42,29 @@ final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
     func signOut() async throws {
         try Auth.auth().signOut()
     }
+    
+    // ✨ NEW: Delete the current Firebase user account
+    func deleteUser() async throws {
+        guard let user = Auth.auth().currentUser else {
+            // Throw a custom error if the user is unexpectedly not authenticated
+            throw AuthError.notAuthenticated
+        }
+        
+        // Use withCheckedThrowingContinuation to bridge the completion handler to async/await
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            user.delete { error in
+                if let error = error {
+                    cont.resume(throwing: error)
+                    return
+                }
+                cont.resume(returning: ())
+            }
+        }
+    }
+    // ✨ END NEW
 
+    // MARK: - GoogleSignInProviding Method
+    
     @MainActor
     func signInWithGoogle() async throws -> AppUser {
         #if canImport(GoogleSignIn)
@@ -88,12 +114,12 @@ final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
     }
 
     private static func topViewController(base: UIViewController? = UIApplication.shared.connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-            .first?.rootViewController) -> UIViewController? {
+                                                 .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+                                                 .first?.rootViewController) -> UIViewController? {
         if let nav = base as? UINavigationController { return topViewController(base: nav.visibleViewController) }
         if let tab = base as? UITabBarController { return topViewController(base: tab.selectedViewController) }
         if let presented = base?.presentedViewController { return topViewController(base: presented) }
         return base
     }
 }
-#endif
+#endif // canImport(FirebaseAuth) && canImport(FirebaseCore)
