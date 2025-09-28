@@ -35,6 +35,8 @@ class ProfileViewModel: ObservableObject {
         do {
             try validateEmail()
             try await auth.signIn(email: email, password: password)
+            // Load local profile data if available
+            LocalUserStorage.shared.loadProfile()
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -48,6 +50,8 @@ class ProfileViewModel: ObservableObject {
                 self.errorMessage = nil
                 self.email = ""
                 self.password = ""
+                // Clear local storage
+                LocalUserStorage.shared.clearProfile()
             }
         }
     }
@@ -55,11 +59,23 @@ class ProfileViewModel: ObservableObject {
     func deleteProfile() async {
         errorMessage = nil
         do {
+            // Get user ID before deletion
+            guard let currentUser = user else {
+                errorMessage = "No user to delete"
+                return
+            }
+            
+            // Delete from Firestore first
+            try await UserService.shared.deleteProfile(uid: currentUser.id)
+            
+            // Then delete from Firebase Auth
             try await auth.deleteUser()
-            // Clear local state on successful deletion
+            
+            // Clear local state and storage on successful deletion
             self.user = nil
             self.email = ""
             self.password = ""
+            LocalUserStorage.shared.clearProfile()
         } catch {
             self.errorMessage = error.localizedDescription
         }

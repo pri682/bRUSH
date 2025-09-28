@@ -95,6 +95,16 @@ class SignUpViewModel: ObservableObject {
                 )
                 try await userService.createProfile(userProfile: profile)
                 
+                // 3. Save profile locally for fast access
+                let localProfile = LocalUserProfile(
+                    firstName: firstName,
+                    lastName: lastName,
+                    displayName: displayName,
+                    email: email,
+                    uid: authUser.id
+                )
+                LocalUserStorage.shared.saveProfile(localProfile)
+                
                 // Sign-up successful - AuthService.signUp already updated the user state
                 // Set state to .complete (for dismissing the sign up flow UI)
                 currentStep = .complete

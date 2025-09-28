@@ -33,4 +33,9 @@ final class UserService {
         // This is the single critical database write
         try await userRef.setData(profileData)
     }
+    
+    func deleteProfile(uid: String) async throws {
+        let userRef = db.collection(usersCollection).document(uid)
+        try await userRef.delete()
+    }
 }
