@@ -8,7 +8,6 @@ struct DetailView: View {
 
     var body: some View {
         Group {
-            // This condition handles both cases: drawings with and without backgrounds
             if item.imageURL == nil || backgroundImage != nil {
                 DrawingView(item: item, backgroundImage: backgroundImage) { drawing in
                     updateDrawing(drawing)
@@ -30,14 +29,12 @@ struct DetailView: View {
     
     private func updateDrawing(_ drawing: PKDrawing) {
         let data = drawing.dataRepresentation()
-        // Use the existing drawing URL or create a new one if it's the first time editing
         let filename = item.drawingURL?.lastPathComponent ?? (UUID().uuidString + ".drawing")
         
         if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent(filename) {
             do {
                 try data.write(to: fileURL, options: .atomic)
                 
-                // Create a composite preview that includes the background
                 let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
                 let renderer = UIGraphicsImageRenderer(size: previewSize.size)
                 let preview = renderer.image { context in

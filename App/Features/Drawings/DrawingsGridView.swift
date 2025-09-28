@@ -43,9 +43,8 @@ struct DrawingsGridView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                // 👇 This is the fix: Changed from a Button to a NavigationLink
+                // This is now a NavigationLink to push a new, full-screen canvas
                 NavigationLink {
-                    // Destination: A new DrawingView for a blank canvas
                     DrawingView { drawing in
                         saveNewDrawing(drawing)
                     }
@@ -67,7 +66,7 @@ struct DrawingsGridView: View {
                 let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
                 let preview = drawing.image(from: previewSize, scale: 2.0)
                 
-                // Create a new Item with a drawingURL but no imageURL
+                // Create a new Item with a drawingURL but no background imageURL
                 let newItem = Item(imageURL: nil, drawingURL: fileURL, preview: preview)
                 dataModel.addItem(newItem)
                 

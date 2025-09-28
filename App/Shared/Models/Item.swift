@@ -3,7 +3,7 @@ import PencilKit
 
 struct Item: Identifiable, Codable, Equatable {
     let id: UUID
-    var imageURL: URL?      // URL for the original background image (now optional)
+    var imageURL: URL?      // URL for the background image (now optional)
     var drawingURL: URL?   // URL for the saved PKDrawing file
     var preview: UIImage?  // In-memory preview image for the grid
 

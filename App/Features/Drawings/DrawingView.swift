@@ -18,6 +18,7 @@ struct DrawingView: View {
                     .opacity(0.3)
             }
             
+            // This wrapper now provides the full-featured toolbar
             PKCanvas(canvasView: $pkCanvasView)
         }
         .onAppear(perform: loadDrawing)
@@ -29,7 +30,6 @@ struct DrawingView: View {
                 dismiss()
             } }
         }
-        // 👇 These two modifiers create the full-screen, immersive experience
         .toolbar(.hidden, for: .tabBar)
         .navigationBarBackButtonHidden(true)
     }
@@ -42,14 +42,6 @@ struct DrawingView: View {
                 pkCanvasView.drawing = drawing
             }
             drawingURL.stopAccessingSecurityScopedResource()
-        }
-    }
-}
-
-struct DrawingView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            DrawingView(onSave: { _ in })
         }
     }
 }

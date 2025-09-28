@@ -30,20 +30,17 @@ class DataModel: ObservableObject {
         }
     }
     
-    /// Replaces an item with an updated version containing a new drawing and preview.
     func updateItem(_ item: Item, withDrawingURL url: URL, preview: UIImage) {
         if let index = items.firstIndex(where: { $0.id == item.id }) {
-            // Create a new item instance to ensure SwiftUI detects the change
             items[index] = Item(
                 id: item.id,
-                imageURL: items[index].imageURL, // Keep the original background
+                imageURL: items[index].imageURL,
                 drawingURL: url,
                 preview: preview
             )
         }
     }
 
-    /// Removes an item and its associated files, safely handling optional URLs.
     func removeItem(_ item: Item) {
         if let index = items.firstIndex(of: item) {
             let itemToRemove = items[index]
@@ -85,7 +82,6 @@ class DataModel: ObservableObject {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         
         var background: UIImage? = nil
-        // Safely unwrap imageURL before trying to load data
         if let imageURL = item.imageURL, let data = try? Data(contentsOf: imageURL) {
             background = UIImage(data: data)
         }
@@ -99,7 +95,6 @@ class DataModel: ObservableObject {
             let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
             let renderer = UIGraphicsImageRenderer(size: previewSize.size)
             let compositePreview = renderer.image { context in
-                // Draw background only if it exists
                 background?.draw(in: previewSize)
                 drawing.image(from: previewSize, scale: 2.0).draw(in: previewSize)
             }
@@ -107,7 +102,6 @@ class DataModel: ObservableObject {
         } else if let background = background {
             items[index].preview = background
         } else {
-            // Create a blank white preview for drawings with no background
             let renderer = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 200))
             items[index].preview = renderer.image { context in UIColor.white.setFill(); context.fill(CGRect(x: 0, y: 0, width: 200, height: 200)) }
         }
