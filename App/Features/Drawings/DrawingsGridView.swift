@@ -1,11 +1,11 @@
 import SwiftUI
+import PencilKit
 
-// RENAME: The struct name must match what you call in brushApp.swift
- struct DrawingsGridView: View {
+struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
     
     private static let columns = 3
-    @State private var isAddingPhoto = false
+    @State private var isCreatingNewDrawing = false // State to show the new drawing sheet
     @State private var isEditing = false
     
     @State private var gridColumns = Array(repeating: GridItem(.flexible()), count: columns)
@@ -15,28 +15,19 @@ import SwiftUI
             ScrollView {
                 LazyVGrid(columns: gridColumns) {
                     ForEach(dataModel.items) { item in
-                        GeometryReader { geo in
-                            NavigationLink(destination: DetailView(item: item)) {
-                                GridItemView(size: geo.size.width, item: item)
-                            }
+                        NavigationLink(destination: DetailView(item: item)) {
+                            GridItemView(size: 120, item: item)
                         }
-                        .cornerRadius(8.0)
-                        .aspectRatio(1, contentMode: .fit)
-                        .shadow(color: Color(red: 0.8, green: 0.8, blue: 0.8, opacity: 0.5), radius: 8)
-                        .padding()
                         .overlay(alignment: .topTrailing) {
                             if isEditing {
                                 Button {
-                                    withAnimation {
-                                        dataModel.removeItem(item)
-                                    }
+                                    withAnimation { dataModel.removeItem(item) }
                                 } label: {
                                     Image(systemName: "xmark.square.fill")
-                                        .font(Font.title)
+                                        .font(.title)
                                         .symbolRenderingMode(.palette)
                                         .foregroundStyle(.white, .red)
                                 }
-                                .offset(x: 2, y: 0)
                             }
                         }
                     }
@@ -44,10 +35,16 @@ import SwiftUI
                 .padding()
             }
         }
-        .navigationBarTitle("Template Gallery")
+        .navigationBarTitle("Past Drawings")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isAddingPhoto) {
-            PhotoPicker()
+        .sheet(isPresented: $isCreatingNewDrawing) {
+            // Present a new, blank drawing view modally
+            NavigationStack {
+                DrawingView { drawing in
+                    // This is the save handler for a NEW drawing
+                    saveNewDrawing(drawing)
+                }
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -57,19 +54,33 @@ import SwiftUI
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    isAddingPhoto = true
+                    isCreatingNewDrawing = true // Trigger the new drawing sheet
                 } label: {
                     Image(systemName: "plus")
                 }
             }
         }
     }
-}
-
-//// RENAME: The preview struct must also be updated
-struct DrawingsGridView_Previews: PreviewProvider {
-    static var previews: some View {
-        DrawingsGridView().environmentObject(DataModel())
-             .previewDevice("iPad (8th generation)")
+    
+    private func saveNewDrawing(_ drawing: PKDrawing) {
+        let data = drawing.dataRepresentation()
+        let filename = UUID().uuidString + ".drawing"
+        
+        if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename) {
+            do {
+                try data.write(to: fileURL, options: .atomic)
+                
+                // Create a preview of the new drawing
+                let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
+                let preview = drawing.image(from: previewSize, scale: 2.0)
+                
+                // Create a new Item with a drawingURL but no imageURL
+                let newItem = Item(imageURL: nil, drawingURL: fileURL, preview: preview)
+                dataModel.addItem(newItem)
+                
+            } catch {
+                print("Error saving new drawing: \(error)")
+            }
+        }
     }
- }
+}

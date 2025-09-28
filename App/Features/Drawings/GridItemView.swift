@@ -6,14 +6,16 @@ struct GridItemView: View {
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            AsyncImage(url: item.url) { image in
-                image
+            // The grid now displays the preview image
+            if let previewImage = item.preview {
+                Image(uiImage: previewImage)
                     .resizable()
                     .scaledToFill()
-            } placeholder: {
-                ProgressView()
+            } else {
+                ProgressView() // Shows while the preview is loading
             }
-            .frame(width: size, height: size)
         }
+        .frame(width: size, height: size)
+        .clipped()
     }
 }
