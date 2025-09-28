@@ -1,9 +1,16 @@
+//
+//  brushApp.swift
+//  brush
+//
+//  Created by Meidad Troper on 9/25/25.
+//
+
 import SwiftUI
 import PencilKit // Keep this if any of your files in the *current* module use PencilKit
 import UserNotifications
 
 @main
-struct MySketchnotingApp: App {
+struct brushApp: App {
     // Assuming DataModel and NotificationManager are defined elsewhere and ready to use
     @StateObject var dataModel = DataModel()
     
@@ -68,7 +75,7 @@ struct MySketchnotingApp: App {
             .environmentObject(dataModel) // Inject the DataModel
         } // <-- CLOSES WindowGroup
     } // <-- CLOSES body
-} // <-- CLOSES struct MySketchnotingApp
+} // <-- CLOSES struct brushApp
 
 // Note: You must define placeholder views for HomeView, FriendsView, etc.,
 // and the DataModel and NotificationManager to make this compile fully.

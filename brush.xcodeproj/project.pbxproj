@@ -24,30 +24,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1033B8D82E863B8800111590 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1033B8D82E863B8800111590 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = brush.app; path = /Users/kelvinmathew/Documents/Classes/SWE/bRUSH/build/Debug/brush.app; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1033B9ED2E8643B100111590 /* Exceptions for "brush" folder in "brush" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Shared/Utilities/FileManagerExtensions.swift,
-				Shared/Utilities/NotificationManager.swift,
-				Shared/Utilities/PhotoPicker.swift,
-				Utilities/ShareSheet.swift,
-				Utilities/TabIconOverlay.swift,
-			);
-			target = 1033B8D72E863B8800111590 /* brush */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1033B8DA2E863B8800111590 /* brush */ = {
+		1033B8DA2E863B8800111590 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1033B9ED2E8643B100111590 /* Exceptions for "brush" folder in "brush" target */,
-			);
-			path = brush;
+			path = App;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -80,17 +63,8 @@
 		1033B8CF2E863B8800111590 = {
 			isa = PBXGroup;
 			children = (
-				1033B8DA2E863B8800111590 /* brush */,
-				1033B8D92E863B8800111590 /* Products */,
+				1033B8DA2E863B8800111590 /* App */,
 			);
-			sourceTree = "<group>";
-		};
-		1033B8D92E863B8800111590 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				1033B8D82E863B8800111590 /* brush.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,7 +83,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1033B8DA2E863B8800111590 /* brush */,
+				1033B8DA2E863B8800111590 /* App */,
 			);
 			name = brush;
 			packageProductDependencies = (
@@ -161,7 +135,7 @@
 				1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 1033B8D92E863B8800111590 /* Products */;
+			productRefGroup = 1033B8CF2E863B8800111590;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
