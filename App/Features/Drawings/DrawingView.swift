@@ -2,10 +2,8 @@ import SwiftUI
 import PencilKit
 
 struct DrawingView: View {
-    // Optional item and background for handling both new and existing drawings
     var item: Item?
     var backgroundImage: UIImage?
-    // The onSave closure now only needs to pass back the final drawing
     let onSave: (PKDrawing) -> Void
     
     @State private var pkCanvasView = PKCanvasView()
@@ -13,7 +11,6 @@ struct DrawingView: View {
     
     var body: some View {
         ZStack {
-            // Display background image if one exists
             if let backgroundImage = backgroundImage {
                 Image(uiImage: backgroundImage)
                     .resizable()
@@ -21,7 +18,6 @@ struct DrawingView: View {
                     .opacity(0.3)
             }
             
-            // The PKCanvas now relies on the built-in tool picker
             PKCanvas(canvasView: $pkCanvasView)
         }
         .onAppear(perform: loadDrawing)
@@ -33,10 +29,12 @@ struct DrawingView: View {
                 dismiss()
             } }
         }
+        // 👇 These two modifiers create the full-screen, immersive experience
+        .toolbar(.hidden, for: .tabBar)
+        .navigationBarBackButtonHidden(true)
     }
     
     private func loadDrawing() {
-        // Load existing strokes if an item was passed in
         if let drawingURL = item?.drawingURL {
             drawingURL.startAccessingSecurityScopedResource()
             if let data = try? Data(contentsOf: drawingURL),
