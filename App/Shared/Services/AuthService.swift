@@ -1,8 +1,8 @@
 import Foundation
 import Combine
-import FirebaseAuth // Assuming this is present in your full file
+import FirebaseAuth
 
-// MARK: - AuthError
+// MARK: - AuthError (No changes here, keeping for context)
 public enum AuthError: LocalizedError {
     case invalidCredentials
     case userAlreadyExists
@@ -19,24 +19,23 @@ public enum AuthError: LocalizedError {
     }
 }
 
-// MARK: - AppUser
+// MARK: - AppUser (No changes here, keeping for context)
 public struct AppUser: Equatable {
     public let id: String
     public let email: String
     public let displayName: String?
 }
 
-// MARK: - AuthProviding Protocol
+// MARK: - AuthProviding Protocol (No changes here, keeping for context)
 public protocol AuthProviding {
     var currentUser: AppUser? { get }
     func signIn(email: String, password: String) async throws -> AppUser
     func signUp(email: String, password: String) async throws -> AppUser
     func signOut() async throws
-    // ✨ NEW: Function to delete the currently authenticated user
     func deleteUser() async throws
 }
 
-// MARK: - InMemoryAuthProvider
+// MARK: - InMemoryAuthProvider (No changes here, keeping for context)
 final class InMemoryAuthProvider: AuthProviding {
     private var users: [String: (password: String, displayName: String?)] = [:]
     private(set) var currentUser: AppUser?
@@ -63,22 +62,20 @@ final class InMemoryAuthProvider: AuthProviding {
         currentUser = nil
     }
     
-    // ✨ NEW: Implementation for in-memory deletion
     func deleteUser() async throws {
         guard let user = currentUser else { throw AuthError.notAuthenticated }
-        // In-memory removal logic
         users.removeValue(forKey: user.email.lowercased())
         currentUser = nil
     }
 }
 
-// MARK: - GoogleSignInProviding Protocol
+// MARK: - GoogleSignInProviding Protocol (No changes here, keeping for context)
 protocol GoogleSignInProviding {
     @MainActor
     func signInWithGoogle() async throws -> AppUser
 }
 
-// MARK: - AuthService
+// MARK: - AuthService (Updated signUp logic)
 final class AuthService: ObservableObject {
     static let shared = AuthService()
 
@@ -87,7 +84,6 @@ final class AuthService: ObservableObject {
 
     init(provider: AuthProviding? = nil) {
         #if canImport(FirebaseAuth)
-        // NOTE: FirebaseAuthProvider must be defined in another file and conform to AuthProviding
         let chosen: AuthProviding = provider ?? FirebaseAuthProvider()
         #else
         let chosen: AuthProviding = provider ?? InMemoryAuthProvider()
@@ -100,19 +96,16 @@ final class AuthService: ObservableObject {
     private func mapAuthError(_ error: Error) -> Error {
         let description = error.localizedDescription
         
-        // Map common sign-in errors
         if description.contains("malformed or has expired") ||
            description.contains("wrong password") ||
            description.contains("no user record") {
             return AuthError.invalidCredentials
         }
         
-        // Map invalid email format
         if description.contains("email address is badly formatted") {
             return AuthError.backend("Invalid email address.")
         }
 
-        // Map errors related to delete/reauth, which Firebase often returns
         if description.contains("requires recent login") {
             return AuthError.backend("To delete your account, please sign out and sign in again to re-authenticate.")
         }
@@ -135,10 +128,16 @@ final class AuthService: ObservableObject {
     }
 
     @MainActor
-    func signUp(email: String, password: String) async throws {
+    func signUp(email: String, password: String) async throws -> AppUser {
         do {
+            // Only perform Auth creation here.
             let u = try await provider.signUp(email: email, password: password)
-            self.user = u
+            // NOTE: We don't update self.user here, only in the sign-in flow.
+            // The SignUpViewModel should drive the completion.
+            // In this specific refactor, we rely on the provider returning the user,
+            // and the ProfileViewModel listens for changes if Auth.auth().currentUser updates.
+            self.user = u // Keep this line to immediately update the main UI listener
+            return u // Return the AppUser with the UID
         } catch {
             throw mapAuthError(error)
         }
@@ -168,14 +167,13 @@ final class AuthService: ObservableObject {
         }
     }
     
-    // ✨ NEW: Delete User function in AuthService
     @MainActor
     func deleteUser() async throws {
         do {
             try await provider.deleteUser()
-            self.user = nil // Clear local user state upon successful deletion
+            self.user = nil
         } catch {
-            throw mapAuthError(error) // Map and re-throw the error
+            throw mapAuthError(error)
         }
     }
 }
