@@ -20,6 +20,9 @@ struct ProfileView: View {
                         .buttonStyle(.bordered)
                         .tint(.red)
                         .padding(.top, 8)
+                        
+                        // ✨ NEW: Delete Profile Button
+                        DeleteProfileButton(viewModel: viewModel)
                     }
                     .padding()
                 }
