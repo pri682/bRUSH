@@ -5,24 +5,27 @@ import Combine
 class ProfileViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var password: String = ""
-    @Published var isSignUp: Bool = false
     @Published private(set) var user: AppUser? = nil
-    @Published var errorMessage: String? = nil // Remains for UI display
+    @Published var errorMessage: String? = nil
 
     private let auth = AuthService.shared
+    private var cancellables = Set<AnyCancellable>() // Used for Combine subscriptions
 
     init() {
-        self.user = auth.user
+        // ✨ THE FIX: Use .sink instead of .assign(to: &$) for reliable chaining in init()
+        auth.$user
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newUser in
+                // Safely update the @Published property inside the sink closure
+                self?.user = newUser
+            }
+            .store(in: &cancellables)
     }
 
-    func toggleSignUp() {
-        isSignUp.toggle()
-        errorMessage = nil
-    }
-    
-    // 💡 NEW HELPER: Basic email validation
+    // 💡 HELPER: Basic email validation
     private func validateEmail() throws {
         if !email.contains("@") {
+            // Assuming AuthError.invalidEmailFormat is defined in an extension
             throw AuthError.invalidEmailFormat
         }
     }
@@ -30,20 +33,10 @@ class ProfileViewModel: ObservableObject {
     func signIn() async {
         errorMessage = nil
         do {
-            try validateEmail() // Validate before calling service
+            try validateEmail()
             try await auth.signIn(email: email, password: password)
-            self.user = auth.user
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-    }
-
-    func signUp() async {
-        errorMessage = nil
-        do {
-            try validateEmail() // Validate before calling service
-            try await auth.signUp(email: email, password: password)
-            self.user = auth.user
+            // Load local profile data if available
+            LocalUserStorage.shared.loadProfile()
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -55,30 +48,41 @@ class ProfileViewModel: ObservableObject {
             await MainActor.run {
                 self.user = nil
                 self.errorMessage = nil
+                self.email = ""
+                self.password = ""
+                // Clear local storage
+                LocalUserStorage.shared.clearProfile()
             }
         }
     }
     
     func deleteProfile() async {
-            errorMessage = nil
-            do {
-                try await auth.deleteUser()
-                // Clear local state on successful deletion
-                self.user = nil
-                self.email = ""
-                self.password = ""
-            } catch {
-                self.errorMessage = error.localizedDescription
-                // NOTE: Deletion often fails if the user hasn't recently signed in.
-                // Firebase requires re-authentication, which we're not prompting for here.
-                // The error message will guide the user (e.g., "requires recent login").
+        errorMessage = nil
+        do {
+            // Get user ID before deletion
+            guard let currentUser = user else {
+                errorMessage = "No user to delete"
+                return
             }
+            
+            // Delete from Firestore first
+            try await UserService.shared.deleteProfile(uid: currentUser.id)
+            
+            // Then delete from Firebase Auth
+            try await auth.deleteUser()
+            
+            // Clear local state and storage on successful deletion
+            self.user = nil
+            self.email = ""
+            self.password = ""
+            LocalUserStorage.shared.clearProfile()
+        } catch {
+            self.errorMessage = error.localizedDescription
         }
     }
+}
 
-
-
-// 💡 NEW: Add AuthError case for email validation
+// Ensure this extension is available in the scope where ProfileViewModel is defined
 public extension AuthError {
     static var invalidEmailFormat: AuthError {
         return .backend("Invalid email address.")

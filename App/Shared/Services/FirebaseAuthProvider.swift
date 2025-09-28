@@ -43,25 +43,12 @@ final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
         try Auth.auth().signOut()
     }
     
-    // ✨ NEW: Delete the current Firebase user account
     func deleteUser() async throws {
-        guard let user = Auth.auth().currentUser else {
-            // Throw a custom error if the user is unexpectedly not authenticated
+        guard let currentUser = Auth.auth().currentUser else {
             throw AuthError.notAuthenticated
         }
-        
-        // Use withCheckedThrowingContinuation to bridge the completion handler to async/await
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            user.delete { error in
-                if let error = error {
-                    cont.resume(throwing: error)
-                    return
-                }
-                cont.resume(returning: ())
-            }
-        }
+        try await deleteCurrentUser(currentUser)
     }
-    // ✨ END NEW
 
     // MARK: - GoogleSignInProviding Method
     
@@ -109,6 +96,15 @@ final class FirebaseAuthProvider: AuthProviding, GoogleSignInProviding {
             Auth.auth().signIn(with: credential) { result, error in
                 if let error = error { cont.resume(throwing: error); return }
                 cont.resume(returning: result!)
+            }
+        }
+    }
+    
+    private func deleteCurrentUser(_ user: User) async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            user.delete { error in
+                if let error = error { cont.resume(throwing: error); return }
+                cont.resume(returning: ())
             }
         }
     }

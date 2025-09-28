@@ -1,18 +1,43 @@
 import SwiftUI
 import Combine
-import FirebaseAuth // You may not need this if all logic is in ViewModel/AuthService
+import FirebaseAuth
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var localStorage = LocalUserStorage.shared
+    // ✨ NEW: State to manage the Sheet presentation for sign-up
+    @State private var showingSignUpFlow = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
-                        Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email ?? "user")")")
-                            .font(.title.bold())
-                            .multilineTextAlignment(.center)
+                        // Display first name and username from local storage
+                        if let profile = localStorage.currentProfile {
+                            VStack(spacing: 4) {
+                                Text(profile.firstName)
+                                    .font(.title.bold())
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("@\(profile.displayName)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        } else {
+                            // Show loading or prompt to set up profile
+                            VStack(spacing: 4) {
+                                Text("Welcome!")
+                                    .font(.title.bold())
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("Setting up your profile...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
                             
                         Button("Sign Out!") {
                             viewModel.signOut()
@@ -21,7 +46,7 @@ struct ProfileView: View {
                         .tint(.red)
                         .padding(.top, 8)
                         
-                        // ✨ NEW: Delete Profile Button
+                        // Delete Profile Button
                         DeleteProfileButton(viewModel: viewModel)
                     }
                     .padding()
@@ -30,19 +55,20 @@ struct ProfileView: View {
                     VStack(spacing: 20) {
                         Spacer()
 
-                        Text(viewModel.isSignUp ? "Create an account" : "Sign in")
+                        // Only for Sign In now
+                        Text("Sign In")
                             .font(.title2.bold())
 
-                        // 💡 FIX: Error Message Display
+                        // Error Message Display
                         if let error = viewModel.errorMessage {
                             Text(error)
                                 .foregroundColor(.red)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
-                                .transition(.opacity) // Add a nice fade effect
+                                .transition(.opacity)
                         }
 
-                        // NOTE: InputField must be defined elsewhere
+                        // Input fields for SIGN IN
                         InputField(
                             placeholder: "Email",
                             text: $viewModel.email,
@@ -56,38 +82,26 @@ struct ProfileView: View {
                         )
 
                         Button {
-                            Task {
-                                if viewModel.isSignUp {
-                                    await viewModel.signUp()
-                                } else {
-                                    await viewModel.signIn()
-                                }
-                            }
+                            Task { await viewModel.signIn() }
                         } label: {
-                            Text(viewModel.isSignUp ? "Sign Up" : "Sign In")
+                            Text("Sign In")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
 
                         // NOTE: DividerWithText must be defined elsewhere
-                        DividerWithText("or")
-
-                        // Google Sign-In button (commented out, as in original code)
-                        /*
-                        GoogleSignInButton {
-                            Task { await viewModel.signInWithGoogle() }
-                        }
-                        */
+                        // DividerWithText("or")
 
                         Spacer()
 
+                        // ✨ NEW: Button to launch the multi-step SignUpFlow
                         Button {
-                            viewModel.toggleSignUp()
+                            showingSignUpFlow = true // Open the sheet
                         } label: {
                             HStack {
-                                Text(viewModel.isSignUp ? "Already have an account?" : "Don’t have an account?")
-                                Text(viewModel.isSignUp ? "Sign In" : "Sign Up")
+                                Text("Don’t have an account?")
+                                Text("Sign Up")
                                     .fontWeight(.semibold)
                             }
                         }
@@ -99,6 +113,10 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
+            // ✨ NEW: The sheet modifier to present the SignUpFlow
+            .sheet(isPresented: $showingSignUpFlow) {
+                SignUpFlow()
+            }
         }
     }
 }

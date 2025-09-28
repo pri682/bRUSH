@@ -9,6 +9,7 @@ import SwiftUI
 import PencilKit // Keep this if any of your files in the *current* module use PencilKit
 import UserNotifications
 
+
 @main
 struct brushApp: App {
     // Assuming DataModel and NotificationManager are defined elsewhere and ready to use
@@ -41,7 +42,18 @@ struct brushApp: App {
 
                 // 3. Drawings Tab
                 NavigationStack {
-                    //DrawingsGridView()
+                    VStack {
+                        Image(systemName: "pencil.and.scribble")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                        Text("Drawing Feature")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("Coming Soon")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                    .navigationTitle("Drawings")
                 }
                 .tabItem {
                     // It's best to move this custom Vstack to a reusable struct
