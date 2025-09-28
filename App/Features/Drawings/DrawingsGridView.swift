@@ -5,7 +5,6 @@ struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
     
     private static let columns = 3
-    @State private var isCreatingNewDrawing = false // State to show the new drawing sheet
     @State private var isEditing = false
     
     @State private var gridColumns = Array(repeating: GridItem(.flexible()), count: columns)
@@ -37,15 +36,6 @@ struct DrawingsGridView: View {
         }
         .navigationBarTitle("Past Drawings")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $isCreatingNewDrawing) {
-            // Present a new, blank drawing view modally
-            NavigationStack {
-                DrawingView { drawing in
-                    // This is the save handler for a NEW drawing
-                    saveNewDrawing(drawing)
-                }
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(isEditing ? "Done" : "Edit") {
@@ -53,8 +43,12 @@ struct DrawingsGridView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    isCreatingNewDrawing = true // Trigger the new drawing sheet
+                // 👇 This is the fix: Changed from a Button to a NavigationLink
+                NavigationLink {
+                    // Destination: A new DrawingView for a blank canvas
+                    DrawingView { drawing in
+                        saveNewDrawing(drawing)
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -70,7 +64,6 @@ struct DrawingsGridView: View {
             do {
                 try data.write(to: fileURL, options: .atomic)
                 
-                // Create a preview of the new drawing
                 let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
                 let preview = drawing.image(from: previewSize, scale: 2.0)
                 
