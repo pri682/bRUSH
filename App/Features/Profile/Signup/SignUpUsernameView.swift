@@ -11,42 +11,34 @@ struct SignUpUsernameView: View {
 
             // Display Name Input Field
             InputField(
-                placeholder: "Display Name (Unique)",
+                placeholder: "Display Name (min 3 chars)",
                 text: $viewModel.displayName,
                 isSecure: false
             )
-            .onChange(of: viewModel.displayName) { _ in
-                // Debounce or manually trigger validation
-                Task {
-                    // Simple check when text changes, a real app might debounce this
-                    await viewModel.validateDisplayName()
-                }
-            }
+            // 🗑️ REMOVED: .onChange logic, as validation is no longer required on type
             
-            // Display Name Status/Error
-            if viewModel.isCheckingDisplayName {
-                ProgressView("Checking...")
-            } else if let error = viewModel.displayNameError {
-                Text(error)
+            // Display a simple error message if the name is too short
+            if !viewModel.displayName.isEmpty && !viewModel.isStep2Valid {
+                 Text("Display name must be at least 3 characters.")
                     .foregroundColor(.red)
-            } else if !viewModel.displayName.isEmpty {
-                Text("Display name is available!")
-                    .foregroundColor(.green)
             }
+
+            // 🗑️ REMOVED: All status indicators related to checking unique name
 
             Button("Complete Sign Up") {
                 Task {
-                    await viewModel.completeSignUp()
+                    // Calls the updated submitStep2() in the ViewModel
+                    await viewModel.submitStep2()
                 }
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 16)
             .disabled(
-                viewModel.displayName.isEmpty ||
-                viewModel.displayNameError != nil ||
-                viewModel.isCheckingDisplayName ||
+                // SIMPLIFIED disable logic
+                !viewModel.isStep2Valid ||
                 viewModel.isLoading
             )
         }
+        .padding(.horizontal) // Add padding to make the view look good
     }
 }

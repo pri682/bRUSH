@@ -1,6 +1,7 @@
 import Foundation
 import Combine
-import FirebaseAuth // For error handling contexts
+import SwiftUI // Required for @MainActor and ObservableObject
+// import FirebaseAuth // Keep if AuthError is defined here, otherwise remove
 
 @MainActor
 class SignUpViewModel: ObservableObject {
@@ -13,8 +14,9 @@ class SignUpViewModel: ObservableObject {
 
     // MARK: - Step 2 Fields (UsernameView)
     @Published var displayName = ""
-    @Published var isCheckingDisplayName = false
-    @Published var displayNameError: String? = nil
+    
+    // 🗑️ REMOVED: isCheckingDisplayName (No longer needed)
+    // 🗑️ REMOVED: displayNameError (No longer needed since uniqueness check is gone)
 
     // MARK: - State Management
     @Published var currentStep: SignUpStep = .input
@@ -27,6 +29,7 @@ class SignUpViewModel: ObservableObject {
     enum SignUpStep {
         case input      // First Name, Last Name, Email, Passwords
         case username   // Choose Display Name
+        case complete   // ✨ ADDED: Final step for flow control
     }
 
     // MARK: - Step 1 Validation & Navigation
@@ -45,36 +48,33 @@ class SignUpViewModel: ObservableObject {
         currentStep = .username
     }
     
+    // 🔑 ADDED: Property for basic length validation on Step 2
+    var isStep2Valid: Bool {
+        return displayName.count >= 3
+    }
+
     // MARK: - Step 2 Display Name Validation
 
-    func validateDisplayName() async {
-        displayNameError = nil
-        isCheckingDisplayName = true
-        
-        guard displayName.count >= 3 else {
-            displayNameError = "Display name must be at least 3 characters."
-            isCheckingDisplayName = false
+    // 🗑️ REMOVED: The entire async validateDisplayName() function.
+    
+    // ✨ NEW/MODIFIED: Submit function for Step 2 (only checks length, then signs up)
+    func submitStep2() async {
+        guard isStep2Valid else {
+            errorMessage = "Username must be at least 3 characters."
             return
         }
-
-        do {
-            let isTaken = try await userService.isDisplayNameTaken(displayName)
-            if isTaken {
-                displayNameError = "This display name is already taken. Please choose another."
-            } else {
-                displayNameError = nil
-            }
-        } catch {
-            displayNameError = "Failed to check display name availability. Please try again."
-        }
-        isCheckingDisplayName = false
+        
+        errorMessage = nil
+        // Proceed directly to the sign-up execution
+        await completeSignUp()
     }
 
     // MARK: - Final Sign Up Execution (Auth + Firestore)
 
     func completeSignUp() async {
-        guard displayNameError == nil && !displayName.isEmpty else {
-            errorMessage = "Please enter a valid, unique display name."
+        // 🔑 MODIFIED: Simplified guard to only check for length using isStep2Valid
+        guard isStep2Valid else {
+            errorMessage = "Please enter a valid display name (min 3 characters)."
             return
         }
         
@@ -82,38 +82,29 @@ class SignUpViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // 1. Create the user in Firebase Auth (Email/Password)
-            let authUser = try await auth.signUp(email: email, password: password)
-            
-            // 2. Prepare the full profile object for Firestore
-            let profile = UserProfile(
-                uid: authUser.id,
-                firstName: firstName,
-                lastName: lastName,
-                displayName: displayName,
-                email: email
-            )
-            
-            // 3. Save the profile to Firestore (includes the unique display name check/lock)
-            try await userService.createProfile(userProfile: profile)
-            
-            // Success: The user is now signed in and their data is saved.
-            // We can now dismiss the flow or rely on the AuthService to update the main UI.
+                // 1. Create the user in Firebase Auth (Email/Password)
+                let authUser = try await auth.signUp(email: email, password: password)
+                
+                // 2. Prepare and Save the full profile object to Firestore
+                let profile = UserProfile(
+                    uid: authUser.id,
+                    firstName: firstName,
+                    lastName: lastName,
+                    displayName: displayName,
+                    email: email
+                )
+                try await userService.createProfile(userProfile: profile)
+                
+                // Sign-up successful - AuthService.signUp already updated the user state
+                // Set state to .complete (for dismissing the sign up flow UI)
+                currentStep = .complete
 
-        } catch let authError as AuthError {
-            // Handle Auth-related errors (e.g., email already in use)
-            errorMessage = authError.errorDescription
-            // If Auth failed, roll back the step to let the user correct the email/password
-            currentStep = .input
-        } catch {
-            // Handle Firestore/UserService errors (e.g., network failure, or rare display name race condition)
-            errorMessage = "Sign up failed: \(error.localizedDescription)"
+            } catch let authError as AppAuthError {
+                errorMessage = authError.localizedDescription
+            } catch {
+                errorMessage = "Sign up failed: \(error.localizedDescription)"
+            }
             
-            // 💡 CRITICAL: If Firestore fails *after* Auth succeeds, you have a partial registration.
-            // In a production app, you would add logic here to clean up the Auth user if Firestore failed.
-            // For simplicity here, we rely on the main error message.
+            isLoading = false
         }
-        
-        isLoading = false
-    }
 }

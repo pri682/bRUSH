@@ -63,8 +63,7 @@ final class InMemoryAuthProvider: AuthProviding {
     }
     
     func deleteUser() async throws {
-        guard let user = currentUser else { throw AuthError.notAuthenticated }
-        users.removeValue(forKey: user.email.lowercased())
+        // In memory implementation - just clear current user
         currentUser = nil
     }
 }
