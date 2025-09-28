@@ -70,7 +70,7 @@ struct DrawingView: View {
             second: 0,
             of: Date().addingTimeInterval(86400)) {
             
-            UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
+            UserDefaults.standard.set(newDeadline, forKey: "brushDeadline")
         }
 
         // Reschedule tomorrow’s notifications (24h + 12h reminders)
@@ -83,4 +83,3 @@ struct DrawingView_Previews: PreviewProvider {
         DrawingView(image: Image("frames"))
     }
 }
-
