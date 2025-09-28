@@ -59,7 +59,14 @@ class NotificationManager {
     
     // Clear app badge + remove today's reminders
     func clearBadge() {
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        // Asynchronously set the badge count to 0
+        UNUserNotificationCenter.current().setBadgeCount(0) { error in
+            if let error = error {
+                // Handle any errors here, e.g., print a warning
+                print("Error setting badge count: \(error.localizedDescription)")
+            }
+        }
+        
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: ["DailyDoodleStart", "DailyDoodleHalf"])
     }

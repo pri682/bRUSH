@@ -10,7 +10,7 @@ struct ProfileView: View {
             Group {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
-                        Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email ?? "user")")")
+                        Text("Welcome\((user.displayName.map { " \($0)" } ?? ", \(user.email)"))")
                             .font(.title.bold())
                             .multilineTextAlignment(.center)
                             

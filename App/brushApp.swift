@@ -41,7 +41,7 @@ struct brushApp: App {
 
                 // 3. Drawings Tab
                 NavigationStack {
-                    //DrawingsGridView()
+                    DrawingsGridView()
                 }
                 .tabItem {
                     // It's best to move this custom Vstack to a reusable struct

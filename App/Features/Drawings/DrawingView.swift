@@ -7,6 +7,7 @@ struct DrawingView: View {
     @State private var pkCanvasView = PKCanvasView()
     @State private var isSharing = false
     @State private var isBackgroundHiding = false
+    @Environment(\.displayScale) var displayScale
     
     var body: some View {
         
@@ -42,7 +43,7 @@ struct DrawingView: View {
                         Button(action: shareDrawing) {
                             Image(systemName: "square.and.arrow.up")
                         }.sheet(isPresented: $isSharing) {
-                            let image = pkCanvasView.drawing.image(from: pkCanvasView.bounds, scale: UIScreen.main.scale)
+                            let image = pkCanvasView.drawing.image(from: pkCanvasView.bounds, scale: displayScale)
                             ShareSheet(
                                 activityItems: [image],
                                 excludedActivityTypes: [])
