@@ -16,6 +16,8 @@ Package.resolved
 # Secrets / Local config
 GoogleService-Info.plist
 SupabaseConfig.plist
+GoogleService-Info
+
 .env
 .env.*
 
