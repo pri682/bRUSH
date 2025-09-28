@@ -15,8 +15,10 @@ struct SignUpFlow: View {
                 } else if viewModel.currentStep == .username {
                     SignUpUsernameView(viewModel: viewModel)
                 } else {
-                    // Sign-up complete - show success message briefly
-                    VStack(spacing: 16) {
+                    // Sign-up complete - show success message with Continue button
+                    VStack(spacing: 20) {
+                        Spacer()
+                        
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.green)
@@ -27,6 +29,14 @@ struct SignUpFlow: View {
                         Text("Your account has been created successfully.")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Button("Continue") {
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.bottom, 32)
                     }
                     .padding()
                 }
@@ -51,20 +61,16 @@ struct SignUpFlow: View {
                 "Welcome!"
             )
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                // Only show Cancel button during sign-up steps, not on welcome screen
+                if viewModel.currentStep != .complete {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
                     }
                 }
             }
-            .onChange(of: auth.user) { _, newUser in
-                // Auto-dismiss when user is successfully signed up
-                if newUser != nil && viewModel.currentStep == .complete {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        dismiss()
-                    }
-                }
-            }
+            // Note: Manual Continue button now handles dismissal instead of auto-dismiss
         }
     }
 }

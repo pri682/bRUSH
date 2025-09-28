@@ -4,6 +4,7 @@ import FirebaseAuth
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var localStorage = LocalUserStorage.shared
     // ✨ NEW: State to manage the Sheet presentation for sign-up
     @State private var showingSignUpFlow = false
 
@@ -12,10 +13,31 @@ struct ProfileView: View {
             Group {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
-                        // Display user's Display Name if available, otherwise email
-                        Text("Welcome\(user.displayName.map { " \($0)" } ?? ", \(user.email ?? "user")")")
-                            .font(.title.bold())
-                            .multilineTextAlignment(.center)
+                        // Display first name and username from local storage
+                        if let profile = localStorage.currentProfile {
+                            VStack(spacing: 4) {
+                                Text(profile.firstName)
+                                    .font(.title.bold())
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("@\(profile.displayName)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        } else {
+                            // Show loading or prompt to set up profile
+                            VStack(spacing: 4) {
+                                Text("Welcome!")
+                                    .font(.title.bold())
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("Setting up your profile...")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
                             
                         Button("Sign Out!") {
                             viewModel.signOut()
