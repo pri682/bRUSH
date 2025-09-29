@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 // Centralized theme for the app inspired by the new brush logo
 public enum BrushTheme {

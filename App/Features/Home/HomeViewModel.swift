@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 final class HomeViewModel: ObservableObject {
     // Centralized app title in case branding changes again
