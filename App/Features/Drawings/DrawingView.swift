@@ -19,45 +19,76 @@ struct DrawingView: View {
             .ignoresSafeArea()
             .overlay(
                 // This ZStack is the new "mini canvas"
-                ZStack(alignment: .top) {
-                    // Canvas Background
-                    if let backgroundImage = backgroundImage {
-                        Image(uiImage: backgroundImage)
-                            .resizable()
-                            .scaledToFit()
-                            .opacity(0.3)
-                    }
-                    
+                ZStack(alignment: .topLeading) {
                     // The PencilKit Canvas
                     PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
+                        .cornerRadius(20)
+                        .shadow(radius: 5)
                     
                     // Undo/Redo buttons overlay, only for iPhone
                     if UIDevice.current.userInterfaceIdiom == .phone {
-                        HStack(spacing: 20) {
+                        HStack {
                             Button {
                                 pkCanvasView.undoManager?.undo()
                             } label: {
-                                Image(systemName: "arrow.uturn.backward.circle.fill")
-                                    .font(.largeTitle)
+                                Image(systemName: "arrow.uturn.backward")
+                                    .font(.title2)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.white)
+                                            .shadow(radius: 2)
+                                    )
                             }
-                            .disabled(!canUndo) // Button is grayed out if canUndo is false
-                            
+                            .disabled(!canUndo)
+
                             Button {
                                 pkCanvasView.undoManager?.redo()
                             } label: {
-                                Image(systemName: "arrow.uturn.forward.circle.fill")
-                                    .font(.largeTitle)
+                                Image(systemName: "arrow.uturn.forward")
+                                    .font(.title2)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.white)
+                                            .shadow(radius: 2)
+                                    )
                             }
-                            .disabled(!canRedo) // Button is grayed out if canRedo is false
+                            .disabled(!canRedo)
                         }
                         .foregroundColor(.accentColor)
-                        .padding(.top)
+                        .padding(.top, 12)
+                        .padding(.leading, 8)
+
+                        // Info button (top-right), circular with white fill and shadow
+                        HStack {
+                            Spacer()
+                            Button {
+                                // Later: show drawing prompt
+                            } label: {
+                                Image(systemName: "paintpalette") // 🎨 art-themed icon
+                                    .font(.title3)
+                                    .padding(10)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.white)
+                                            .shadow(radius: 2)
+                                    )
+                            }
+                            .foregroundColor(.accentColor)
+                            .padding(.top, 12)
+                            .padding(.trailing, 16)
+                        }
                     }
                 }
                 .background(.white)
                 .cornerRadius(20)
                 .shadow(radius: 5)
-                .padding() // Padding around the mini canvas
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 80)
             )
         .onAppear(perform: loadDrawing)
         .navigationBarTitleDisplayMode(.inline)

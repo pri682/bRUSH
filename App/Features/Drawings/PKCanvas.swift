@@ -24,10 +24,15 @@ struct PKCanvas: UIViewRepresentable {
     }
     
     private func showToolPicker() {
-        let toolPicker = PKToolPicker()
-        toolPicker.setVisible(true, forFirstResponder: canvasView)
-        toolPicker.addObserver(canvasView)
-        canvasView.becomeFirstResponder()
+        if let window = UIApplication.shared.connectedScenes
+            .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
+            .first,
+           let picker = PKToolPicker.shared(for: window) {
+
+            picker.setVisible(true, forFirstResponder: canvasView)
+            picker.addObserver(canvasView)
+            canvasView.becomeFirstResponder()
+        }
     }
     
     // MARK: - Coordinator
