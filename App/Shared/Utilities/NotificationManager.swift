@@ -36,8 +36,8 @@ class NotificationManager {
                 let comps = Calendar.current.dateComponents([.hour, .minute], from: notifyDate)
                 
                 let content = UNMutableNotificationContent()
-                content.title = "🖌️ Time to Doodle!"
-                content.body = "You still have time, but don’t forget to finish today’s brush."
+                content.title = "🖌️ Time to bRUSH!"
+                content.body = "You still have time, but don’t forget to finish today’s bRUSH."
                 content.sound = .default
                 content.badge = NSNumber(value: i + 1)
                 
