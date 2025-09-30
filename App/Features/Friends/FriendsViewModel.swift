@@ -14,6 +14,7 @@ class FriendsViewModel: ObservableObject {
     @Published var addResults: [FriendSearchResult] = []
     @Published var isSearchingAdd: Bool = false
     @Published var addError: String?
+    @Published var sent: [SentFriendRequest] = []
     
     private let _mockDirectory: [FriendSearchResult] = [
         .init(handle: "jesse",  displayName: "Jesse Flynn"),
@@ -60,7 +61,9 @@ class FriendsViewModel: ObservableObject {
         isSearchingAdd = false
     }
     func sendFriendRequest(to user: FriendSearchResult) {
-        requests.append(FriendRequest(fromName: user.displayName, handle: "@\(user.handle)"))
+        let handle = "@\(user.handle)"
+            guard !sent.contains(where: { $0.handle == handle }) else { return }
+            sent.append(.init(toName: user.displayName, handle: handle))
+            print("Sent friend request to \(handle)")
     }
 }
-
