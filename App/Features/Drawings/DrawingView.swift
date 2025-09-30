@@ -27,6 +27,23 @@ struct DrawingView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) { Button("Done") {
                 onSave(pkCanvasView.drawing)
+                
+                // stop reminders for today
+                NotificationManager.shared.clearReminders()
+
+                // save deadline for tomorrow (optional, if you want to track it)
+                if let newDeadline = Calendar.current.date(
+                    bySettingHour: 20,
+                    minute: 0,
+                    second: 0,
+                    of: Date().addingTimeInterval(86400)
+                ) {
+                    UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
+                }
+
+                // reschedule for tomorrow
+                NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
+                
                 dismiss()
             } }
         }

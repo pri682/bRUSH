@@ -9,7 +9,7 @@ class NotificationManager {
     // Ask user for notification permission
     func requestPermission() {
         UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            .requestAuthorization(options: [.alert, .sound]) { granted, error in
                 if let error = error {
                     print("⚠️ Notification permission error: \(error)")
                 } else {
@@ -18,64 +18,44 @@ class NotificationManager {
             }
     }
     
-    // Schedule daily reminders: one at start (24h left), one at halfway (12h left)
+    // Schedule reminders every 2 hours until deadline
     func scheduleDailyReminders(hour: Int = 20, minute: Int = 0) {
         let center = UNUserNotificationCenter.current()
+        clearReminders() // Remove old ones first
         
-        // Remove old requests so they don't pile up
-        center.removePendingNotificationRequests(withIdentifiers: ["DailyBrushStart", "DailyBrushHalf"])
-        
-        // --- First reminder (start of the 24h window) ---
-        let startContent = UNMutableNotificationContent()
-        startContent.title = "🖌️ Daily Brush Reminder"
-        startContent.body = "You have 24 hours to complete today’s brush!"
-        startContent.sound = .default
-        startContent.badge = NSNumber(value: 1)
-        
+        // Base start time (e.g. 8 PM)
         var startComponents = DateComponents()
         startComponents.hour = hour
         startComponents.minute = minute
         
-        let startTrigger = UNCalendarNotificationTrigger(dateMatching: startComponents, repeats: true)
-        let startRequest = UNNotificationRequest(identifier: "DailyBrushStart", content: startContent, trigger: startTrigger)
-        center.add(startRequest)
+        guard let startDate = Calendar.current.date(from: startComponents) else { return }
         
-        // --- Second reminder (12h before deadline) ---
-        let halfContent = UNMutableNotificationContent()
-        halfContent.title = "⏳ 12 Hours Left!"
-        halfContent.body = "Only 12 hours remain to finish today’s brush. Don’t miss your streak!"
-        halfContent.sound = .default
-        halfContent.badge = NSNumber(value: 1)
-        
-        if let startDate = Calendar.current.date(from: startComponents),
-           let halfDate = Calendar.current.date(byAdding: .hour, value: 12, to: startDate) {
-            
-            let halfComponents = Calendar.current.dateComponents([.hour, .minute], from: halfDate)
-            let halfTrigger = UNCalendarNotificationTrigger(dateMatching: halfComponents, repeats: true)
-            let halfRequest = UNNotificationRequest(identifier: "DailyBrushHalf", content: halfContent, trigger: halfTrigger)
-            center.add(halfRequest)
+        // Schedule every 2 hours for 24h (12 reminders)
+        for i in 0..<12 {
+            if let notifyDate = Calendar.current.date(byAdding: .hour, value: i * 2, to: startDate) {
+                let comps = Calendar.current.dateComponents([.hour, .minute], from: notifyDate)
+                
+                let content = UNMutableNotificationContent()
+                content.title = "🖌️ Time to Doodle!"
+                content.body = "You still have time, but don’t forget to finish today’s brush."
+                content.sound = .default
+                content.badge = NSNumber(value: i + 1)
+                
+                let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+                let request = UNNotificationRequest(
+                    identifier: "DailyBrush\(i)",
+                    content: content,
+                    trigger: trigger
+                )
+                center.add(request)
+            }
         }
     }
     
-    // Clear app badge + remove today's reminders
-    func clearBadge() {
+    // Stop all reminders (called when doodle is completed)
+    func clearReminders() {
+        let identifiers = (0..<12).map { "DailyBrush\($0)" }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
         UIApplication.shared.applicationIconBadgeNumber = 0
-        UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: ["DailyBrushStart", "DailyBrushHalf"])
-    }
-    
-    // Debug: schedule a test notification in 30 seconds
-    func scheduleTestNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "🔔 Test Notification"
-        content.body = "This is a test notification firing in 30 seconds."
-        content.sound = .default
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 30, repeats: false)
-        let request = UNNotificationRequest(identifier: "TestBrush", content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request)
-        print("✅ Scheduled test notification in 30 seconds")
     }
 }
-
