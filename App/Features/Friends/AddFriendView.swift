@@ -36,13 +36,18 @@ struct AddFriendView: View {
                             Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button {
-                            vm.sendFriendRequest(to: user)
-                            dismiss()
-                        } label: {
-                            Label("Add", systemImage: "person.badge.plus")
+                        if vm.sent.contains(where: { $0.handle == "@\(user.handle)" }) {
+                            Text("Pending")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Button {
+                                vm.sendFriendRequest(to: user)
+                            } label: {
+                                Label("Add", systemImage: "person.badge.plus")
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
-                        .buttonStyle(.borderedProminent)
                     }
                     .padding(.vertical, 4)
                 }
