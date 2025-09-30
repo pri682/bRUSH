@@ -38,6 +38,16 @@ struct ProfileView: View {
                                     .multilineTextAlignment(.center)
                             }
                         }
+                        
+                        VStack(spacing: 8) {
+                            Text("🔥 Current Streak: \(StreakManager().currentStreak) days")
+                                .font(.headline)
+                            Text("🏆 Longest Streak: \(StreakManager().longestStreak) days")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 12)
+
                             
                         Button("Sign Out!") {
                             viewModel.signOut()
