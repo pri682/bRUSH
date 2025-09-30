@@ -22,8 +22,6 @@ struct DrawingView: View {
                 ZStack(alignment: .topLeading) {
                     // The PencilKit Canvas
                     PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
-                        .cornerRadius(20)
-                        .shadow(radius: 5)
                     
                     // Undo/Redo buttons overlay, only for iPhone
                     if UIDevice.current.userInterfaceIdiom == .phone {
