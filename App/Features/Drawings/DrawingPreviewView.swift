@@ -3,13 +3,22 @@ import SwiftUI
 struct DrawingPreviewView: View {
     let item: Item
     
-    // State to hold the image for sharing
-    @State private var imageToShare: UIImage?
     @State private var isSharing = false
+    
+    // This computed property resolves the image for display within your app.
+    private var resolvedImage: UIImage? {
+        if let img = item.image {
+            return img
+        } else if let data = try? Data(contentsOf: item.url),
+                  let img = UIImage(data: data) {
+            return img
+        }
+        return nil
+    }
     
     var body: some View {
         Group {
-            if let image = item.image {
+            if let image = resolvedImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -18,20 +27,18 @@ struct DrawingPreviewView: View {
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button {
-                                self.imageToShare = image
+                                // Just toggle the sheet's presentation state.
                                 self.isSharing = true
                             } label: {
                                 Image(systemName: "square.and.arrow.up")
                             }
                         }
                     }
+                    // The sheet now receives the item's URL directly.
                     .sheet(isPresented: $isSharing) {
-                        if let imageToShare = imageToShare {
-                            ShareSheet(activityItems: [imageToShare])
-                        }
+                        ShareSheet(activityItems: [item.url])
                     }
             } else {
-                // This view should only be shown if an image is already loaded
                 ProgressView()
             }
         }
