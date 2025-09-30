@@ -23,66 +23,53 @@ struct DrawingView: View {
                     // The PencilKit Canvas
                     PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
                     
-                    // Undo/Redo buttons overlay, only for iPhone
+                    // Undo/Redo and Info buttons overlay, only for iPhone
                     if UIDevice.current.userInterfaceIdiom == .phone {
                         HStack {
-                            Button {
-                                pkCanvasView.undoManager?.undo()
-                            } label: {
-                                Image(systemName: "arrow.uturn.backward")
-                                    .font(.title2)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.white)
-                                            .shadow(radius: 2)
-                                    )
-                            }
-                            .disabled(!canUndo)
+                            HStack {
+                                Button {
+                                    pkCanvasView.undoManager?.undo()
+                                    updateUndoRedoState()
+                                } label: {
+                                    Image(systemName: "arrow.uturn.backward")
+                                        .font(.title2)
+                                }
+                                .disabled(!canUndo)
+                                
+                                Divider().frame(height: 20)
 
-                            Button {
-                                pkCanvasView.undoManager?.redo()
-                            } label: {
-                                Image(systemName: "arrow.uturn.forward")
-                                    .font(.title2)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.white)
-                                            .shadow(radius: 2)
-                                    )
+                                Button {
+                                    pkCanvasView.undoManager?.redo()
+                                    updateUndoRedoState()
+                                } label: {
+                                    Image(systemName: "arrow.uturn.forward")
+                                        .font(.title2)
+                                }
+                                .disabled(!canRedo)
                             }
-                            .disabled(!canRedo)
-                        }
-                        .foregroundColor(.accentColor)
-                        .padding(.top, 12)
-                        .padding(.leading, 8)
-
-                        // Info button (top-right), circular with white fill and shadow
-                        HStack {
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(.white).shadow(radius: 2))
+                            
                             Spacer()
+
+                            // MARK: Info Button
                             Button {
                                 // Later: show drawing prompt
                             } label: {
                                 Image(systemName: "paintpalette") // 🎨 art-themed icon
                                     .font(.title3)
                                     .padding(10)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.white)
-                                            .shadow(radius: 2)
-                                    )
+                                    .background(Circle().fill(.white).shadow(radius: 2))
                             }
-                            .foregroundColor(.accentColor)
-                            .padding(.top, 12)
-                            .padding(.trailing, 16)
                         }
+                        .foregroundColor(.accentColor)
+                        .padding(.top, 16)
+                        .padding(.horizontal, 16)
                     }
                 }
                 .background(.white)
-                .cornerRadius(20)
+                .cornerRadius(34)
                 .shadow(radius: 5)
                 .padding(.top, 16)
                 .padding(.horizontal, 16)
@@ -101,7 +88,7 @@ struct DrawingView: View {
         .navigationBarBackButtonHidden(true)
     }
     
-    /// This function is called every time a stroke is drawn or erased.
+    /// This function is called every time a stroke is drawn, erased, or undone/redone.
     private func updateUndoRedoState() {
         canUndo = pkCanvasView.undoManager?.canUndo ?? false
         canRedo = pkCanvasView.undoManager?.canRedo ?? false
