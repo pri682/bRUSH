@@ -13,7 +13,7 @@ struct AddFriendView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .submitLabel(.search)
-                        .onSubmit { vm.performAddSearch() }
+                        //.onSubmit { vm.performAddSearch() }
                 }
                 .padding(12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
