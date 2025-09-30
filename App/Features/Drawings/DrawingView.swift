@@ -81,6 +81,7 @@ struct DrawingView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) { Button("Done") {
                 onSave(pkCanvasView.drawing)
+                updateUndoRedoState()
                 dismiss()
             } }
         }
