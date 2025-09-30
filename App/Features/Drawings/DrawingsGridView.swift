@@ -1,77 +1,38 @@
 import SwiftUI
-import PencilKit
 
 struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
+    @State private var isAddingNewDrawing = false
     
-    private static let columns = 3
-    @State private var isEditing = false
-    
-    @State private var gridColumns = Array(repeating: GridItem(.flexible()), count: columns)
+    private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
-        VStack {
+        NavigationStack {
             ScrollView {
-                LazyVGrid(columns: gridColumns) {
+                LazyVGrid(columns: gridColumns, spacing: 20) {
                     ForEach(dataModel.items) { item in
-                        NavigationLink(destination: DetailView(item: item)) {
-                            GridItemView(size: 120, item: item)
-                        }
-                        .overlay(alignment: .topTrailing) {
-                            if isEditing {
-                                Button {
-                                    withAnimation { dataModel.removeItem(item) }
-                                } label: {
-                                    Image(systemName: "xmark.square.fill")
-                                        .font(.title)
-                                        .symbolRenderingMode(.palette)
-                                        .foregroundStyle(.white, .red)
-                                }
-                            }
+                        NavigationLink(destination: DrawingPreviewView(item: item)) {
+                            GridItemView(size: 100, item: item)
                         }
                     }
                 }
                 .padding()
             }
-        }
-        .navigationBarTitle("Past Drawings")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(isEditing ? "Done" : "Edit") {
-                    withAnimation { isEditing.toggle() }
+            .navigationTitle("Previous Drawings")
+            .navigationDestination(isPresented: $isAddingNewDrawing) {
+                DrawingView { url, image in
+                    let newItem = Item(url: url, image: image)
+                    dataModel.addItem(newItem)
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                // This is now a NavigationLink to push a new, full-screen canvas
-                NavigationLink {
-                    DrawingView { drawing in
-                        saveNewDrawing(drawing)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        isAddingNewDrawing = true
+                    } label: {
+                        Image(systemName: "plus")
                     }
-                } label: {
-                    Image(systemName: "plus")
                 }
-            }
-        }
-    }
-    
-    private func saveNewDrawing(_ drawing: PKDrawing) {
-        let data = drawing.dataRepresentation()
-        let filename = UUID().uuidString + ".drawing"
-        
-        if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename) {
-            do {
-                try data.write(to: fileURL, options: .atomic)
-                
-                let previewSize = CGRect(x: 0, y: 0, width: 200, height: 200)
-                let preview = drawing.image(from: previewSize, scale: 2.0)
-                
-                // Create a new Item with a drawingURL but no background imageURL
-                let newItem = Item(imageURL: nil, drawingURL: fileURL, preview: preview)
-                dataModel.addItem(newItem)
-                
-            } catch {
-                print("Error saving new drawing: \(error)")
             }
         }
     }

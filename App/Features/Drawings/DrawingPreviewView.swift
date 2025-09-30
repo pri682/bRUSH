@@ -1,43 +1,38 @@
-//
-//  DrawingPreviewView.swift
-//  brush
-//
-//  Created by Kelvin Mathew on 9/28/25.
-//
-
-
 import SwiftUI
 
 struct DrawingPreviewView: View {
     let item: Item
+    
+    // State to hold the image for sharing
+    @State private var imageToShare: UIImage?
     @State private var isSharing = false
     
     var body: some View {
         Group {
-            if let previewImage = item.preview {
-                Image(uiImage: previewImage)
+            if let image = item.image {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
-                    .padding()
+                    .navigationTitle("Drawing")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button {
+                                self.imageToShare = image
+                                self.isSharing = true
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                        }
+                    }
+                    .sheet(isPresented: $isSharing) {
+                        if let imageToShare = imageToShare {
+                            ShareSheet(activityItems: [imageToShare])
+                        }
+                    }
             } else {
-                // This fallback shows while the preview is being generated after launch.
+                // This view should only be shown if an image is already loaded
                 ProgressView()
-            }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    isSharing = true
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                }
-            }
-        }
-        .sheet(isPresented: $isSharing) {
-            // This uses your existing ShareSheet.swift file
-            if let imageToShare = item.preview {
-                ShareSheet(activityItems: [imageToShare])
             }
         }
     }
