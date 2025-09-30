@@ -16,6 +16,8 @@ class FriendsViewModel: ObservableObject {
     @Published var addError: String?
     @Published var sent: [SentFriendRequest] = []
     
+    private var cancellables = Set<AnyCancellable>()
+    
     private let _mockDirectory: [FriendSearchResult] = [
         .init(handle: "jesse",  displayName: "Jesse Flynn"),
         .init(handle: "kelvin",  displayName: "Kelvin Mathew"),
@@ -66,4 +68,24 @@ class FriendsViewModel: ObservableObject {
             sent.append(.init(toName: user.displayName, handle: handle))
             print("Sent friend request to \(handle)")
     }
+    init() {
+        $addQuery
+            .removeDuplicates()
+            .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
+            .sink { [weak self] q in
+                guard let self else { return }
+                let trimmed = q.replacingOccurrences(of: "@", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count >= 2 {
+                    self.isSearchingAdd = true
+                    self.addResults = self._mockDirectory
+                        .filter { $0.handle.contains(trimmed.lowercased()) }
+                        .sorted { $0.handle < $1.handle }
+                    self.isSearchingAdd = false
+                } else {
+                    self.addResults = []
+                }
+            }
+            .store(in: &cancellables)
+        }
 }
