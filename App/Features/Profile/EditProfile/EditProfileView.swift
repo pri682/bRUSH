@@ -17,13 +17,27 @@ struct EditProfileView: View {
             Form {
                 Section(header: Text("First Name")) {
                     TextField("Enter your first name", text: $viewModel.firstName)
+                        .autocapitalization(.words)
 
-                    if let error = viewModel.errorMessage {
+                    if let error = viewModel.firstNameError {
                         Text(error)
                             .foregroundColor(.red)
                             .font(.caption)
                     }
                 }
+
+                Section(header: Text("Username")) {
+                    TextField("Enter your username", text: $viewModel.displayName)
+                        .autocapitalization(.none)
+                        .textInputAutocapitalization(.never)
+
+                    if let error = viewModel.displayNameError {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+
             }
             .navigationTitle("Edit Profile")
             .toolbar {
@@ -33,19 +47,21 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            await viewModel.saveChanges()
-                            if viewModel.errorMessage == nil {
-                                // Push changes back into parent
+                            let success = await viewModel.saveChanges()
+                            if success {
+                                // Push changes back into parent binding
                                 if var updated = userProfile {
                                     updated.firstName = viewModel.firstName
+                                    updated.displayName = viewModel.displayName
                                     userProfile = updated
                                 }
                                 dismiss()
                             }
                         }
                     }
-                    .disabled(viewModel.isSaving)
+                    .disabled(viewModel.isSaving || !viewModel.isValid)
                 }
+
             }
         }
     }

@@ -6,7 +6,7 @@ public struct UserProfile: Codable, Equatable {
     let uid: String
     var firstName: String
     let lastName: String
-    let displayName: String
+    var displayName: String
     let email: String
 }
 
