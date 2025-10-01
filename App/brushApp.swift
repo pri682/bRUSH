@@ -55,16 +55,8 @@ struct brushApp: App {
                           Text("Drawings")
                     }
                 }
-
-                // 4. Leaderboard Tab
-                NavigationStack {
-                    LeaderboardView()
-                }
-                .tabItem {
-                    Label("Leaderboard", systemImage: "trophy")
-                }
                 
-                // 5. Profile Tab - UNCOMMENTED AND CORRECTED
+                // 4. Profile Tab - UNCOMMENTED AND CORRECTED
                 NavigationStack {
                     ProfileView() // Assuming ProfileView exists
                 } // <-- THIS CLOSING BRACE WAS MISSING/COMMENTED
