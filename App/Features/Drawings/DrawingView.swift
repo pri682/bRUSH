@@ -13,6 +13,44 @@ struct DrawingView: View {
     @State private var canUndo = false
     @State private var canRedo = false
     
+    // State for the selected canvas theme
+    @State private var selectedTheme: CanvasTheme = .white
+
+    // Enum to define the available canvas themes
+    enum CanvasTheme: String, CaseIterable, Identifiable {
+        case white = "White"
+        case black = "Black"
+        case blackboard = "Blackboard"
+
+        var id: String { self.rawValue }
+
+        // The background color for the SwiftUI view
+        var backgroundColor: Color {
+            switch self {
+            case .white:
+                return .white
+            case .black:
+                return .black
+            case .blackboard:
+                // You can replace this color with an ImageBrush for your texture
+                return Color(red: 0.1, green: 0.2, blue: 0.15)
+            }
+        }
+        
+        // The UIColor equivalent for saving the image
+        var uiColor: UIColor {
+            switch self {
+            case .white:
+                return .white
+            case .black:
+                return .black
+            case .blackboard:
+                // This should match the placeholder color above
+                return UIColor(red: 0.1, green: 0.2, blue: 0.15, alpha: 1.0)
+            }
+        }
+    }
+    
     var body: some View {
         // A light gray background to make the canvas stand out
         Color(uiColor: .systemGray6)
@@ -23,9 +61,10 @@ struct DrawingView: View {
                     // The PencilKit Canvas
                     PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
                     
-                    // Undo/Redo and Info buttons overlay, only for iPhone
+                    // Undo/Redo and other buttons overlay, only for iPhone
                     if UIDevice.current.userInterfaceIdiom == .phone {
                         HStack {
+                            // Undo/Redo Buttons
                             HStack {
                                 Button {
                                     pkCanvasView.undoManager?.undo()
@@ -53,14 +92,31 @@ struct DrawingView: View {
                             
                             Spacer()
 
-                            // MARK: Info Button
-                            Button {
-                                // Later: show drawing prompt
-                            } label: {
-                                Image(systemName: "paintpalette") // 🎨 art-themed icon
-                                    .font(.title3)
-                                    .padding(10)
-                                    .background(Circle().fill(.white).shadow(radius: 2))
+                            // Right-side buttons (Theme and Prompt)
+                            HStack(spacing: 16) {
+                                // MARK: Theme Button
+                                Menu {
+                                    ForEach(CanvasTheme.allCases) { theme in
+                                        Button(theme.rawValue) {
+                                            selectedTheme = theme
+                                        }
+                                    }
+                                } label: {
+                                    Image(systemName: "paintpalette") // 🎨 art-themed icon
+                                        .font(.title3)
+                                        .frame(width: 44, height: 44)
+                                        .background(Circle().fill(.white).shadow(radius: 2))
+                                }
+                                
+                                // MARK: Prompt Button
+                                Button {
+                                    // Later: show drawing prompt
+                                } label: {
+                                    Image(systemName: "lightbulb") // 💡 new icon for prompt
+                                        .font(.title3)
+                                        .frame(width: 44, height: 44)
+                                        .background(Circle().fill(.white).shadow(radius: 2))
+                                }
                             }
                         }
                         .foregroundColor(.accentColor)
@@ -68,42 +124,31 @@ struct DrawingView: View {
                         .padding(.horizontal, 16)
                     }
                 }
-                .background(.white)
+                .background(selectedTheme.backgroundColor) // Use the selected theme for the background
                 .cornerRadius(34)
                 .shadow(radius: 5)
                 .padding(.top, 16)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 80)
             )
-            .onAppear(perform: updateUndoRedoState)
+            .onAppear(perform: setupCanvas)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("Done") {
-                    // The "Done" button now calls the new save function
                     saveDrawingAsImage()
-//
-//                    // stop reminders for today
-//                    NotificationManager.shared.clearReminders()
-//
-//                    // save deadline for tomorrow (optional, if you want to track it)
-//                    if let newDeadline = Calendar.current.date(
-//                        bySettingHour: 20,
-//                        minute: 0,
-//                        second: 0,
-//                        of: Date().addingTimeInterval(86400)
-//                    ) {
-//                        UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
-//                    }
-//
-//                    // reschedule for tomorrow
-//                    NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
-//                    
                     dismiss()
                 } }
             }
             .toolbar(.hidden, for: .tabBar)
             .navigationBarBackButtonHidden(true)
+    }
+    
+    private func setupCanvas() {
+        // Make the PKCanvasView background transparent so our ZStack background shows through
+        pkCanvasView.isOpaque = false
+        pkCanvasView.backgroundColor = .clear
+        updateUndoRedoState()
     }
     
     /// This function is called every time a stroke is drawn, erased, or undone/redone.
@@ -116,7 +161,7 @@ struct DrawingView: View {
     
     /// Creates a flattened JPG image, saves it to a file, and calls the onSave closure.
     private func saveDrawingAsImage() {
-        // 1. Create a UIImage from the drawing with a white background
+        // 1. Create a UIImage from the drawing with the selected background
         let image = createCompositeImage()
         
         // 2. Convert the image to JPG data
@@ -141,14 +186,15 @@ struct DrawingView: View {
         }
     }
     
-    /// Creates a single UIImage by drawing the strokes onto a white background.
+    /// Creates a single UIImage by drawing the strokes onto the selected background.
     private func createCompositeImage() -> UIImage {
         let canvasSize = pkCanvasView.bounds.size
         let renderer = UIGraphicsImageRenderer(size: canvasSize)
         
         let finalImage = renderer.image { context in
-            // Fill the background with white
-            UIColor.white.setFill()
+            // Fill the background with the selected theme color
+            // If you use an image asset for a texture, you would draw it here first.
+            selectedTheme.uiColor.setFill()
             context.fill(CGRect(origin: .zero, size: canvasSize))
             
             // Draw the PencilKit strokes on top
