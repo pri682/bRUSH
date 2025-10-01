@@ -46,5 +46,10 @@ final class UserService {
         }
         return try Firestore.Decoder().decode(UserProfile.self, from: data)
     }
+    
+    func updateProfile(uid: String, data: [String: Any]) async throws {
+        let userRef = db.collection(usersCollection).document(uid)
+        try await userRef.updateData(data)
+    }
 
 }

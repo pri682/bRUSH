@@ -6,8 +6,7 @@ import FirebaseFirestore
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showingSignUpFlow = false
-    @State private var isEditingName = false
-    @State private var newFirstName = ""
+    @State private var showingEditProfile = false
 
     var body: some View {
         NavigationStack {
@@ -15,37 +14,22 @@ struct ProfileView: View {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
                         // Display first name and username from Firestore profile
-                        if let profile = viewModel.profile {
+                        if let _ = viewModel.profile {
                             VStack(spacing: 4) {
                                 HStack {
-                                    if isEditingName {
-                                        TextField("First Name", text: $newFirstName)
-                                            .textFieldStyle(.roundedBorder)
-                                            .onAppear {
-                                                newFirstName = profile.firstName
-                                            }
-                                        Button("Save") {
-                                            Task {
-                                                await viewModel.updateFirstName(newFirstName)
-                                                isEditingName = false
-                                            }
-                                        }
-                                        .buttonStyle(.borderedProminent)
-                                    } else {
-                                        Text(profile.firstName)
-                                            .font(.title.bold())
-                                            .multilineTextAlignment(.center)
+                                    Text(viewModel.profile!.firstName)
+                                        .font(.title.bold())
+                                        .multilineTextAlignment(.center)
 
-                                        Button {
-                                            isEditingName = true
-                                        } label: {
-                                            Image(systemName: "pencil")
-                                                .foregroundColor(.blue)
-                                        }
+                                    Button {
+                                        showingEditProfile = true
+                                    } label: {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(.blue)
                                     }
                                 }
 
-                                Text("@\(profile.displayName)")
+                                Text("@\(viewModel.profile!.displayName)")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
@@ -149,6 +133,12 @@ struct ProfileView: View {
             .sheet(isPresented: $showingSignUpFlow) {
                 SignUpFlow()
             }
+            .sheet(isPresented: $showingEditProfile) {
+                if let _ = viewModel.profile {
+                    EditProfileView(userProfile: $viewModel.profile)
+                }
+            }
+
         }
     }
 }
