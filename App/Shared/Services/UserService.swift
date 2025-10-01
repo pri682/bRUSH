@@ -38,4 +38,13 @@ final class UserService {
         let userRef = db.collection(usersCollection).document(uid)
         try await userRef.delete()
     }
+    
+    func fetchProfile(uid: String) async throws -> UserProfile {
+        let doc = try await db.collection(usersCollection).document(uid).getDocument()
+        guard let data = doc.data() else {
+            throw AuthError.backend("Profile not found.")
+        }
+        return try Firestore.Decoder().decode(UserProfile.self, from: data)
+    }
+
 }
