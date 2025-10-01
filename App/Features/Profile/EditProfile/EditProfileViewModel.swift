@@ -64,8 +64,10 @@ class EditProfileViewModel: ObservableObject {
         guard !trimmed.isEmpty else { return "Username cannot be empty." }
         guard trimmed.count >= 3 else { return "Username must be at least 3 characters long." }
         guard trimmed.count <= 15 else { return "Username cannot be more than 15 characters long." }
-        guard CharacterSet.alphanumerics.isSuperset(of: CharacterSet(charactersIn: trimmed)) else {
-            return "Username can only contain letters and numbers."
+
+        let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        guard allowedChars.isSuperset(of: CharacterSet(charactersIn: trimmed)) else {
+            return "Username can only contain letters, numbers, and underscores."
         }
         return nil
     }
