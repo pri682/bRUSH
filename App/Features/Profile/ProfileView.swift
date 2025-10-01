@@ -1,10 +1,13 @@
 import SwiftUI
 import Combine
 import FirebaseAuth
+import FirebaseFirestore
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showingSignUpFlow = false
+    @State private var isEditingName = false
+    @State private var newFirstName = ""
 
     var body: some View {
         NavigationStack {
@@ -14,9 +17,33 @@ struct ProfileView: View {
                         // Display first name and username from Firestore profile
                         if let profile = viewModel.profile {
                             VStack(spacing: 4) {
-                                Text(profile.firstName)
-                                    .font(.title.bold())
-                                    .multilineTextAlignment(.center)
+                                HStack {
+                                    if isEditingName {
+                                        TextField("First Name", text: $newFirstName)
+                                            .textFieldStyle(.roundedBorder)
+                                            .onAppear {
+                                                newFirstName = profile.firstName
+                                            }
+                                        Button("Save") {
+                                            Task {
+                                                await viewModel.updateFirstName(newFirstName)
+                                                isEditingName = false
+                                            }
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                    } else {
+                                        Text(profile.firstName)
+                                            .font(.title.bold())
+                                            .multilineTextAlignment(.center)
+
+                                        Button {
+                                            isEditingName = true
+                                        } label: {
+                                            Image(systemName: "pencil")
+                                                .foregroundColor(.blue)
+                                        }
+                                    }
+                                }
 
                                 Text("@\(profile.displayName)")
                                     .font(.subheadline)

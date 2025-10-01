@@ -4,7 +4,7 @@ import Combine
 
 public struct UserProfile: Codable, Equatable {
     let uid: String
-    let firstName: String
+    var firstName: String
     let lastName: String
     let displayName: String
     let email: String

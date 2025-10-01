@@ -1,5 +1,7 @@
 import SwiftUI
 import Combine
+import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
 class ProfileViewModel: ObservableObject {
@@ -10,6 +12,7 @@ class ProfileViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     private let auth = AuthService.shared
+    private let db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -98,6 +101,20 @@ class ProfileViewModel: ObservableObject {
             LocalUserStorage.shared.clearProfile()
         } catch {
             self.errorMessage = error.localizedDescription
+        }
+    }
+    
+    func updateFirstName(_ newFirstName: String) async {
+        guard let userID = user?.id else { return } // Ensure we use the correct property for user ID
+        do {
+            try await db.collection("users").document(userID).updateData(["firstName": newFirstName])
+            DispatchQueue.main.async {
+                self.profile?.firstName = newFirstName // Ensure `firstName` is mutable
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to update name: \(error.localizedDescription)"
+            }
         }
     }
 }
