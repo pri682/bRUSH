@@ -45,94 +45,31 @@ struct DrawingView: View {
     
     // A list of available texture assets
     private let textureAssets = [
-        "notebook",
-        "chalkboard",
-        "canvas",
-        "scroll",
-        "stickynote",
-        "bedroomwall"
+        "Notebook",
+        "Canvas",
+        "Sticky Note",
+        "Scroll",
+        "Chalkboard",
+        "Wall"
     ]
 
     var body: some View {
         Color(uiColor: .systemGray6)
             .ignoresSafeArea()
             .overlay(
-                ZStack(alignment: .top) {
-                    PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
+                // This VStack with Spacers now controls the vertical positioning
+                VStack(spacing: 0) {
+                    // Top spacer to provide padding above the canvas
+                    Spacer(minLength: 16)
                     
-                    // This HStack contains all the top buttons and manages the layout
-                    HStack {
-                        if UIDevice.current.userInterfaceIdiom == .phone {
-                            // iPhone Left side: Undo/Redo Buttons
-                            HStack {
-                                Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo).padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 4))
-                                Divider().frame(height: 20)
-                                Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo).padding(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 16))
-                            }
-                            .glassEffect(.regular.interactive())
-                            
-                            Spacer()
-
-                            // iPhone Right side: Theme & Prompt Buttons
-                            HStack(spacing: 16) {
-                                Button {
-                                    isThemePickerPresented = true
-                                } label: {
-                                    Image(systemName: "paintpalette")
-                                        .font(.title3)
-                                        .frame(width: 44, height: 44)
-                                        .glassEffect(.regular.interactive())
-                                }
-                                .sheet(isPresented: $isThemePickerPresented) {
-                                    themePickerView
-                                }
-                                
-                                Button {
-                                    // Later: show drawing prompt
-                                } label: {
-                                    Image(systemName: "lightbulb")
-                                        .font(.title3)
-                                        .frame(width: 44, height: 44)
-                                        .glassEffect(.regular.interactive())
-                                }
-                            }
-                        } else {
-                            // iPad Left side: Theme Button
-                            Button {
-                                isThemePickerPresented = true
-                            } label: {
-                                Image(systemName: "paintpalette")
-                                    .font(.title)
-                                    .frame(width: 44, height: 44)
-                                    .glassEffect(.regular.interactive())
-                            }
-                            .sheet(isPresented: $isThemePickerPresented) {
-                                themePickerView
-                            }
-                            
-                            Spacer()
-                            
-                            // iPad Right side: Prompt Button
-                            Button {
-                                // Later: show drawing prompt
-                            } label: {
-                                Image(systemName: "lightbulb")
-                                    .font(.title)
-                                    .frame(width: 44, height: 44)
-                                    .glassEffect(.regular.interactive())
-                            }
-                        }
-                    }
-                    .foregroundColor(.accentColor)
-                    .padding(.top, 16)
-                    .padding(.horizontal, 16)
+                    // The drawing canvas view, constrained by a 9:16 aspect ratio
+                    canvasView
+                        .aspectRatio(9/16, contentMode: .fit)
+                    
+                    // Bottom spacer to ensure at least 80 points for the tool picker
+                    Spacer(minLength: 80)
                 }
-                .background(canvasBackground)
-                .cornerRadius(34)
-                .shadow(radius: 5)
-                .padding(.top, 16)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 80)
+                .padding(.horizontal, 16) // Apply horizontal padding
             )
             .onAppear(perform: setupCanvas)
             .onChange(of: customColor) { selectedTheme = .color(customColor) }
@@ -144,6 +81,83 @@ struct DrawingView: View {
             .toolbar(.hidden, for: .tabBar)
             .navigationBarBackButtonHidden(true)
     }
+
+    // This view contains the canvas and its overlay buttons
+    private var canvasView: some View {
+        ZStack(alignment: .top) {
+            PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
+            
+            // This HStack contains all the top buttons and manages the layout
+            HStack {
+                if UIDevice.current.userInterfaceIdiom == .phone {
+                    // iPhone Left side: Undo/Redo Buttons
+                    HStack {
+                        Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo).padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 4))
+                        Divider().frame(height: 20)
+                        Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo).padding(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 16))
+                    }
+                    .glassEffect(.regular.interactive())
+                    
+                    Spacer()
+
+                    // iPhone Right side: Theme & Prompt Buttons
+                    HStack(spacing: 16) {
+                        Button {
+                            isThemePickerPresented = true
+                        } label: {
+                            Image(systemName: "paintpalette")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                                .glassEffect(.regular.interactive())
+                        }
+                        .sheet(isPresented: $isThemePickerPresented) {
+                            themePickerView
+                        }
+                        
+                        Button {
+                            // Later: show drawing prompt
+                        } label: {
+                            Image(systemName: "lightbulb")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                                .glassEffect(.regular.interactive())
+                        }
+                    }
+                } else {
+                    // iPad Left side: Theme Button
+                    Button {
+                        isThemePickerPresented = true
+                    } label: {
+                        Image(systemName: "paintpalette")
+                            .font(.title)
+                            .frame(width: 54, height: 54)
+                            .glassEffect(.regular.interactive())
+                    }
+                    .sheet(isPresented: $isThemePickerPresented) {
+                        themePickerView
+                    }
+                    
+                    Spacer()
+                    
+                    // iPad Right side: Prompt Button
+                    Button {
+                        // Later: show drawing prompt
+                    } label: {
+                        Image(systemName: "lightbulb")
+                            .font(.title)
+                            .frame(width: 54, height: 54)
+                            .glassEffect(.regular.interactive())
+                    }
+                }
+            }
+            .foregroundColor(.accentColor)
+            .padding(.top, 16)
+            .padding(.horizontal, 16)
+        }
+        .background(canvasBackground)
+        .cornerRadius(34)
+        .shadow(radius: 5)
+    }
     
     // MARK: - Subviews
 
@@ -151,11 +165,11 @@ struct DrawingView: View {
     private var themePickerView: some View {
         NavigationView {
             Form {
-                Section(header: Text("Color")) {
+                Section(header: Text("Color").foregroundColor(.primary)) {
                     ColorPicker("Custom Color", selection: $customColor, supportsOpacity: false)
                 }
                 
-                Section(header: Text("Textures")) {
+                Section(header: Text("Textures").foregroundColor(.primary)) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
                         ForEach(textureAssets, id: \.self) { assetName in
                             Button {
@@ -181,8 +195,9 @@ struct DrawingView: View {
             .navigationTitle("Canvas Theme")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { isThemePickerPresented = false }
+                        .foregroundColor(.primary)
                 }
             }
         }
