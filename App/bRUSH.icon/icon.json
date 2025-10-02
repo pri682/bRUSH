@@ -1,30 +1,31 @@
 {
   "fill" : {
     "linear-gradient" : [
-      "extended-srgb:1.00000,0.21961,0.23529,1.00000",
-      "extended-srgb:0.38039,0.33333,0.96078,1.00000"
+      "extended-srgb:1.00000,0.55294,0.15686,1.00000",
+      "extended-srgb:1.00000,0.21961,0.23529,1.00000"
     ]
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "3408890.png",
-          "name" : "Icon",
+          "fill" : "none",
+          "glass" : true,
+          "image-name" : "cf881996-8b6f-4bcd-a366-05e146a975db_removalai_preview.png",
+          "name" : "cf881996-8b6f-4bcd-a366-05e146a975db_removalai_preview",
           "position" : {
             "scale" : 1.4,
             "translation-in-points" : [
-              0,
-              0
+              1.4614352637207007,
+              -34.95753150819916
             ]
           }
         }
       ],
       "shadow" : {
-        "kind" : "layer-color",
+        "kind" : "neutral",
         "opacity" : 0.5
       },
-      "specular" : true,
       "translucency" : {
         "enabled" : true,
         "value" : 0.5
