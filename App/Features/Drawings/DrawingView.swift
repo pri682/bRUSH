@@ -50,7 +50,11 @@ struct DrawingView: View {
         "Sticky Note",
         "Scroll",
         "Chalkboard",
-        "Wall"
+        "Classroom",
+        "Wall",
+        "Brick",
+        "Grass",
+        "Underwater"
     ]
 
     var body: some View {
@@ -169,7 +173,7 @@ struct DrawingView: View {
                     ColorPicker("Custom Color", selection: $customColor, supportsOpacity: false)
                 }
                 
-                Section(header: Text("Textures").foregroundColor(.primary)) {
+                Section(header: Text("Image").foregroundColor(.primary)) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))]) {
                         ForEach(textureAssets, id: \.self) { assetName in
                             Button {
@@ -192,7 +196,7 @@ struct DrawingView: View {
                     }
                 }
             }
-            .navigationTitle("Canvas Theme")
+            .navigationTitle("Custom Backgrounds")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
