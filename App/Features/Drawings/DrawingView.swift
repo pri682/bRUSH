@@ -48,6 +48,7 @@ struct DrawingView: View {
         "notebook",
         "chalkboard",
         "canvas",
+        "scroll",
         "stickynote",
         "bedroomwall"
     ]
@@ -56,52 +57,75 @@ struct DrawingView: View {
         Color(uiColor: .systemGray6)
             .ignoresSafeArea()
             .overlay(
-                ZStack(alignment: .topLeading) {
+                ZStack(alignment: .top) {
                     PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
                     
-                    if UIDevice.current.userInterfaceIdiom == .phone {
-                        HStack {
-                            // Undo/Redo Buttons
+                    // This HStack contains all the top buttons and manages the layout
+                    HStack {
+                        if UIDevice.current.userInterfaceIdiom == .phone {
+                            // iPhone Left side: Undo/Redo Buttons
                             HStack {
-                                Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo)
+                                Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo).padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 4))
                                 Divider().frame(height: 20)
-                                Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo)
+                                Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo).padding(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 16))
                             }
-                            .padding(.horizontal, 16).padding(.vertical, 8)
-                            .background(Capsule().fill(.white).shadow(radius: 2))
+                            .glassEffect(.regular.interactive())
                             
                             Spacer()
 
-                            // Right-side buttons
+                            // iPhone Right side: Theme & Prompt Buttons
                             HStack(spacing: 16) {
-                                // MARK: Theme Button with modern .sheet presentation
                                 Button {
                                     isThemePickerPresented = true
                                 } label: {
                                     Image(systemName: "paintpalette")
                                         .font(.title3)
                                         .frame(width: 44, height: 44)
-                                        .background(Circle().fill(.white).shadow(radius: 2))
+                                        .glassEffect(.regular.interactive())
                                 }
                                 .sheet(isPresented: $isThemePickerPresented) {
                                     themePickerView
                                 }
                                 
-                                // MARK: Prompt Button
                                 Button {
                                     // Later: show drawing prompt
                                 } label: {
                                     Image(systemName: "lightbulb")
                                         .font(.title3)
                                         .frame(width: 44, height: 44)
-                                        .background(Circle().fill(.white).shadow(radius: 2))
+                                        .glassEffect(.regular.interactive())
                                 }
                             }
+                        } else {
+                            // iPad Left side: Theme Button
+                            Button {
+                                isThemePickerPresented = true
+                            } label: {
+                                Image(systemName: "paintpalette")
+                                    .font(.title)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .sheet(isPresented: $isThemePickerPresented) {
+                                themePickerView
+                            }
+                            
+                            Spacer()
+                            
+                            // iPad Right side: Prompt Button
+                            Button {
+                                // Later: show drawing prompt
+                            } label: {
+                                Image(systemName: "lightbulb")
+                                    .font(.title)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
                         }
-                        .foregroundColor(.accentColor)
-                        .padding(.top, 16)
-                        .padding(.horizontal, 16)
                     }
+                    .foregroundColor(.accentColor)
+                    .padding(.top, 16)
+                    .padding(.horizontal, 16)
                 }
                 .background(canvasBackground)
                 .cornerRadius(34)
@@ -166,14 +190,20 @@ struct DrawingView: View {
     
     @ViewBuilder
     private var canvasBackground: some View {
-        switch selectedTheme {
-        case .color(let color):
-            color
-        case .texture(let name):
-            if UIImage(named: name) != nil {
-                Image(name).resizable().scaledToFill()
-            } else {
-                Color.white // Fallback if texture is not found
+        ZStack {
+            switch selectedTheme {
+            case .color(let color):
+                color
+            case .texture:
+                Color.white
+            }
+
+            if case .texture(let name) = selectedTheme {
+                if UIImage(named: name) != nil {
+                    Image(name)
+                        .resizable()
+                        .scaledToFill()
+                }
             }
         }
     }
@@ -204,13 +234,37 @@ struct DrawingView: View {
     private func createCompositeImage() -> UIImage {
         let canvasSize = pkCanvasView.bounds.size
         let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        
         return renderer.image { context in
-            if let backgroundImage = selectedTheme.getBackgroundImage(size: canvasSize) {
-                backgroundImage.draw(in: CGRect(origin: .zero, size: canvasSize))
-            } else {
-                UIColor.white.setFill()
-                context.fill(CGRect(origin: .zero, size: canvasSize))
+            let backgroundColor: UIColor = {
+                if case .color(let c) = selectedTheme {
+                    return c.toUIColor()
+                }
+                return .white
+            }()
+            backgroundColor.setFill()
+            context.fill(CGRect(origin: .zero, size: canvasSize))
+
+            if case .texture(let name) = selectedTheme, let textureImage = UIImage(named: name) {
+                let imageSize = textureImage.size
+                let canvasRect = CGRect(origin: .zero, size: canvasSize)
+                
+                let aspectWidth = canvasRect.width / imageSize.width
+                let aspectHeight = canvasRect.height / imageSize.height
+                let aspectRatio = min(aspectWidth, aspectHeight)
+                
+                let scaledSize = CGSize(width: imageSize.width * aspectRatio, height: imageSize.height * aspectRatio)
+                
+                let drawingRect = CGRect(
+                    x: (canvasRect.width - scaledSize.width) / 2.0,
+                    y: (canvasRect.height - scaledSize.height) / 2.0,
+                    width: scaledSize.width,
+                    height: scaledSize.height
+                )
+                
+                textureImage.draw(in: drawingRect)
             }
+            
             let drawingImage = pkCanvasView.drawing.image(from: pkCanvasView.bounds, scale: displayScale)
             drawingImage.draw(in: CGRect(origin: .zero, size: canvasSize))
         }
@@ -225,6 +279,6 @@ extension Color {
 
 extension String {
     var displayName: String {
-        self.components(separatedBy: "/").last?.capitalized ?? "Texture"
+        self.capitalized
     }
 }

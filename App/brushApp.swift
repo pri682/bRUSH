@@ -31,15 +31,7 @@ struct brushApp: App {
                     Label("Home", systemImage: "house")
                 }
 
-                // 2. Friends Tab
-                NavigationStack {
-                    FriendsView()
-                }
-                .tabItem {
-                    Label("Friends", systemImage: "person.2")
-                }
-
-                // 3. Drawings Tab
+                // 2. Drawings Tab
                 NavigationStack {
                     DrawingsGridView()
                 }
@@ -54,6 +46,14 @@ struct brushApp: App {
                             )
                           Text("Drawings")
                     }
+                }
+                
+                // 2. Friends Tab
+                NavigationStack {
+                    FriendsView()
+                }
+                .tabItem {
+                    Label("Friends", systemImage: "person.2")
                 }
                 
                 // 4. Profile Tab - UNCOMMENTED AND CORRECTED
