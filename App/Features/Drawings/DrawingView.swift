@@ -61,37 +61,29 @@ struct DrawingView: View {
         Color(uiColor: .systemGray6)
             .ignoresSafeArea()
             .overlay(
-                // This VStack with Spacers now controls the vertical positioning
                 VStack(spacing: 0) {
-                    // Top spacer to provide padding above the canvas
                     Spacer(minLength: 16)
-                    
-                    // The drawing canvas view, constrained by a 9:16 aspect ratio
                     canvasView
                         .aspectRatio(9/16, contentMode: .fit)
-                    
-                    // Bottom spacer to ensure at least 80 points for the tool picker
                     Spacer(minLength: 80)
                 }
-                .padding(.horizontal, 16) // Apply horizontal padding
+                .padding(.horizontal, 16)
             )
             .onAppear(perform: setupCanvas)
             .onChange(of: customColor) { selectedTheme = .color(customColor) }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage(); dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage(); NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0); dismiss() } }
             }
             .toolbar(.hidden, for: .tabBar)
             .navigationBarBackButtonHidden(true)
     }
 
-    // This view contains the canvas and its overlay buttons
     private var canvasView: some View {
         ZStack(alignment: .top) {
             PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
             
-            // This HStack contains all the top buttons and manages the layout
             HStack {
                 if UIDevice.current.userInterfaceIdiom == .phone {
                     // iPhone Left side: Undo/Redo Buttons
@@ -165,7 +157,6 @@ struct DrawingView: View {
     
     // MARK: - Subviews
 
-    // A modern, form-based view for the theme picker sheet
     private var themePickerView: some View {
         NavigationView {
             Form {

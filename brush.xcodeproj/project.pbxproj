@@ -24,7 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		5D64F4822E8CFDE800C03CC1 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = brush.app; path = /Users/kelvinmathew/Documents/Classes/SWE/bRUSH/build/Debug/brush.app; sourceTree = "<absolute>"; };
+		5D64F8F82E8F2DD900C03CC1 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = brush.app; path = /Users/kelvinmathew/Documents/Classes/SWE/bRUSH/build/Debug/brush.app; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -103,7 +103,7 @@
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
 			);
 			productName = brush;
-			productReference = 5D64F4822E8CFDE800C03CC1 /* brush.app */;
+			productReference = 5D64F8F82E8F2DD900C03CC1 /* brush.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

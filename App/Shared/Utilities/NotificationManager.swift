@@ -57,6 +57,32 @@ class NotificationManager {
         }
     }
     
+    // Clear all reminders
+    func clearReminders() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: ["DailyBrushStart", "DailyBrushHalf"]
+        )
+    }
+    
+    // Reset Daily Brush Cycle
+    func resetDailyReminders(hour: Int = 20, minute: Int = 0) {
+        // stop reminders for today
+        clearReminders()
+        
+        // save deadline for tomorrow (optional, if you want to track it)
+        if let newDeadline = Calendar.current.date(
+            bySettingHour: hour,
+            minute: minute,
+            second: 0,
+            of: Date().addingTimeInterval(86400)
+        ) {
+            UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
+        }
+        
+        // Reschedule both reminders (24h + 12h)
+        scheduleDailyReminders(hour: hour, minute: minute)
+    }
+    
     // Clear app badge + remove today's reminders
     func clearBadge() {
         UIApplication.shared.applicationIconBadgeNumber = 0
