@@ -45,16 +45,16 @@ struct DrawingView: View {
     
     // A list of available texture assets
     private let textureAssets = [
-        "Notebook",
-        "Canvas",
-        "Sticky Note",
-        "Scroll",
-        "Chalkboard",
-        "Classroom",
-        "Wall",
-        "Brick",
-        "Grass",
-        "Underwater"
+        "notebook",
+        "canvas",
+        "sticky note",
+        "scroll",
+        "chalkboard",
+        "classroom",
+        "wall",
+        "brick",
+        "grass",
+        "underwater"
     ]
 
     var body: some View {
