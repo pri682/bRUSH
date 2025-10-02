@@ -24,7 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		5D64F4822E8CFDE800C03CC1 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5D64F4822E8CFDE800C03CC1 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = brush.app; path = /Users/kelvinmathew/Documents/Classes/SWE/bRUSH/build/Debug/brush.app; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -64,7 +64,6 @@
 			isa = PBXGroup;
 			children = (
 				1033B8DA2E863B8800111590 /* App */,
-				5D64F4822E8CFDE800C03CC1 /* brush.app */,
 			);
 			sourceTree = "<group>";
 		};
