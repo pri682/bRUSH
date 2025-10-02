@@ -4,9 +4,9 @@ import Combine
 
 public struct UserProfile: Codable, Equatable {
     let uid: String
-    let firstName: String
+    var firstName: String
     let lastName: String
-    let displayName: String
+    var displayName: String
     let email: String
 }
 
@@ -38,4 +38,18 @@ final class UserService {
         let userRef = db.collection(usersCollection).document(uid)
         try await userRef.delete()
     }
+    
+    func fetchProfile(uid: String) async throws -> UserProfile {
+        let doc = try await db.collection(usersCollection).document(uid).getDocument()
+        guard let data = doc.data() else {
+            throw AuthError.backend("Profile not found.")
+        }
+        return try Firestore.Decoder().decode(UserProfile.self, from: data)
+    }
+    
+    func updateProfile(uid: String, data: [String: Any]) async throws {
+        let userRef = db.collection(usersCollection).document(uid)
+        try await userRef.updateData(data)
+    }
+
 }

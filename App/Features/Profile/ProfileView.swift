@@ -1,65 +1,84 @@
 import SwiftUI
 import Combine
 import FirebaseAuth
+import FirebaseFirestore
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
-    @StateObject private var localStorage = LocalUserStorage.shared
-    // ✨ NEW: State to manage the Sheet presentation for sign-up
     @State private var showingSignUpFlow = false
+    @State private var showingEditProfile = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if let user = viewModel.user {
                     VStack(spacing: 16) {
-                        // Display first name and username from local storage
-                        if let profile = localStorage.currentProfile {
+                        // Display first name and username from Firestore profile
+                        if let _ = viewModel.profile {
                             VStack(spacing: 4) {
-                                Text(profile.firstName)
-                                    .font(.title.bold())
-                                    .multilineTextAlignment(.center)
-                                
-                                Text("@\(profile.displayName)")
+                                HStack {
+                                    Text(viewModel.profile!.firstName)
+                                        .font(.title.bold())
+                                        .multilineTextAlignment(.center)
+
+                                    Button {
+                                        showingEditProfile = true
+                                    } label: {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+
+                                Text("@\(viewModel.profile!.displayName)")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                             }
                         } else {
-                            // Show loading or prompt to set up profile
+                            // Show loading or placeholder while fetching
                             VStack(spacing: 4) {
                                 Text("Welcome!")
                                     .font(.title.bold())
                                     .multilineTextAlignment(.center)
-                                
-                                Text("Setting up your profile...")
+
+                                Text("Loading your profile...")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                             }
                         }
-                            
+
+                        // Example streak section
+                        VStack(spacing: 8) {
+                            Text("🔥 Current Streak: \(StreakManager().currentStreak) days")
+                                .font(.headline)
+                            Text("🏆 Longest Streak: \(StreakManager().longestStreak) days")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 12)
+
+                        // Sign Out
                         Button("Sign Out!") {
                             viewModel.signOut()
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
                         .padding(.top, 8)
-                        
+
                         // Delete Profile Button
                         DeleteProfileButton(viewModel: viewModel)
                     }
                     .padding()
-                }
-                else {
+                } else {
+                    // Sign In screen
                     VStack(spacing: 20) {
                         Spacer()
 
-                        // Only for Sign In now
                         Text("Sign In")
                             .font(.title2.bold())
 
-                        // Error Message Display
+                        // Error message
                         if let error = viewModel.errorMessage {
                             Text(error)
                                 .foregroundColor(.red)
@@ -68,13 +87,14 @@ struct ProfileView: View {
                                 .transition(.opacity)
                         }
 
-                        // Input fields for SIGN IN
+                        // Email
                         InputField(
                             placeholder: "Email",
                             text: $viewModel.email,
                             isSecure: false
                         )
 
+                        // Password
                         InputField(
                             placeholder: "Password",
                             text: $viewModel.password,
@@ -90,14 +110,11 @@ struct ProfileView: View {
                         .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
 
-                        // NOTE: DividerWithText must be defined elsewhere
-                        // DividerWithText("or")
-
                         Spacer()
 
-                        // ✨ NEW: Button to launch the multi-step SignUpFlow
+                        // Launch Sign Up Flow
                         Button {
-                            showingSignUpFlow = true // Open the sheet
+                            showingSignUpFlow = true
                         } label: {
                             HStack {
                                 Text("Don’t have an account?")
@@ -113,10 +130,15 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
-            // ✨ NEW: The sheet modifier to present the SignUpFlow
             .sheet(isPresented: $showingSignUpFlow) {
                 SignUpFlow()
             }
+            .sheet(isPresented: $showingEditProfile) {
+                if let _ = viewModel.profile {
+                    EditProfileView(userProfile: $viewModel.profile)
+                }
+            }
+
         }
     }
 }

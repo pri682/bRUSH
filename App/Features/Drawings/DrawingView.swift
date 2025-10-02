@@ -6,6 +6,7 @@ struct DrawingView: View {
     let onSave: (URL, UIImage) -> Void
     
     @State private var pkCanvasView = PKCanvasView()
+    @State private var streakManager = StreakManager()
     @Environment(\.dismiss) var dismiss
     @Environment(\.displayScale) var displayScale
     

@@ -1,42 +1,65 @@
 import SwiftUI
 import Combine
+import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
 class ProfileViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var password: String = ""
     @Published private(set) var user: AppUser? = nil
+    @Published var profile: UserProfile? = nil   // 🔥 New: Firestore profile
     @Published var errorMessage: String? = nil
 
     private let auth = AuthService.shared
-    private var cancellables = Set<AnyCancellable>() // Used for Combine subscriptions
+    private let db = Firestore.firestore()
+    private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // ✨ THE FIX: Use .sink instead of .assign(to: &$) for reliable chaining in init()
+        // Watch for auth state changes
         auth.$user
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newUser in
-                // Safely update the @Published property inside the sink closure
                 self?.user = newUser
+                Task {
+                    if let uid = newUser?.id {
+                        await self?.loadProfile(uid: uid)
+                    } else {
+                        await MainActor.run {
+                            self?.profile = nil
+                        }
+                    }
+                }
             }
             .store(in: &cancellables)
     }
 
-    // 💡 HELPER: Basic email validation
+    // MARK: - Profile Loading
+    private func loadProfile(uid: String) async {
+        do {
+            let loadedProfile = try await UserService.shared.fetchProfile(uid: uid)
+            await MainActor.run { self.profile = loadedProfile }
+        } catch {
+            await MainActor.run { self.errorMessage = error.localizedDescription }
+        }
+    }
+
+    // MARK: - Email Validation
     private func validateEmail() throws {
         if !email.contains("@") {
-            // Assuming AuthError.invalidEmailFormat is defined in an extension
             throw AuthError.invalidEmailFormat
         }
     }
 
+    // MARK: - Auth Actions
     func signIn() async {
         errorMessage = nil
         do {
             try validateEmail()
             try await auth.signIn(email: email, password: password)
-            // Load local profile data if available
-            LocalUserStorage.shared.loadProfile()
+            if let uid = auth.user?.id {
+                await loadProfile(uid: uid)
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -47,10 +70,10 @@ class ProfileViewModel: ObservableObject {
             await auth.signOut()
             await MainActor.run {
                 self.user = nil
+                self.profile = nil
                 self.errorMessage = nil
                 self.email = ""
                 self.password = ""
-                // Clear local storage
                 LocalUserStorage.shared.clearProfile()
             }
         }
@@ -59,7 +82,6 @@ class ProfileViewModel: ObservableObject {
     func deleteProfile() async {
         errorMessage = nil
         do {
-            // Get user ID before deletion
             guard let currentUser = user else {
                 errorMessage = "No user to delete"
                 return
@@ -71,8 +93,9 @@ class ProfileViewModel: ObservableObject {
             // Then delete from Firebase Auth
             try await auth.deleteUser()
             
-            // Clear local state and storage on successful deletion
+            // Clear local state
             self.user = nil
+            self.profile = nil
             self.email = ""
             self.password = ""
             LocalUserStorage.shared.clearProfile()
@@ -80,9 +103,23 @@ class ProfileViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+    
+    func updateFirstName(_ newFirstName: String) async {
+        guard let userID = user?.id else { return } // Ensure we use the correct property for user ID
+        do {
+            try await db.collection("users").document(userID).updateData(["firstName": newFirstName])
+            DispatchQueue.main.async {
+                self.profile?.firstName = newFirstName // Ensure `firstName` is mutable
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to update name: \(error.localizedDescription)"
+            }
+        }
+    }
 }
 
-// Ensure this extension is available in the scope where ProfileViewModel is defined
+// MARK: - Custom Error
 public extension AuthError {
     static var invalidEmailFormat: AuthError {
         return .backend("Invalid email address.")
