@@ -80,10 +80,11 @@ class NotificationManager {
     
     // Clear app badge + remove today's reminders
     func clearBadge() {
-    // Stop all reminders (called when doodle is completed)
-    func clearReminders() {
-        let identifiers = (0..<12).map { "DailyBrush\($0)" }
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        // Stop all reminders (called when doodle is completed)
+        func clearReminders() {
+            let identifiers = (0..<12).map { "DailyBrush\($0)" }
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 }
