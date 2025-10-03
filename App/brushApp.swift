@@ -18,6 +18,7 @@ struct brushApp: App {
         // Request notification permission as soon as the app launches
         NotificationManager.shared.requestPermission()
         NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
+        UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
     
     var body: some Scene {
