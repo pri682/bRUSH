@@ -6,9 +6,9 @@ struct GridItemView: View {
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // The grid now displays the preview image
-            if let previewImage = item.preview {
-                Image(uiImage: previewImage)
+            // The grid now displays the 'image' property from the in-memory cache
+            if let cachedImage = item.image {
+                Image(uiImage: cachedImage)
                     .resizable()
                     .scaledToFill()
             } else {
@@ -17,5 +17,7 @@ struct GridItemView: View {
         }
         .frame(width: size, height: size)
         .clipped()
+        .cornerRadius(8.0)
+        .shadow(radius: 5)
     }
 }
