@@ -11,7 +11,13 @@ struct PKCanvas: UIViewRepresentable {
         canvasView.isOpaque = false
         // Set the coordinator as the delegate to receive drawing change notifications.
         canvasView.delegate = context.coordinator
-        showToolPicker()
+
+        // Present a per-instance tool picker (shared(for:) is deprecated in iOS 14)
+        let picker = context.coordinator.toolPicker
+        picker.setVisible(true, forFirstResponder: canvasView)
+        picker.addObserver(canvasView)
+        canvasView.becomeFirstResponder()
+        
         return canvasView
     }
     
@@ -23,21 +29,10 @@ struct PKCanvas: UIViewRepresentable {
         Coordinator(onDrawingChanged: onDrawingChanged)
     }
     
-    private func showToolPicker() {
-        if let window = UIApplication.shared.connectedScenes
-            .compactMap({ ($0 as? UIWindowScene)?.keyWindow })
-            .first,
-           let picker = PKToolPicker.shared(for: window) {
-
-            picker.setVisible(true, forFirstResponder: canvasView)
-            picker.addObserver(canvasView)
-            canvasView.becomeFirstResponder()
-        }
-    }
-    
     // MARK: - Coordinator
     class Coordinator: NSObject, PKCanvasViewDelegate {
         let onDrawingChanged: () -> Void
+        let toolPicker = PKToolPicker()
 
         init(onDrawingChanged: @escaping () -> Void) {
             self.onDrawingChanged = onDrawingChanged
