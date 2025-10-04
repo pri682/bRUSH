@@ -2,21 +2,29 @@ import SwiftUI
 
 struct HomeView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-    @State private var showOnboarding = false
+    @State private var showOnboarding: Bool = false
     
-    // 👇 NEW: controls dropdown
-    @State private var showingNotifications = false
+    // Controls dropdown
+    @State private var showingNotifications: Bool = false
+    
+    // View model for feed data and title
+    @StateObject private var viewModel: HomeViewModel = HomeViewModel()
+    @State private var isOnboardingPresented: Bool = false
+    @State private var isPresentingCreate: Bool = false
+    @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
 
     var body: some View {
         ZStack {
-            HomeBackground(palette: HomeBackground.brandVivid).ignoresSafeArea()
+            // Plain background – no gradients
+            Color(.systemBackground)
+                .ignoresSafeArea()
             
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
+                // Top bar
                 HStack(spacing: 12) {
-                    BrandIcon(size: 26, preferAsset: true)
-                    Text("Brush")
-                        .font(BrushFont.title(26))
-                        .foregroundStyle(BrushTheme.textBlue)
+                    Text(viewModel.appTitle)
+                        .font(BrushFont.title(22))
+                        .foregroundColor(.primary)
                     
                     Spacer()
                     
@@ -24,8 +32,8 @@ struct HomeView: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell.fill")
                                 .imageScale(.large)
-                                .foregroundColor(BrushTheme.pink) // back to default color
-
+                                .foregroundColor(BrushTheme.pink)
+                            
                             if !NotificationManager.shared.getNotificationHistory().isEmpty {
                                 Circle()
                                     .fill(Color.red)
@@ -34,38 +42,38 @@ struct HomeView: View {
                             }
                         }
                     }
-                    
-                    Button("Welcome") { showOnboarding = true }
-                        .font(.footnote)
-                        .tint(BrushTheme.pink)
                 }
                 .padding(.horizontal)
+                .padding(.vertical, 12)
                 
-                VStack(spacing: 8) {
-                    Text("Welcome Home!")
-                        .font(BrushFont.title(34))
-                        .foregroundStyle(BrushTheme.textBlue)
-                    Text("Bring your ideas to life with bold color and soft gradients.")
-                        .font(BrushFont.body(17))
-                        .foregroundStyle(BrushTheme.textBlue.opacity(0.8))
-                }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+                Divider()
+                
+                // Feed – scrollable list of user art posts
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        // Persistent CTA at the top (no gradient)
+                        FirstPostCTA {
+                            isPresentingCreate = true
+                        }
+                        .padding(.top, 8)
 
-                Spacer()
+                        if viewModel.feedItems.isEmpty {
+                            Text("Your feed will show your drawings here.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
 
-                NavigationLink(destination: DrawingsGridView()) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "pencil.and.outline")
-                        Text("Start Brushing")
+                        // Feed items without actions bar below each post
+                        ForEach(viewModel.feedItems) { item in
+                            UserFeedItemView(item: item)
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
                 }
-                .buttonStyle(BrushTheme.BrushButtonStyle())
-                .brushGlass(cornerRadius: 22)
-                .padding(.bottom, 24)
             }
             
-            // 👇 Notification dropdown aligned under the bell
+            // Notification dropdown aligned under the bell
             if showingNotifications {
                 VStack {
                     NotificationsDropdown()
@@ -81,20 +89,141 @@ struct HomeView: View {
         .onTapGesture {
             if showingNotifications { withAnimation { showingNotifications = false } }
         }
-        .fullScreenCover(
-            isPresented: Binding(
-                get: { !hasCompletedOnboarding || showOnboarding },
-                set: { newValue in
-                    if !newValue {
-                        hasCompletedOnboarding = true
-                        showOnboarding = false
-                    }
-                }
-            )
-        ) {
+        .onAppear {
+            isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
+        }
+        .onChange(of: hasCompletedOnboarding) { oldValue, newValue in
+            isOnboardingPresented = !newValue || showOnboarding
+        }
+        .onChange(of: showOnboarding) { oldValue, newValue in
+            isOnboardingPresented = !hasCompletedOnboarding || newValue
+        }
+        .onChange(of: isOnboardingPresented) { oldValue, newValue in
+            if !newValue {
+                hasCompletedOnboarding = true
+                showOnboarding = false
+            }
+        }
+        .fullScreenCover(isPresented: $isOnboardingPresented) {
             WelcomeView()
         }
+        .sheet(isPresented: $isPresentingCreate) {
+            NavigationStack {
+                DrawingView { _, _ in
+                    hasPostedToday = true
+                }
+                .navigationTitle("New Drawing")
+            }
+        }
     }
+}
+
+private struct PostActionsBar: View {
+    @State private var voteCount: Int = 3800
+    @State private var commentCount: Int = 4100
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Vote pill (up/down)
+            Button(action: { voteCount += 1 }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up")
+                    Text(Formatter.compact.string(for: voteCount) ?? "\(voteCount)")
+                    Image(systemName: "arrow.down")
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(UIColor.systemGray5))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            // Comments pill
+            Button(action: { /* open comments */ }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "bubble.left")
+                    Text(Formatter.compact.string(for: commentCount) ?? "\(commentCount)")
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(UIColor.systemGray5))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            // Badge/medal pill
+            Button(action: { /* show awards */ }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "rosette")
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(UIColor.systemGray5))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            // Share pill
+            ShareLink(item: "Check out this drawing from Brush!") {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Share")
+                }
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(UIColor.systemGray5))
+                .clipShape(Capsule())
+            }
+        }
+    }
+}
+
+private struct FirstPostCTA: View {
+    var onCreate: () -> Void
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(UIColor.secondarySystemBackground))
+
+            VStack(spacing: 16) {
+                Image(systemName: "scribble.variable")
+                    .font(.system(size: 44, weight: .bold))
+                    .foregroundStyle(.secondary)
+
+                Button(action: onCreate) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "plus")
+                        Text("Draw your first drawing")
+                    }
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
+                    .background(Color(UIColor.systemGray5))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(24)
+        }
+        .aspectRatio(16.0/9.0, contentMode: .fit)
+    }
+}
+
+private enum Formatter {
+    static let compact: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 1
+        f.usesGroupingSeparator = true
+        f.locale = .current
+        return f
+    }()
 }
 
 #Preview {
