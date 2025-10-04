@@ -11,7 +11,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let user = viewModel.user {
+                if viewModel.user != nil {
                     VStack(spacing: 16) {
                         // Display first name and username from Firestore profile
                         if let _ = viewModel.profile {
