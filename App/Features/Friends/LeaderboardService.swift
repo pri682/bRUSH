@@ -10,15 +10,15 @@ final class FriendsLeaderboardServiceStub: LeaderboardService {
         return [
             LeaderboardEntry(
                 userId: "1",
-                displayName: "Jesse Flynn",
-                handle: "@jesse",
+                displayName: "Ted",
+                handle: "@grumpyoldman",
                 gold: 3, silver: 2, bronze: 1,
                 submittedAt: Date()
             ),
             LeaderboardEntry(
                 userId: "2",
-                displayName: "Vaidic Soni",
-                handle: "@vaidic",
+                displayName: "Aaron",
+                handle: "@lunchalone",
                 gold: 1, silver: 2, bronze: 4,
                 submittedAt: Date().addingTimeInterval(-600)
             )
