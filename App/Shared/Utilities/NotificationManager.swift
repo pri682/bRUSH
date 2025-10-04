@@ -94,7 +94,11 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     
     // Clear app badge
     func clearBadge() {
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        UNUserNotificationCenter.current().setBadgeCount(0) { error in
+            if let error = error {
+                print("⚠️ Failed to clear badge: \(error)")
+            }
+        }
         clearReminders()
     }
     
