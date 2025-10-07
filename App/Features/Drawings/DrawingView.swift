@@ -75,7 +75,9 @@ struct DrawingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage(); NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0); dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage();
+                    streakManager.markCompletedToday()
+                    NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0); dismiss() } }
             }
             .toolbar(.hidden, for: .tabBar)
             .navigationBarBackButtonHidden(true)
