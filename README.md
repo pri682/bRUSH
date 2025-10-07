@@ -111,7 +111,33 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 ### 👤 Kelvin Mathew
 
-*(No JIRA tasks recorded for this sprint yet)*
+#### **KAN-47 — Canvas for Drawings**
+- Implemented UI and logic for for the canvas which can generate strokes based on touch input.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/c0df58b05d29f08666e93cb2700f13fd3aae3691/?at=feature%2FKAN-47-canvas)
+
+#### **KAN-48 — Custom PencilKit API**
+- Implemented UI and logic for the customized Swift toolpicker that updates the drawing view.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/b44f03882c33a1f2e24d68458ca5adaaa8f21dc1/?at=feature%2FKAN-48-as-a-user-i-want-to-choose-brush-)
+
+#### **KAN-49 — Add Undo/Redo for iPhone**
+- Implemented UI and logic for being able to undo and redo on iPhone due to the toolpicker not showing one unlike iPad.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/3dac70e2a6db1c3ccf7be8bfe3b4a3265327abaa/?at=feature%2FKAN-49-as-a-user-i-want-to-undo-redo-act)
+
+#### **KAN-50 — Add Share Sheet and Save Drawing Locally**
+- Implemented UI and logic for creating the composite drawing, saving it in the local memory and being able to share it.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/9658e3941ec9aa0e00aed71f977c344efc23cb37/?at=feature%2FKAN-50-as-a-user-i-want-to-export-the-ca)
+🔗 [Bitbucket Pull Request](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/2)
+
+#### **KAN-65 — Enable Users to Change Canvas Backgrounds**
+- Implemented UI and logic for being able to change the color of the canvas or pick from preset assets. Updated the export feature based on this.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/c8ddfebd88d5af3fdb1cf0d4381a38f29f14f101/?at=feature%2FKAN-65-as-a-user-i-want-to-be-able-to-ch)
+🔗 [Bitbucket Pull Request](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/7)
+
+#### **Next Steps** 
+- Improving the preview screen and the exporting logic for backgrounds with wide aspect ratios.
+- Adding a custom canvas outline styled timer when start drawing is clicked in the feed. Also add confirmation warning when submitting early.
+- Upload the drawing jpeg to the respective area in Firebase.
+- Pass the prompt of the day from the feed to the drawing so it can be viewed while drawing as well as when previewing past drawings (along with date).
 
 ---
 
