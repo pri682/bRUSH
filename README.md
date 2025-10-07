@@ -102,6 +102,12 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 - Implemented logic for user to update their profiles, including name and username.  
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
 
+#### **Next Steps** 
+- Profile Photo selection + saving it on Firebase.
+- save profile data locally to limit firebase usage and reduce costs.
+- Better Profile UI + Ensuring it scales correctly to different screen sizes.
+- Possible: Add requirement for users to verify themselevs when signing up via 2FA
+
 ---
 
 ### 👤 Kelvin Mathew
