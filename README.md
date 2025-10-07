@@ -62,7 +62,7 @@ bRUSH! Aims to connect people, unlock creative thinking, and bring more color to
 
 ## Features
 
-Currently in progress as of October 6, 2025:
+Currently in progress as of October 6, 2025 (Next steps for sprint 2):
 - Pick a personal profile page photo
 - store drawings locally
 - friend requests and leaderboard
@@ -83,24 +83,24 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 #### **KAN-13 — Implement User Login**
 - Implemented all user login logic including authentication flow and session persistence.  
-🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-13-user-login)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-13-user-login)
 
 #### **KAN-53 — Implement User Sign Out**
 - Added user sign-out functionality, restoring the app to its deafult, empty state.
 
-	🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
+	🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
 
 #### **KAN-14 — Allow User Profile Deletion**
 - Implemented the ability for users to permanently delete their profiles and associated data.  
-🔗 [View Commit (Bitbucket)](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-14-Delete-Profile)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-14-Delete-Profile)
 
 #### **KAN-61 — Enable User Sign-Up for New Profiles**
 - Developed the user registration process and linked it to the backend user store.  
-🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-61-sign-up-form)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-61-sign-up-form)
 
 #### **KAN-12 — Update User Profile Information**
 - Implemented logic for user to update their profiles, including name and username.  
-🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
 
 ---
 
