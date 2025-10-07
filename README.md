@@ -62,7 +62,7 @@ bRUSH! Aims to connect people, unlock creative thinking, and bring more color to
 
 ## Features
 
-Currently in progress as of September 23, 2025:
+Currently in progress as of October 6, 2025:
 - Pick a personal profile page photo
 - store drawings locally
 - friend requests and leaderboard
@@ -127,14 +127,9 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 *(No JIRA tasks recorded for this sprint yet)*
 
 
-## Setup
+<!-- ## Setup
 
 ### Requirements
-- Node.js (LTS version recommended)
-- npm or yarn
-- Expo CLI (for React Native development)
-- Android Studio (for Android emulation) or Xcode (for iOS emulation, Mac only)
-- A Firebase project (for Authentication, Firestore, and Cloud Storage)
 
 ### Installation
 
@@ -144,7 +139,7 @@ How does one go about using it?
 Provide various use cases and code examples here.
 
 `write-your-code-here`
-
+ -->
 
 ## Project Status
 Project is: _in progress_ 
@@ -180,4 +175,4 @@ Created by [@flynerdpl](https://www.flynerd.pl/) - feel free to contact me!
 <!-- ## License -->
 <!-- This project is open source and available under the [... License](). -->
 
-You don't have to include all sections - just the one's relevant to your project -->
+<!-- You don't have to include all sections - just the one's relevant to your project --> 
