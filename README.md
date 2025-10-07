@@ -87,8 +87,7 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 #### **KAN-53 — Implement User Sign Out**
 - Added user sign-out functionality, restoring the app to its deafult, empty state.
-
-	🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
 
 #### **KAN-14 — Allow User Profile Deletion**
 - Implemented the ability for users to permanently delete their profiles and associated data.  
@@ -118,8 +117,26 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 ### 👤 Vaidic Soni
 
-*(No JIRA tasks recorded for this sprint yet)*
+#### **KAN-52 — Daily Reminder Functionality**
+- Users now get periodic reminders every 2 hours to complete their daily drawing if they haven't done so.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/432d7255bac1e8b46ca891dae935610f734f8296/?at=feature%2FKAN-52-NotificationReminder)
 
+#### **KAN-21 — Fixing notification Scheduling**
+- Fixed notifications and made changes to make them better and increase their frequency.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/KAN-21_Fixing_Notifications/)
+
+#### **KAN-23 — Added Streak functionality**
+- Designed logic to track daily drawing streaks to motivate users.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/KAN-23-Streak_Feature/)
+
+#### **KAN-45 — Added Notification Bell and History**
+- Implemented a dropdown panel that stores and displays all past notifications.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/2437e02c6cc9a20d5537e9c8a60e27a40fbd7f72/?at=feature%2FKAN-45-as-a-user-i-want-a-bell-icon-on-t)
+
+#### **Next Steps**
+- Let users upload and share their drawings using Firebase Storage.
+- Show posts from friends using Firestore for filtered queries.
+- Do the prompt logic by using LLM's API's and train them.
 ---
 
 ### 👤 Priyanka Karki
