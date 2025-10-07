@@ -18,7 +18,7 @@
 ## Description  
 
 **Who are we?**  
-Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/Dr-DefiChain?tab=overview&from=2024-12-01&to=2024-12-31) we created bRUSH! The new social media app.  
+Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/jeaflynn) we created bRUSH! The new social media app.  
 
 **What are we creating?**  
 In short, this is a mobile social media app that aims at connecting everyone to their creative side as well as connect people closer. The app is aimed at anyone ages 12 to 22 though we believe it will be enjoyable even among families, sharing drawings with your parents.  
@@ -124,8 +124,38 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 ### 👤 Jesse Flynn
 
-*(No JIRA tasks recorded for this sprint yet)*
+#### **KAN-18 - Friends Tab (View/Search/Request + Add Friend)**
+- Implemented friend screen UI
+- Added friend requests section with accept/decline functionality (mock)
+- Added friends section with searchable list
 
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-18-as-a-user-i-want-to-have-a-friends-tab-to-view-and-compete-with-my-friends)
+
+#### **KAN-19 - Friends Leaderboard (frontend)**
+- Added LeaderboardEntry model and LeaderboardService protocol
+- Extended Friends VM with state, sorting, and refresh logic
+- Added Leaderboard section in Friends page with ranking, points, refresh, and error/empty states
+- Added trophy icon to toggle leaderboard visibility
+
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-19-as-a-user-i-want-a-leaderboard-to-compete-with-friends)
+
+*Note: KAN-18 (Friends tab) was accidentally merged into main instead of the sprint1-dev branch. As a result, when I created the KAN-19 branch and 
+merged it into sprint1-dev, it also included the KAN-18 commits. These commits were already reviewed and merged to main earlier. KAN-19 contains only the 
+leaderboard-related changes, but the history shows both sets because of the branch base. This was not an attempt to duplicate or fake work - just a branch 
+merge mistake that I wanted to add here for clarity.*
+
+#### **Next Steps** 
+- Friends Backend Integration (Firebase)
+	- Connect Add Friend flow to real Firebase users using handles
+	- Implement friend request creation, acceptance, and persistence with Firestore
+	- Update FriendsViewModel to use live user data instead of mock arrays
+- Leaderboard Backend Integration
+	- Implement Firebase logic to query friends’ submissions and calculate medal totals
+	- Replace stub service with real Firestore queries using filters for friend IDs
+	- Ensure leaderboard updates on refresh and matches real medal counts
+- Testing and Polish
+	- Add unit tests for FriendsViewModel search and leaderboard sorting logic
+	- Clean up any UI bugs or state resets between tabs
 
 <!-- ## Setup
 
