@@ -83,24 +83,24 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 #### **KAN-13 — Implement User Login**
 - Implemented all user login logic including authentication flow and session persistence.  
-🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-13)
+🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-13-user-login)
 
 #### **KAN-53 — Implement User Sign Out**
 - Added user sign-out functionality, restoring the app to its deafult, empty state.
 
-	🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-53)
+	🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
 
 #### **KAN-14 — Allow User Profile Deletion**
 - Implemented the ability for users to permanently delete their profiles and associated data.  
-🔗 [View Commit (Bitbucket)](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/54add76a6de8c4711d16bf24aa381dafa0951fc8)
+🔗 [View Commit (Bitbucket)](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-14-Delete-Profile)
 
 #### **KAN-61 — Enable User Sign-Up for New Profiles**
 - Developed the user registration process and linked it to the backend user store.  
-🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-61)
+🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-61-sign-up-form)
 
 #### **KAN-12 — Update User Profile Information**
 - Implemented logic for user to update their profiles, including name and username.  
-🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-12)
+🔗 [View JIRA Task](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
 
 ---
 
