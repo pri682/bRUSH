@@ -52,28 +52,79 @@ bRUSH! Aims to connect people, unlock creative thinking, and bring more color to
 
 
 
-## Technologies Used
-- React Native
-- Android Studio (for Android Development)
-- XCode (for iOS deployment)
+## Technologies
+- Swift UI
+- XCode
 - Firebase Authentication
 - Firebase Cloud Storage
-- Firebase  Firestore (cloud NoSQL database for app data)
 - Gemini API (Google AI)
-- Expo (if you use it for development and testing)
-- More as we see fit...
+- Apple Native APIs (Pencil Kit, photos UI, etc...)
 
 ## Features
 
 Currently in progress as of September 23, 2025:
-- Login: Secure sign in and profile creation (Using Google Firebase User Authentication)
-- bRUSH: Draw your very own take on a fun unique prompt and save the bRUSH locally or on the cloud (using Google Firebase)
-- Customize: customize your own profile by editing your information, and showcasing your favorite bRUSHes of your own!
+- Pick a personal profile page photo
+- store drawings locally
+- friend requests and leaderboard
+- feed view
+- medal awarding
+- Liquid glass implemntation
+- sign up user verification (verification codes)
+- Notifications panel
 
-<!--
-## Screenshots
-![Example screenshot](./img/screenshot.png)
-<!-- If you have screenshots you'd like to share, include them here. -->
+## 🧩 Contributions
+
+This section lists individual contributions for this sprint.  
+Each entry includes the JIRA task ID, title, and links to related commits or pull requests.
+
+---
+
+### 👤 Meidad Troper
+
+#### **KAN-13 — Implement User Login**
+- Implemented all user login logic including authentication flow and session persistence.  
+🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-13)
+
+#### **KAN-53 — Implement User Sign Out**
+- Added user sign-out functionality, restoring the app to its deafult, empty state.
+
+	🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-53)
+
+#### **KAN-14 — Allow User Profile Deletion**
+- Implemented the ability for users to permanently delete their profiles and associated data.  
+🔗 [View Commit (Bitbucket)](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/54add76a6de8c4711d16bf24aa381dafa0951fc8)
+
+#### **KAN-61 — Enable User Sign-Up for New Profiles**
+- Developed the user registration process and linked it to the backend user store.  
+🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-61)
+
+#### **KAN-12 — Update User Profile Information**
+- Implemented logic for user to update their profiles, including name and username.  
+🔗 [View JIRA Task](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?selectedIssue=KAN-12)
+
+---
+
+### 👤 Kelvin Mathew
+
+*(No JIRA tasks recorded for this sprint yet)*
+
+---
+
+### 👤 Vaidic Soni
+
+*(No JIRA tasks recorded for this sprint yet)*
+
+---
+
+### 👤 Priyanka Karki
+
+*(No JIRA tasks recorded for this sprint yet)*
+
+---
+
+### 👤 Jesse Flynn
+
+*(No JIRA tasks recorded for this sprint yet)*
 
 
 ## Setup
@@ -87,44 +138,6 @@ Currently in progress as of September 23, 2025:
 
 ### Installation
 
-1. Clone the repository:
-	```sh
-	git clone <your-repo-url>
-	cd brush/client
-	```
-
-2. Install dependencies:
-	```sh
-	npm install
-	```
-	or
-	```sh
-	yarn install
-	```
-
-3. Install Expo CLI globally (if not already installed):
-	```sh
-	npm install -g expo-cli
-	```
-
-4. Set up Firebase:
-	- Create a Firebase project at [Firebase Console](https://console.firebase.google.com/).
-	- Enable Authentication, Firestore, and Cloud Storage.
-	- Download your `google-services.json` (Android) and/or `GoogleService-Info.plist` (iOS) and place them in the appropriate directories.
-	- Update your Firebase config in the project as needed.
-
-5. Start the development server:
-	```sh
-	npx expo start
-	```
-	or
-	```sh
-	expo start
-	```
-
-6. Run the app:
-	- Use an emulator (Android Studio/Xcode) or scan the QR code with the Expo Go app on your device.
-
 
 ## Usage
 How does one go about using it?
@@ -137,7 +150,10 @@ Provide various use cases and code examples here.
 Project is: _in progress_ 
 
 
-## Room for Improvement
+
+
+
+<!-- ## Room for Improvement
 Include areas you believe need improvement / could be improved. Also add TODOs for future development.
 
 Room for improvement:
@@ -164,4 +180,4 @@ Created by [@flynerdpl](https://www.flynerd.pl/) - feel free to contact me!
 <!-- ## License -->
 <!-- This project is open source and available under the [... License](). -->
 
-<!-- You don't have to include all sections - just the one's relevant to your project -->
+You don't have to include all sections - just the one's relevant to your project -->
