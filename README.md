@@ -234,7 +234,7 @@ merge mistake that I wanted to add here for clarity.*
 	- Clean up any UI bugs or state resets between tabs
 
 #### **Burnup chart for Sprint-1**
-![Feed Preview](Resources/nemodians-burnup-chart-1.png)
+![Feed Preview](App/Resources/nemodians-burnup-chart-1.png)
 
 
 <!-- ## Setup
