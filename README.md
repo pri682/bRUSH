@@ -167,8 +167,35 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 ### 👤 Priyanka Karki
 
-*(No JIRA tasks recorded for this sprint yet)*
+#### **KAN-51 – Welcome Screen with Logo and Design Elements.**
+Integrated the new logo into the welcome screen.
+Added a “Get Started” button and aligned layout elements.
+Ensured consistency and responsiveness across devices.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/2be9dcd5d70ad75b5ee7c49470d0fdc44b713405)
 
+#### **KAN-63 – Home Feed Page.**
+Built the main feed to display friends’ drawings.
+Added navigation tabs for Home, Explore, Create, and Profile.
+Structured layout for future backend integration.
+🔗 [Bitbucket] (https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/feature/KAN-63-as-a-user-i-want-my-home-page-to-)
+
+#### **KAN-64 – Profile Navigation.**
+Enabled navigation from feed posts to creator profiles.
+Added private profile visibility logic.
+Tested smooth page transitions.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/19128ac3199010535bd6b2015dcdedc7a956b65b)
+
+#### **KAN-71 – Post Interactions (Likes, Medals, Shares).**
+Added interactive like, medal, and share buttons to feed posts.
+Managed state updates and interaction animations.
+Verified full integration within feed layout.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-71-as-a-user-i-want-to-be-able-to-ta)
+
+#### **Next Steps (Sprint 2)**
+Design and plan the structure for the backend logic.
+Integrate the feed, profile, and interaction features with a reliable database to store and manage user data.
+Implement real-time updates for likes and medals to ensure dynamic user feedback.
+Optimize feed performance and conduct accessibility testing for a smoother user experience.
 ---
 
 ### 👤 Jesse Flynn
@@ -222,9 +249,6 @@ Provide various use cases and code examples here.
 
 ## Project Status
 Project is: _in progress_ 
-
-
-
 
 
 <!-- ## Room for Improvement
