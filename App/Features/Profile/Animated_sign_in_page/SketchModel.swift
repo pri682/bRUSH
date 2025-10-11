@@ -8,12 +8,18 @@
 
 import SwiftUI
 
-struct Sketch: Identifiable {
+struct Sketch: Identifiable, Equatable {
     let id = UUID()
+    let imageName: String
     let x: CGFloat
     let y: CGFloat
     let size: CGFloat
     let rotation: Double
-    let opacity: Double
-    let speed: Double
+    var opacity: Double
+    var isFadingOut: Bool
+    var color: Color = .white
+
+    static func == (lhs: Sketch, rhs: Sketch) -> Bool {
+        lhs.id == rhs.id
+    }
 }
