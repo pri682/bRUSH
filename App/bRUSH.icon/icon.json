@@ -1,0 +1,44 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "extended-srgb:1.00000,0.80000,0.00000,1.00000",
+      "extended-srgb:1.00000,0.21961,0.23529,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : null,
+      "layers" : [
+        {
+          "fill" : "none",
+          "glass" : true,
+          "image-name" : "cf881996-8b6f-4bcd-a366-05e146a975db_removalai_preview.png",
+          "name" : "cf881996-8b6f-4bcd-a366-05e146a975db_removalai_preview",
+          "position" : {
+            "scale" : 1.4,
+            "translation-in-points" : [
+              1.4614352637207007,
+              -34.95753150819916
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 1
+      },
+      "specular" : false,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

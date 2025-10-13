@@ -18,6 +18,7 @@ struct brushApp: App {
         // Request notification permission as soon as the app launches
         NotificationManager.shared.requestPermission()
         NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
+        UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
     
     var body: some Scene {
@@ -31,15 +32,7 @@ struct brushApp: App {
                     Label("Home", systemImage: "house")
                 }
 
-                // 2. Friends Tab
-                NavigationStack {
-                    FriendsView()
-                }
-                .tabItem {
-                    Label("Friends", systemImage: "person.2")
-                }
-
-                // 3. Drawings Tab
+                // 2. Drawings Tab
                 NavigationStack {
                     DrawingsGridView()
                 }
@@ -55,16 +48,16 @@ struct brushApp: App {
                           Text("Drawings")
                     }
                 }
-
-                // 4. Leaderboard Tab
+                
+                // 2. Friends Tab
                 NavigationStack {
-                    LeaderboardView()
+                    FriendsView()
                 }
                 .tabItem {
-                    Label("Leaderboard", systemImage: "trophy")
+                    Label("Friends", systemImage: "person.2")
                 }
                 
-                // 5. Profile Tab - UNCOMMENTED AND CORRECTED
+                // 4. Profile Tab - UNCOMMENTED AND CORRECTED
                 NavigationStack {
                     ProfileView() // Assuming ProfileView exists
                 } // <-- THIS CLOSING BRACE WAS MISSING/COMMENTED

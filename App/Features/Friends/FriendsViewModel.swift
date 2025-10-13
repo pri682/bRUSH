@@ -15,8 +15,12 @@ class FriendsViewModel: ObservableObject {
     @Published var isSearchingAdd: Bool = false
     @Published var addError: String?
     @Published var sent: [SentFriendRequest] = []
+    @Published var leaderboard: [LeaderboardEntry] = []
+    @Published var isLoadingLeaderboard = false
+    @Published var leaderboardError: String?
     
     private var cancellables = Set<AnyCancellable>()
+    private var leaderboardService: LeaderboardService = FriendsLeaderboardServiceStub()
     
     private let _mockDirectory: [FriendSearchResult] = [
         .init(handle: "jesse",  displayName: "Jesse Flynn"),
@@ -87,5 +91,23 @@ class FriendsViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+        }
+    func loadLeaderboard(for date: Date = Date()) {
+            isLoadingLeaderboard = true
+            leaderboardError = nil
+            Task { @MainActor in
+                do {
+                    let entries = try await leaderboardService.fetchLeaderboard(for: date)
+                    self.leaderboard = entries.sorted {
+                        if $0.points != $1.points {
+                            return $0.points > $1.points
+                        }
+                        return $0.submittedAt < $1.submittedAt
+                    }
+                } catch {
+                    leaderboardError = "Failed to load leaderboard."
+                }
+                isLoadingLeaderboard = false
+            }
         }
 }
