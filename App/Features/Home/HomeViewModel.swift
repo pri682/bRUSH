@@ -20,7 +20,7 @@ struct FeedItem: Identifiable {
 
 final class HomeViewModel: ObservableObject {
     // Centralized app title in case branding changes again
-    @Published var appTitle: String = "Brush"
+    @Published var appTitle: String = "bRUSH"
 
     // Onboarding storage
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false

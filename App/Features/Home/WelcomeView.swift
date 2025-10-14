@@ -16,7 +16,7 @@ struct WelcomeView: View {
                         .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
                         .accessibilityLabel("Brush app logo")
 
-                    Text("Brush")
+                    Text("bRUSH")
                         .font(BrushFont.title(40))
                         .foregroundStyle(BrushTheme.textBlue)
                         .accessibilityAddTraits(.isHeader)
