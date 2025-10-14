@@ -24,7 +24,6 @@ struct HomeView: View {
                 HStack(spacing: 12) {
                     Text(viewModel.appTitle)
                         .font(BrushFont.title(22))
-                        .foregroundColor(.primary)
                     
                     Spacer()
                     
@@ -32,16 +31,22 @@ struct HomeView: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell.fill")
                                 .imageScale(.large)
-                                .foregroundColor(BrushTheme.pink)
-                            
+                                .frame(width: 44, height: 44, alignment: .center)
+
                             if !NotificationManager.shared.getNotificationHistory().isEmpty {
-                                Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 10, height: 10)
-                                    .offset(x: 6, y: -6)
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white)
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 7, height: 7)
+                                }
+                                .frame(width: 10, height: 10)
+                                .offset(x: -9, y: 9)
                             }
                         }
                     }
+                    .glassEffect(.regular.interactive())
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 12)
@@ -77,7 +82,7 @@ struct HomeView: View {
             if showingNotifications {
                 VStack {
                     NotificationsDropdown()
-                        .offset(x: -10, y: 40) // shift slightly under the bell
+                        .offset(x: -15, y: 80)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(1)
                     Spacer()
@@ -107,7 +112,7 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $isOnboardingPresented) {
             WelcomeView()
         }
-        .sheet(isPresented: $isPresentingCreate) {
+        .fullScreenCover(isPresented: $isPresentingCreate) {
             NavigationStack {
                 DrawingView { _, _ in
                     hasPostedToday = true
