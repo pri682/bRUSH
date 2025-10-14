@@ -42,7 +42,7 @@ struct UserFeedItemView: View {
             
             // Art area (vertical canvas placeholder for now)
             ZStack(alignment: .bottomLeading) {
-                Rectangle()
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
                     .frame(maxWidth: .infinity)
                     .aspectRatio(16.0/9.0, contentMode: .fit)
@@ -52,7 +52,6 @@ struct UserFeedItemView: View {
                                 Image(name)
                                     .resizable()
                                     .scaledToFill()
-                                    .clipped()
                             } else if let artSymbol = item.artSystemImageName {
                                 Image(systemName: artSymbol)
                                     .resizable()
@@ -62,6 +61,7 @@ struct UserFeedItemView: View {
                             }
                         }
                     )
+                    .clipped()
 
                 // Medal icons and counts at bottom-left (interactive)
                 HStack(spacing: 14) {

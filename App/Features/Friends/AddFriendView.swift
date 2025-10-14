@@ -44,7 +44,12 @@ struct AddFriendView: View {
                             Button {
                                 vm.sendFriendRequest(to: user)
                             } label: {
-                                Label("Add", systemImage: "person.badge.plus")
+                                Label {
+                                    Text("Add")
+                                } icon: {
+                                    Image(systemName: "person.badge.plus")
+                                        .foregroundColor(.white)
+                                }
                             }
                             .buttonStyle(.borderedProminent)
                         }
