@@ -13,6 +13,7 @@ struct DrawingView: View {
     // State to track whether undo/redo is available
     @State private var canUndo = false
     @State private var canRedo = false
+    @Namespace private var namespace
     
     // State for the selected canvas theme, defaulting to a white color
     @State private var selectedTheme: CanvasTheme = .color(.white)
@@ -46,16 +47,9 @@ struct DrawingView: View {
     
     // A list of available texture assets
     private let textureAssets = [
-        "notebook",
-        "canvas",
-        "sticky note",
-        "scroll",
-        "chalkboard",
-        "classroom",
-        "wall",
-        "brick",
-        "grass",
-        "underwater"
+        "notebook", "canvas", "Sticky Note", "scroll",
+        "chalkboard", "Classroom", "bathroom", "Wall",
+        "Brick", "Grass", "Underwater"
     ]
 
     var body: some View {
@@ -83,24 +77,49 @@ struct DrawingView: View {
             .navigationBarBackButtonHidden(true)
     }
 
+    private var undoRedoControls: some View {
+        GlassEffectContainer(spacing: 12) {
+            HStack(spacing: 12) {
+                Button {
+                    pkCanvasView.undoManager?.undo()
+                    updateUndoRedoState()
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                }
+                .disabled(!canUndo)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .glassEffect()
+                .glassEffectID("undoButton", in: namespace)
+
+                if canRedo {
+                    Button {
+                        pkCanvasView.undoManager?.redo()
+                        updateUndoRedoState()
+                    } label: {
+                        Image(systemName: "arrow.uturn.forward")
+                    }
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .glassEffect()
+                    .glassEffectID("redoButton", in: namespace)
+                }
+            }
+        }
+        .animation(.spring(response: 0.8, dampingFraction: 0.8), value: canRedo)
+    }
+
     private var canvasView: some View {
         ZStack(alignment: .top) {
             PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
             
             HStack {
                 if UIDevice.current.userInterfaceIdiom == .phone {
-                    // iPhone Left side: Undo/Redo Buttons
-                    HStack {
-                        Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo).padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 4))
-                        Divider().frame(height: 20)
-                        Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo).padding(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 16))
-                    }
-                    .glassEffect(.regular.interactive())
+                    undoRedoControls
                     
                     Spacer()
 
-                    // iPhone Right side: Theme & Prompt Buttons
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
                         Button {
                             isThemePickerPresented = true
                         } label: {
@@ -111,6 +130,12 @@ struct DrawingView: View {
                         }
                         .sheet(isPresented: $isThemePickerPresented) {
                             themePickerView
+                                .presentationDetents([.fraction(0.8), .large])
+                        }
+                        .onChange(of: isThemePickerPresented) { oldValue, newValue in
+                            if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
+                                picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                            }
                         }
                         
                         Button {
@@ -175,7 +200,7 @@ struct DrawingView: View {
                                 isThemePickerPresented = false
                             } label: {
                                 VStack {
-                                    Image(assetName)
+                                    Image(assetName: assetName)
                                         .resizable().scaledToFill()
                                         .frame(width: 60, height: 60)
                                         .clipShape(Circle())
@@ -230,8 +255,10 @@ struct DrawingView: View {
     }
     
     private func updateUndoRedoState() {
-        canUndo = pkCanvasView.undoManager?.canUndo ?? false
-        canRedo = pkCanvasView.undoManager?.canRedo ?? false
+        withAnimation(.spring()) {
+            canUndo = pkCanvasView.undoManager?.canUndo ?? false
+            canRedo = pkCanvasView.undoManager?.canRedo ?? false
+        }
     }
     
     private func saveDrawingAsImage() {
@@ -284,7 +311,17 @@ struct DrawingView: View {
     }
 }
 
-// MARK: - Helpers
+extension Image {
+    init(assetName: String) {
+        if UIImage(named: assetName) != nil {
+            self.init(assetName)
+        } else if UIImage(named: assetName.lowercased()) != nil {
+            self.init(assetName.lowercased())
+        } else {
+            self.init(systemName: "exclamationmark.triangle")
+        }
+    }
+}
 
 extension Color {
     func toUIColor() -> UIColor { UIColor(self) }
