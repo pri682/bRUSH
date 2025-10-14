@@ -5,19 +5,28 @@ struct AnimatedSketchView: View {
         "boat","icecream","sun","love","rain","test_plane",
         "burger","soda","boot","banana","home","cat","giraffe",
         "dog","sunglasses","plant","hand","dove","casino","console",
-        "ball","football","laugh", "bike", "rainbow", "donut", "brush", "Pencil", "flower",
-        "sloth", "fire", "frog", "badge", "drumsticks", "idea", "fork", "skincare", "star", "tree", "wind",
-        "tucan", "bird", "moon", "trophie", "pizza", "flash",
+        "ball","football","laugh", "bike", "rainbow", "donut", "brush",
+        "Pencil", "flower", "sloth", "fire", "frog", "badge", "drumsticks",
+        "idea", "fork", "skincare", "star", "tree", "wind", "tucan", "bird",
+        "moon", "trophie", "pizza", "flash", "dino", "car", "diamond", "roller",
+        "bucket", "snowman", "chick", "brain", "prey", "bee", "rocket", "dolphin",
+        "drum", "trumpet", "camera", "cafe", "summer", "zzz", "lovehands", "planetring",
+        "earth", "helicopter"
+        
     ]
     
     let iconSize: CGFloat = 40
     let rowSpacing: CGFloat = 8
     let colSpacing: CGFloat = 8
     let fadeInDuration: TimeInterval = 0.3
+    let maxRecent = 15 // # of items we spawn before we can repeat an icon
     
     @State private var sketches: [Sketch] = []
     @State private var canvasSize: CGSize = .zero
     @State private var cancelAnimation = false
+    // Added this since I wanted to not have duplicate icons next to each other...
+    @State private var recentIcons: [String] = []
+    
     
     var body: some View {
         GeometryReader { geometry in
@@ -39,7 +48,8 @@ struct AnimatedSketchView: View {
             .onAppear {
                 canvasSize = geometry.size
                 cancelAnimation = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    // how long we wait before the fade in (1 second)
                     if !cancelAnimation {
                         startDrawingIcons()
                     }
@@ -65,13 +75,16 @@ struct AnimatedSketchView: View {
         
         func drawNextIcon() {
             guard !cancelAnimation else { return }
-            guard currentRow < totalRows else { return } // all icons drawn
+            guard currentRow < totalRows else { return }
             
             let x = CGFloat(currentCol) * (iconSize + colSpacing) + iconSize/2 + colSpacing/2
             let y = CGFloat(currentRow) * (iconSize + rowSpacing) + iconSize/2 + rowSpacing/2
             
+            // Pick a random image, avoiding recent duplicates
+            let imageName = getNonRepeatingIcon()
+            
             let sketch = Sketch(
-                imageName: imageNames.randomElement() ?? "test_plane",
+                imageName: imageName,
                 x: x,
                 y: y,
                 size: iconSize,
@@ -92,18 +105,38 @@ struct AnimatedSketchView: View {
                 }
             }
             
-            // Move to next position
+            // Move to next grid position
             currentCol += 1
             if currentCol >= totalCols {
                 currentCol = 0
                 currentRow += 1
             }
             
+            // Keep drawing next icon after short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
                 drawNextIcon()
             }
         }
         
         drawNextIcon()
+    }
+    
+    // Non-repeating random icon picker
+    private func getNonRepeatingIcon() -> String {
+        var available = imageNames.filter { !recentIcons.contains($0) }
+        if available.isEmpty {
+            available = imageNames // reset if all were used recently
+            recentIcons.removeAll()
+        }
+        let chosen = available.randomElement() ?? "test_plane"
+        recentIcons.append(chosen)
+        
+        // Keep only last 15
+        if recentIcons.count > maxRecent {
+            recentIcons.removeFirst(recentIcons.count - maxRecent)
+        }
+
+        
+        return chosen
     }
 }
