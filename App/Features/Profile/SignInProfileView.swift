@@ -5,50 +5,70 @@ struct SignInProfileView: View {
     @State private var showingSignUpFlow = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        ZStack {
+            // MARK: - Animated Background
+            AnimatedSketchView()
 
-            Text("Sign In")
-                .font(.title2.bold())
+            // MARK: - Foreground Content
+            GeometryReader { geometry in
+                VStack {
+                    Spacer()
 
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
+                    VStack(spacing: 20) {
+                        Image("brush_logo_1")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geometry.size.width * 0.35)
+                            .padding(.bottom, 8)
+
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                                .transition(.opacity)
+                        }
+
+                        InputField(placeholder: "Email", text: $viewModel.email, isSecure: false)
+                        InputField(placeholder: "Password", text: $viewModel.password, isSecure: true)
+
+                        Button {
+                            Task { await viewModel.signIn() }
+                        } label: {
+                            Text("Sign In")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 38)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.accentColor)
+                                )
+                        }
+                        .padding(.top, 8)
+                    }
+                    .frame(maxWidth: 340)
                     .padding(.horizontal)
-                    .transition(.opacity)
-            }
 
-            InputField(placeholder: "Email", text: $viewModel.email, isSecure: false)
-            InputField(placeholder: "Password", text: $viewModel.password, isSecure: true)
+                    Spacer()
 
-            Button {
-                Task { await viewModel.signIn() }
-            } label: {
-                Text("Sign In")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .padding(.top, 8)
-
-            Spacer()
-
-            Button {
-                showingSignUpFlow = true
-            } label: {
-                HStack {
-                    Text("Don’t have an account?")
-                    Text("Sign Up")
-                        .fontWeight(.semibold)
+                    Button {
+                        showingSignUpFlow = true
+                    } label: {
+                        HStack {
+                            Text("Don’t have an account?")
+                            Text("Sign Up")
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 12)
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .sheet(isPresented: $showingSignUpFlow) {
+                    SignUpFlow()
                 }
             }
-            .buttonStyle(.plain)
-            .padding(.bottom, 12)
-        }
-        .frame(maxWidth: 340)
-        .padding()
-        .sheet(isPresented: $showingSignUpFlow) {
-            SignUpFlow()
         }
     }
 }
