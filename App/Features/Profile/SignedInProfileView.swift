@@ -8,16 +8,21 @@ struct SignedInProfileView: View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
-            let responsivePadding = screenWidth * 0.05
-            let headerHeight = screenHeight * 0.32
-            let containerTopSpacing = screenHeight * 0.05
-            let contentWidth = screenWidth - (responsivePadding * 2)
-            let largeMedalSize = contentWidth * 0.18
+            
+            let standardPadding = screenWidth * 0.05
+            let contentWidth = screenWidth - (standardPadding * 2)
+            
+            let headerHeight = screenHeight * 0.25
+            let containerTopSpacing = screenHeight * 0.03
+            let cardHeight: CGFloat = screenHeight * 0.52 // ⬆ slightly taller visually
+            
+            let largeMedalSize = contentWidth * 0.16
+            let cardStackHorizontalPadding = screenWidth * 0.10
+            let isIpad = UIDevice.current.userInterfaceIdiom == .pad
             
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
-                    
-                    // MARK: - Profile Header
+                    // MARK: Header
                     ZStack(alignment: .bottomLeading) {
                         Image("boko")
                             .resizable()
@@ -26,15 +31,12 @@ struct SignedInProfileView: View {
                             .frame(height: headerHeight + 40)
                             .overlay(Color.black.opacity(0.25))
                             .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
-                            .clipped()
                         
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(spacing: 8) {
                                 Text(viewModel.profile?.firstName ?? "Loading...")
-                                    .font(.largeTitle.bold())
+                                    .font(.system(size: screenWidth * 0.08, weight: .bold))
                                     .foregroundColor(.white)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
                                 
                                 if viewModel.profile != nil {
                                     Button {
@@ -45,64 +47,55 @@ struct SignedInProfileView: View {
                                             .padding(6)
                                             .background(Color.black.opacity(0.4))
                                             .clipShape(Circle())
-                                            .shadow(radius: 2)
                                     }
                                 }
                             }
-                            
                             Text("@\(viewModel.profile?.displayName ?? "")")
-                                .font(.headline)
+                                .font(.system(size: screenWidth * 0.045, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
                         }
-                        .padding(.leading, responsivePadding * 0.75)
+                        .padding(.leading, standardPadding * 0.75)
                         .padding(.bottom, screenHeight * 0.04)
                     }
                     .frame(height: headerHeight)
                     .padding(.bottom, containerTopSpacing)
                     
+                    // MARK: - Awards Stack
                     VStack(spacing: screenHeight * 0.03) {
-                        
-                        // MARK: - Swipable Awards Stack (Animated)
                         CardStackView(cards: [
                             CardItem(content:
-                                AwardsCardView(
-                                    title: "Awards Received",
-                                    gradient: LinearGradient(
-                                        gradient: Gradient(colors: [Color.pink, Color.orange, Color.purple]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    largeMedalSize: largeMedalSize
+                                AwardsStackCardView(
+                                    cardTypeTitle: "Awards Received",
+                                    firstPlaceCount: 128,
+                                    secondPlaceCount: 421,
+                                    thirdPlaceCount: 67,
+                                    medalIconSize: largeMedalSize
                                 )
                             ),
                             CardItem(content:
-                                AwardsCardView(
-                                    title: "Awards Given",
-                                    gradient: LinearGradient(
-                                        gradient: Gradient(colors: [Color.orange, Color.pink]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    largeMedalSize: largeMedalSize
+                                AwardsStackCardView(
+                                    cardTypeTitle: "Awards Given",
+                                    firstPlaceCount: 45,
+                                    secondPlaceCount: 110,
+                                    thirdPlaceCount: 20,
+                                    medalIconSize: largeMedalSize
                                 )
                             )
                         ])
-                        .frame(height: largeMedalSize * 2.5)
-                        .padding(.horizontal, responsivePadding)
-                        .padding(.top, 5)
+                        .frame(height: cardHeight)
+                        .padding(.horizontal, cardStackHorizontalPadding)
+                        .padding(.top, isIpad ? 60 : 40) // ✅ gives more space below header
+                        .scaleEffect(isIpad ? 1.12 : 1.05) // ✅ slightly bigger visually
+                        .animation(.easeInOut(duration: 0.4), value: isIpad)
                         
-                        // MARK: - Sign Out
-                        Button(action: {
-                            viewModel.signOut()
-                        }) {
+                        Spacer(minLength: 100)
+                        
+                        // MARK: - Sign Out / Delete
+                        Button(action: { viewModel.signOut() }) {
                             HStack {
-                                Text("Sign Out")
-                                    .font(.headline)
+                                Text("Sign Out").font(.headline)
                                 Spacer()
-                                Image(systemName: "arrow.right.square.fill")
-                                    .font(.title2)
+                                Image(systemName: "arrow.right.square.fill").font(.title2)
                             }
                             .padding()
                             .background(
@@ -110,14 +103,14 @@ struct SignedInProfileView: View {
                                     .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
                             )
                         }
-                        .padding(.horizontal, responsivePadding)
+                        .padding(.horizontal, standardPadding)
                         
-                        // MARK: - Delete Profile
                         DeleteProfileButton(viewModel: viewModel)
-                            .padding(.horizontal, responsivePadding)
+                            .padding(.horizontal, standardPadding)
                     }
                     .padding(.bottom, screenHeight * 0.03)
                 }
+                .frame(maxWidth: .infinity)
             }
             .navigationBarHidden(true)
             .edgesIgnoringSafeArea(.top)
@@ -127,41 +120,5 @@ struct SignedInProfileView: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - AwardsCardView (shared between Received/Given)
-struct AwardsCardView: View {
-    let title: String
-    let gradient: LinearGradient
-    let largeMedalSize: CGFloat
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(.headline.bold())
-                .foregroundColor(.primary)
-            
-            HStack(alignment: .top, spacing: 0) {
-                MedalView(imageName: "gold_medal", count: 0, medalSize: largeMedalSize, textSize: .subheadline)
-                Spacer(minLength: 0)
-                MedalView(imageName: "silver_medal", count: 0, medalSize: largeMedalSize, textSize: .subheadline)
-                Spacer(minLength: 0)
-                MedalView(imageName: "bronze_medal", count: 0, medalSize: largeMedalSize, textSize: .subheadline)
-                Spacer(minLength: 0)
-                MedalView(imageName: "participation_medal", count: 0, medalSize: largeMedalSize, textSize: .subheadline)
-            }
-            .padding(.horizontal, 10)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(gradient, lineWidth: 2)
-                )
-        )
     }
 }
