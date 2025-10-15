@@ -15,14 +15,35 @@ class DataModel: ObservableObject {
     }
     
     init() {
-        if load() {
-            Task { await loadImageCache() }
-        }
+        _ = load()
     }
 
     /// Adds a new item to the collection.
     func addItem(_ item: Item) {
         items.insert(item, at: 0)
+    }
+
+    /// Loads a specific image from its URL into the in-memory cache.
+    func loadImage(for itemID: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == itemID }),
+              items[index].image == nil else {
+            return
+        }
+        
+        let itemUrl = items[index].url
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard itemUrl.startAccessingSecurityScopedResource() else { return }
+            defer { itemUrl.stopAccessingSecurityScopedResource() }
+            
+            if let data = try? Data(contentsOf: itemUrl), let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    if let finalIndex = self.items.firstIndex(where: { $0.id == itemID }) {
+                        self.items[finalIndex].image = image
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Persistence
@@ -38,17 +59,9 @@ class DataModel: ObservableObject {
             let data = try Data(contentsOf: Self.fileURL)
             items = try JSONDecoder().decode([Item].self, from: data)
             return true
-        } catch { return false }
-    }
-    
-    private func loadImageCache() async {
-        for i in items.indices {
-            let url = items[i].url
-            guard url.startAccessingSecurityScopedResource() else { continue }
-            if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                items[i].image = image
-            }
-            url.stopAccessingSecurityScopedResource()
+        } catch {
+            print("Error loading items: \(error.localizedDescription)")
+            return false
         }
     }
 }

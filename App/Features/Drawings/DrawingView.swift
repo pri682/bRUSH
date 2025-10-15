@@ -272,41 +272,38 @@ struct DrawingView: View {
     }
     
     private func createCompositeImage() -> UIImage {
-        let canvasSize = pkCanvasView.bounds.size
-        let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        let canvasBounds = pkCanvasView.bounds
+        let renderer = UIGraphicsImageRenderer(size: canvasBounds.size)
         
         return renderer.image { context in
-            let backgroundColor: UIColor = {
-                if case .color(let c) = selectedTheme {
-                    return c.toUIColor()
+            switch selectedTheme {
+            case .color(let color):
+                color.toUIColor().setFill()
+                context.fill(canvasBounds)
+                
+            case .texture(let name):
+                guard let textureImage = UIImage(named: name) else {
+                    UIColor.white.setFill()
+                    context.fill(canvasBounds)
+                    break
                 }
-                return .white
-            }()
-            backgroundColor.setFill()
-            context.fill(CGRect(origin: .zero, size: canvasSize))
-
-            if case .texture(let name) = selectedTheme, let textureImage = UIImage(named: name) {
-                let imageSize = textureImage.size
-                let canvasRect = CGRect(origin: .zero, size: canvasSize)
                 
-                let aspectWidth = canvasRect.width / imageSize.width
-                let aspectHeight = canvasRect.height / imageSize.height
-                let aspectRatio = min(aspectWidth, aspectHeight)
+                let canvasAspect = canvasBounds.width / canvasBounds.height
+                let imageAspect = textureImage.size.width / textureImage.size.height
                 
-                let scaledSize = CGSize(width: imageSize.width * aspectRatio, height: imageSize.height * aspectRatio)
-                
-                let drawingRect = CGRect(
-                    x: (canvasRect.width - scaledSize.width) / 2.0,
-                    y: (canvasRect.height - scaledSize.height) / 2.0,
-                    width: scaledSize.width,
-                    height: scaledSize.height
-                )
-                
-                textureImage.draw(in: drawingRect)
+                var drawRect: CGRect
+                if canvasAspect > imageAspect {
+                    let scaledHeight = canvasBounds.width / imageAspect
+                    drawRect = CGRect(x: 0, y: (canvasBounds.height - scaledHeight) / 2.0, width: canvasBounds.width, height: scaledHeight)
+                } else {
+                    let scaledWidth = canvasBounds.height * imageAspect
+                    drawRect = CGRect(x: (canvasBounds.width - scaledWidth) / 2.0, y: 0, width: scaledWidth, height: canvasBounds.height)
+                }
+                textureImage.draw(in: drawRect)
             }
             
-            let drawingImage = pkCanvasView.drawing.image(from: pkCanvasView.bounds, scale: displayScale)
-            drawingImage.draw(in: CGRect(origin: .zero, size: canvasSize))
+            let drawingImage = pkCanvasView.drawing.image(from: canvasBounds, scale: displayScale)
+            drawingImage.draw(in: canvasBounds)
         }
     }
 }
