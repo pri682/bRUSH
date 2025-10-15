@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import FirebaseFirestore
 
 @MainActor
 class FriendsViewModel: ObservableObject {
@@ -22,7 +23,10 @@ class FriendsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var leaderboardService: LeaderboardService = FriendsLeaderboardServiceStub()
     
-    private let _mockDirectory: [FriendSearchResult] = [
+    private let handleService = HandleServiceFirebase()
+
+    
+   /* private let _mockDirectory: [FriendSearchResult] = [
         .init(handle: "jesse",  displayName: "Jesse Flynn"),
         .init(handle: "kelvin",  displayName: "Kelvin Mathew"),
         .init(handle: "priyanka", displayName: "Priyanka Karki"),
@@ -35,7 +39,7 @@ class FriendsViewModel: ObservableObject {
             Friend(name: "Aaron", handle: "@lunchalone"),
             Friend(name: "Jeffrey", handle: "@dahmer")
         ]
-    }
+    } */
     var filteredFriends: [Friend] {
         guard !searchText.isEmpty else { return friends }
         return friends.filter { $0.name.lowercased().contains(searchText.lowercased()) ||
@@ -53,24 +57,29 @@ class FriendsViewModel: ObservableObject {
             .replacingOccurrences(of: "@", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        guard !raw.isEmpty else {
-            addResults = []
-            return
-        }
+        guard raw.count >= 2 else { self.addResults = []; return }
         isSearchingAdd = true
         addError = nil
-
-        addResults = _mockDirectory
-            .filter { $0.handle.contains(raw) }
-            .sorted { $0.handle < $1.handle }
-
-        isSearchingAdd = false
+        
+    Task { @MainActor in
+        do {
+            let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
+            self.addResults = hits.map { hit in
+                FriendSearchResult(handle: hit.handle, displayName: hit.displayName)
+            }
+        }
+        catch {
+            self.addResults = []
+            self.addError = "Search failed. Please try again."
+        }
+        self.isSearchingAdd = false
     }
+}
     func sendFriendRequest(to user: FriendSearchResult) {
         let handle = "@\(user.handle)"
             guard !sent.contains(where: { $0.handle == handle }) else { return }
             sent.append(.init(toName: user.displayName, handle: handle))
-            print("Sent friend request to \(handle)")
+        try await FriendRequestServiceFirebase().sendRequest(fromUid: me.id, fromHandle: myHandle, toUid: user.uid)
     }
     init() {
         $addQuery
@@ -82,7 +91,7 @@ class FriendsViewModel: ObservableObject {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 if trimmed.count >= 2 {
                     self.isSearchingAdd = true
-                    self.addResults = self._mockDirectory
+                   // self.addResults = self._mockDirectory
                         .filter { $0.handle.contains(trimmed.lowercased()) }
                         .sorted { $0.handle < $1.handle }
                     self.isSearchingAdd = false
