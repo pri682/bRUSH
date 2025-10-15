@@ -8,6 +8,7 @@
 import SwiftUI
 import PencilKit // Keep this if any of your files in the *current* module use PencilKit
 import UserNotifications
+import FirebaseCore
 
 @main
 struct brushApp: App {
@@ -15,6 +16,9 @@ struct brushApp: App {
     @StateObject var dataModel = DataModel()
     
     init() {
+        if FirebaseApp.app() == nil {
+                    FirebaseApp.configure()
+                }
         // Request notification permission as soon as the app launches
         NotificationManager.shared.requestPermission()
         NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
