@@ -1,8 +1,8 @@
 import SwiftUI
 import PencilKit
+import Combine
 
 struct DrawingView: View {
-    // onSave now provides the URL of the saved JPG and the UIImage for the preview cache
     let onSave: (URL, UIImage) -> Void
     
     @State private var pkCanvasView = PKCanvasView()
@@ -10,19 +10,18 @@ struct DrawingView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.displayScale) var displayScale
     
-    // State to track whether undo/redo is available
     @State private var canUndo = false
     @State private var canRedo = false
     @Namespace private var namespace
     
-    // State for the selected canvas theme, defaulting to a white color
     @State private var selectedTheme: CanvasTheme = .color(.white)
-    // State to manage the color for the ColorPicker
     @State private var customColor: Color = .white
-    // State to present the theme picker as a modern sheet
     @State private var isThemePickerPresented = false
+    
+    private let totalTime: Double = 900
+        @State private var timeRemaining: Double = 900
+        @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    // Enum to define the available canvas themes
     enum CanvasTheme: Equatable, Identifiable {
         case color(Color)
         case texture(String)
@@ -304,6 +303,30 @@ struct DrawingView: View {
             
             let drawingImage = pkCanvasView.drawing.image(from: canvasBounds, scale: displayScale)
             drawingImage.draw(in: canvasBounds)
+        }
+    }
+}
+
+struct ProgressBorder: View {
+    var progress: CGFloat
+    var cornerRadius: CGFloat
+    var lineWidth: CGFloat
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .inset(by: lineWidth / 2)
+                .stroke(Color.accentColor.opacity(0.2), lineWidth: lineWidth)
+            
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .inset(by: lineWidth / 2)
+                .trim(from: 0, to: progress)
+                .stroke(
+                    Color.accentColor,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
+                )
+                .rotationEffect(.degrees(-180), anchor: .center)
+                .animation(.linear(duration: 1.0), value: progress)
         }
     }
 }
