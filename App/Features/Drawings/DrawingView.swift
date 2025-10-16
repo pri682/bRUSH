@@ -4,6 +4,7 @@ import Combine
 
 struct DrawingView: View {
     let onSave: (URL, UIImage) -> Void
+    let prompt: String
     
     @State private var pkCanvasView = PKCanvasView()
     @State private var streakManager = StreakManager()
@@ -17,6 +18,8 @@ struct DrawingView: View {
     @State private var selectedTheme: CanvasTheme = .color(.white)
     @State private var customColor: Color = .white
     @State private var isThemePickerPresented = false
+    @State private var isPromptPresented = false
+    @State private var canvasSize: CGSize = .zero
     
     private let totalTime: Double = 900
         @State private var timeRemaining: Double = 900
@@ -139,6 +142,18 @@ struct DrawingView: View {
 
                     HStack(spacing: 12) {
                         Button {
+                            isPromptPresented.toggle()
+                        } label: {
+                            Image(systemName: "lightbulb")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                                .glassEffect(.regular.interactive())
+                        }
+                        .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                            promptView
+                        }
+                        
+                        Button {
                             isThemePickerPresented = true
                         } label: {
                             Image(systemName: "paintpalette")
@@ -155,17 +170,23 @@ struct DrawingView: View {
                                 picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
                             }
                         }
-                        
-                        Button {
-                            // Later: show drawing prompt
-                        } label: {
-                            Image(systemName: "lightbulb")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
                     }
                 } else {
+                    // iPad Right side: Prompt Button
+                    Button {
+                        isPromptPresented.toggle()
+                    } label: {
+                        Image(systemName: "lightbulb")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                            .glassEffect(.regular.interactive())
+                    }
+                    .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                        promptView
+                    }
+                    
+                    Spacer()
+                    
                     // iPad Left side: Theme Button
                     Button {
                         isThemePickerPresented = true
@@ -178,27 +199,27 @@ struct DrawingView: View {
                     .sheet(isPresented: $isThemePickerPresented) {
                         themePickerView
                     }
-                    
-                    Spacer()
-                    
-                    // iPad Right side: Prompt Button
-                    Button {
-                        // Later: show drawing prompt
-                    } label: {
-                        Image(systemName: "lightbulb")
-                            .font(.title)
-                            .frame(width: 54, height: 54)
-                            .glassEffect(.regular.interactive())
-                    }
                 }
             }
             .foregroundColor(.accentColor)
             .padding(.top, 16)
             .padding(.horizontal, 16)
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear.onAppear {
+                    self.canvasSize = geo.size
+                }
+            }
+        )
         .background(canvasBackground)
         .cornerRadius(34)
         .shadow(radius: 5)
+        .onTapGesture {
+            if isPromptPresented {
+                isPromptPresented = false
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -242,6 +263,21 @@ struct DrawingView: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private var promptView: some View {
+        Text(prompt)
+            .font(.title)
+            .fontWeight(.bold)
+            .multilineTextAlignment(.center)
+            // This is the crucial modifier. It allows the text to grow vertically
+            // by wrapping onto as many lines as needed.
+            .fixedSize(horizontal: false, vertical: true)
+            // We still constrain the width to be smaller than the screen.
+            .frame(maxWidth: UIScreen.main.bounds.width - 80)
+            .padding(40)
+            .presentationCompactAdaptation(.popover)
     }
     
     @ViewBuilder
