@@ -281,7 +281,7 @@ struct DrawingView: View {
         
         if UIDevice.current.userInterfaceIdiom == .pad {
             content
-                .frame(width: 600)
+                .frame(width: 500)
                 .presentationCompactAdaptation(.popover)
         } else {
             content
