@@ -4,143 +4,120 @@ struct SignedInProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingEditProfile = false
     
-    // Header height
-    @State private var headerHeight: CGFloat = UIScreen.main.bounds.height * 0.30
-    let containerTopSpacing: CGFloat = 30
-
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
-                
-                // MARK: - Profile Header
-                ZStack(alignment: .bottomLeading) {
-                    Image("boko") // Replace with dynamic profile image if needed
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: headerHeight + 40)
-                        .overlay(Color.black.opacity(0.2))
-                        .clipShape(RoundedCorners(radius: 40, corners: [.bottomLeft, .bottomRight]))
-                        .clipped()
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        // Name + Pencil Button
-                        HStack(spacing: 8) {
-                            Text(viewModel.profile?.firstName ?? "Loading...")
-                                .font(.largeTitle.bold())
-                                .foregroundColor(.white)
-
-                            // System pencil icon
-                            if viewModel.profile != nil {
-                                Button {
-                                    showingEditProfile = true
-                                } label: {
-                                    Image(systemName: "pencil") // system pencil
-                                        .foregroundColor(.white)
-                                        .padding(6)
-                                        .background(Color.black.opacity(0.4))
-                                        .clipShape(Circle())
-                                        .shadow(radius: 2)
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let screenHeight = geometry.size.height
+            
+            let standardPadding = screenWidth * 0.05
+            let contentWidth = screenWidth - (standardPadding * 2)
+            
+            let headerHeight = screenHeight * 0.25
+            let containerTopSpacing = screenHeight * 0.03
+            let cardHeight: CGFloat = screenHeight * 0.52 // ⬆ slightly taller visually
+            
+            let largeMedalSize = contentWidth * 0.16
+            let cardStackHorizontalPadding = screenWidth * 0.10
+            let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+            
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // MARK: Header
+                    ZStack(alignment: .bottomLeading) {
+                        Image("boko")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: headerHeight + 40)
+                            .overlay(Color.black.opacity(0.25))
+                            .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 8) {
+                                Text(viewModel.profile?.firstName ?? "Loading...")
+                                    .font(.system(size: screenWidth * 0.08, weight: .bold))
+                                    .foregroundColor(.white)
+                                
+                                if viewModel.profile != nil {
+                                    Button {
+                                        showingEditProfile = true
+                                    } label: {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(.white)
+                                            .padding(6)
+                                            .background(Color.black.opacity(0.4))
+                                            .clipShape(Circle())
+                                    }
                                 }
                             }
+                            Text("@\(viewModel.profile?.displayName ?? "")")
+                                .font(.system(size: screenWidth * 0.045, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.85))
                         }
-
-                        // Username
-                        Text("@\(viewModel.profile?.displayName ?? "")")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.85))
+                        .padding(.leading, standardPadding * 0.75)
+                        .padding(.bottom, screenHeight * 0.04)
                     }
-                    .padding(.leading, 30)
-                    .padding(.bottom, 40)
-
-                }
-                .frame(height: headerHeight)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, containerTopSpacing)
-                
-                VStack(spacing: 24) {
+                    .frame(height: headerHeight)
+                    .padding(.bottom, containerTopSpacing)
                     
-                    // MARK: - Awards Container
-                    GradientOutlineBox(
-                        title: "Awards",
-                        gradient: LinearGradient(
-                            gradient: Gradient(colors: [Color.pink, Color.orange, Color.purple]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    ) {
-                        HStack(alignment: .top) {
-                            MedalView(imageName: "gold_medal", count: 0, medalSize: 75, textSize: .subheadline)
-                            Spacer()
-                            MedalView(imageName: "silver_medal", count: 0, medalSize: 75, textSize: .subheadline)
-                            Spacer()
-                            MedalView(imageName: "bronze_medal", count: 0, medalSize: 75, textSize: .subheadline)
-                            Spacer()
-                            MedalView(imageName: "participation_medal", count: 0, medalSize: 75, textSize: .subheadline)
-                        }
-                        .padding(.horizontal, 10)
-                    }
-                    .padding(.horizontal, 40)
-                    
-                    // MARK: - Awards Given + Streak
-                    HStack(alignment: .top, spacing: 16) {
-                        GradientOutlineBox(
-                            title: "Awards Given",
-                            gradient: LinearGradient(
-                                gradient: Gradient(colors: [Color.orange, Color.pink]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                    // MARK: - Awards Stack
+                    VStack(spacing: screenHeight * 0.03) {
+                        CardStackView(cards: [
+                            CardItem(content:
+                                AwardsStackCardView(
+                                    cardTypeTitle: "Awards Received",
+                                    firstPlaceCount: 128,
+                                    secondPlaceCount: 421,
+                                    thirdPlaceCount: 67,
+                                    medalIconSize: largeMedalSize
+                                )
+                            ),
+                            CardItem(content:
+                                AwardsStackCardView(
+                                    cardTypeTitle: "Awards Given",
+                                    firstPlaceCount: 45,
+                                    secondPlaceCount: 110,
+                                    thirdPlaceCount: 20,
+                                    medalIconSize: largeMedalSize
+                                )
                             )
-                        ) {
-                            HStack(alignment: .top, spacing: 12) {
-                                MedalView(imageName: "gold_medal", count: 0, medalSize: 50, textSize: .footnote)
-                                MedalView(imageName: "silver_medal", count: 0, medalSize: 50, textSize: .footnote)
-                                MedalView(imageName: "bronze_medal", count: 0, medalSize: 50, textSize: .footnote)
-                                MedalView(imageName: "participation_medal", count: 0, medalSize: 50, textSize: .footnote)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
+                        ])
+                        .frame(height: cardHeight)
+                        .padding(.horizontal, cardStackHorizontalPadding)
+                        .padding(.top, isIpad ? 60 : 40) // ✅ gives more space below header
+                        .scaleEffect(isIpad ? 1.12 : 1.05) // ✅ slightly bigger visually
+                        .animation(.easeInOut(duration: 0.4), value: isIpad)
                         
-                        StreakBox(
-                            streakCount: 378, // Replace with dynamic streak
-                            gradient: LinearGradient(
-                                gradient: Gradient(colors: [Color.orange, Color.yellow]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                        Spacer(minLength: 100)
+                        
+                        // MARK: - Sign Out / Delete
+                        Button(action: { viewModel.signOut() }) {
+                            HStack {
+                                Text("Sign Out").font(.headline)
+                                Spacer()
+                                Image(systemName: "arrow.right.square.fill").font(.title2)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
                             )
-                        )
-                    }
-                    .padding(.horizontal, 40)
-                    
-                    // MARK: - Sign Out Button
-                    Button(action: { viewModel.signOut() }) {
-                        HStack {
-                            Text("Sign Out")
-                                .font(.headline)
-                            Spacer()
-                            Image(systemName: "arrow.right.square.fill")
-                                .font(.title2)
                         }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
-                        )
+                        .padding(.horizontal, standardPadding)
+                        
+                        DeleteProfileButton(viewModel: viewModel)
+                            .padding(.horizontal, standardPadding)
                     }
-                    .padding(.horizontal, 40)
-                    
-                    // MARK: - Delete Profile Button
-                    DeleteProfileButton(viewModel: viewModel)
-                        .padding(.horizontal, 40)
+                    .padding(.bottom, screenHeight * 0.03)
                 }
-                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
             }
-        }
-        .navigationBarHidden(true)
-        .edgesIgnoringSafeArea(.top)
-        .sheet(isPresented: $showingEditProfile) {
-            if let _ = viewModel.profile {
-                EditProfileView(userProfile: $viewModel.profile)
+            .navigationBarHidden(true)
+            .edgesIgnoringSafeArea(.top)
+            .sheet(isPresented: $showingEditProfile) {
+                if let _ = viewModel.profile {
+                    EditProfileView(userProfile: $viewModel.profile)
+                }
             }
         }
     }
