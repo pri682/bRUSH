@@ -57,14 +57,36 @@ struct DrawingView: View {
             .overlay(
                 VStack(spacing: 0) {
                     Spacer(minLength: 16)
-                    canvasView
-                        .aspectRatio(9/16, contentMode: .fit)
+                    
+                    ZStack {
+                        canvasView
+                            .aspectRatio(9/16, contentMode: .fit)
+                            .padding(24)
+
+                        ProgressBorder(
+                            progress: CGFloat(timeRemaining / totalTime),
+                            cornerRadius: 34,
+                            lineWidth: 8
+                        )
+                        .aspectRatio(16/9, contentMode: .fit)
+                        .rotationEffect(.degrees(90), anchor: .center)
+                        .scaleEffect(x: -1, y: 1, anchor: .center)
+                        .padding(8)
+                    }
+                    
                     Spacer(minLength: 80)
                 }
                 .padding(.horizontal, 16)
             )
             .onAppear(perform: setupCanvas)
             .onChange(of: customColor) { selectedTheme = .color(customColor) }
+            .onReceive(timer) { _ in
+                if timeRemaining > 0 {
+                    timeRemaining -= 1
+                } else {
+                    timer.upstream.connect().cancel()
+                }
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
