@@ -3,6 +3,7 @@ import SwiftUI
 struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
     @State private var isAddingNewDrawing = false
+    @State private var drawingPrompt = "What does your brain look like on a happy day?"
     
     private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
@@ -20,10 +21,10 @@ struct DrawingsGridView: View {
             }
             .navigationTitle("Previous Drawings")
             .navigationDestination(isPresented: $isAddingNewDrawing) {
-                DrawingView { url, image in
+                DrawingView(onSave: { url, image in
                     let newItem = Item(url: url, image: image)
                     dataModel.addItem(newItem)
-                }
+                }, prompt: drawingPrompt)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
