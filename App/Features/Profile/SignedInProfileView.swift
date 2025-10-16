@@ -24,13 +24,29 @@ struct SignedInProfileView: View {
                 VStack(spacing: 0) {
                     // MARK: Header
                     ZStack(alignment: .bottomLeading) {
-                        Image("boko")
-                            .resizable()
-                            .scaledToFill()
+                        // Use custom avatar if available, otherwise use default "boko" image
+                        if let profile = viewModel.profile,
+                           let face = profile.avatarFace,
+                           let eyes = profile.avatarEyes,
+                           let mouth = profile.avatarMouth {
+                            AvatarView(
+                                face: face,
+                                eyes: eyes,
+                                mouth: mouth
+                            )
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
                             .overlay(Color.black.opacity(0.25))
                             .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
+                        } else {
+                            Image("boko")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: headerHeight + 40)
+                                .overlay(Color.black.opacity(0.25))
+                                .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
+                        }
                         
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(spacing: 8) {

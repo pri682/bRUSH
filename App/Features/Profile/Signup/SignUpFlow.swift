@@ -14,6 +14,8 @@ struct SignUpFlow: View {
                     SignUpInputView(viewModel: viewModel)
                 } else if viewModel.currentStep == .username {
                     SignUpUsernameView(viewModel: viewModel)
+                } else if viewModel.currentStep == .avatar {
+                    SignUpAvatarView(viewModel: viewModel)
                 } else {
                     // Sign-up complete - show success message with Continue button
                     VStack(spacing: 20) {
