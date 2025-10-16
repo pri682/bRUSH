@@ -18,7 +18,7 @@ struct DrawingView: View {
     @State private var selectedTheme: CanvasTheme = .color(.white)
     @State private var customColor: Color = .white
     @State private var isThemePickerPresented = false
-    @State private var isPromptPresented = false
+    @State private var isPromptPresented = true
     @State private var canvasSize: CGSize = .zero
     
     private let totalTime: Double = 900
@@ -270,14 +270,24 @@ struct DrawingView: View {
         Text(prompt)
             .font(.title)
             .fontWeight(.bold)
+            .lineSpacing(10)
             .multilineTextAlignment(.center)
-            // This is the crucial modifier. It allows the text to grow vertically
-            // by wrapping onto as many lines as needed.
             .fixedSize(horizontal: false, vertical: true)
-            // We still constrain the width to be smaller than the screen.
             .frame(maxWidth: UIScreen.main.bounds.width - 80)
             .padding(40)
             .presentationCompactAdaptation(.popover)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.95, green: 0.5, blue: 0.1),
+                        Color(red: 1.0, green: 0.4, blue: 0.25),
+                        Color(red: 1.0, green: 0.3, blue: 0.3),
+                        Color(red: 0.95, green: 0.45, blue: 0.15)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
     }
     
     @ViewBuilder
