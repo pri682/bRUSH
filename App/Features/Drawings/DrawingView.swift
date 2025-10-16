@@ -19,7 +19,6 @@ struct DrawingView: View {
     @State private var customColor: Color = .white
     @State private var isThemePickerPresented = false
     @State private var isPromptPresented = true
-    @State private var canvasSize: CGSize = .zero
     
     private let totalTime: Double = 900
         @State private var timeRemaining: Double = 900
@@ -205,13 +204,6 @@ struct DrawingView: View {
             .padding(.top, 16)
             .padding(.horizontal, 16)
         }
-        .background(
-            GeometryReader { geo in
-                Color.clear.onAppear {
-                    self.canvasSize = geo.size
-                }
-            }
-        )
         .background(canvasBackground)
         .cornerRadius(34)
         .shadow(radius: 5)
@@ -267,27 +259,35 @@ struct DrawingView: View {
     
     @ViewBuilder
     private var promptView: some View {
-        Text(prompt)
+        let content = Text(prompt)
             .font(.title)
             .fontWeight(.bold)
-            .lineSpacing(10)
+            .lineSpacing(15)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: UIScreen.main.bounds.width - 80)
-            .padding(40)
-            .presentationCompactAdaptation(.popover)
+            .padding(.vertical, 25)
+            .padding(.horizontal, 40)
             .foregroundStyle(
                 LinearGradient(
                     colors: [
-                        Color(red: 0.95, green: 0.5, blue: 0.1),
-                        Color(red: 1.0, green: 0.4, blue: 0.25),
-                        Color(red: 1.0, green: 0.3, blue: 0.3),
-                        Color(red: 0.95, green: 0.45, blue: 0.15)
+                        Color(red: 1.0, green: 0.35, blue: 0.2),
+                        Color(red: 1.0, green: 0.25, blue: 0.25),
+                        Color(red: 0.95, green: 0.4, blue: 0.15)
                     ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    startPoint: .bottomTrailing,
+                    endPoint: .topLeading
                 )
             )
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            content
+                .frame(width: 600)
+                .presentationCompactAdaptation(.popover)
+        } else {
+            content
+                .frame(width: 450)
+                .presentationCompactAdaptation(.popover)
+        }
     }
     
     @ViewBuilder
