@@ -126,30 +126,38 @@ struct SignedInProfileView: View {
                     .frame(height: headerHeight)
                     .padding(.bottom, containerTopSpacing)
                     
-                    // MARK: - Awards Stack
-                    VStack(spacing: screenHeight * 0.03) {
-                        CardStackView(cards: [
-                            CardItem(content:
-                                AwardsStackCardView(
-                                    cardTypeTitle: "Awards Accumulated",
-                                    // get the real amounts from firebase:
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? -1,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? -1,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? -1,
-                                    medalIconSize: largeMedalSize
-                                )
-                            ),
-                            CardItem(content:
-                                AwardsStackCardView(
-                                    cardTypeTitle: "Awarded to Friends",
-                                    // get the real amounts from firebase:
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? -1,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? -1,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? -1,
-                                    medalIconSize: largeMedalSize
-                                )
-                            )
-                        ])
+                            // MARK: - Awards Stack
+                            VStack(spacing: screenHeight * 0.03) {
+                                CardStackView(cards: [
+                                    CardItem(content: AnyView(
+                                        AwardsStackCardView(
+                                            cardTypeTitle: "Awards Accumulated",
+                                            // get the real amounts from firebase:
+                                            firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? -1,
+                                            secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? -1,
+                                            thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? -1,
+                                            medalIconSize: largeMedalSize
+                                        )
+                                    )),
+                                    CardItem(content: AnyView(
+                                        AwardsStackCardView(
+                                            cardTypeTitle: "Awarded to Friends",
+                                            // get the real amounts from firebase:
+                                            firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? -1,
+                                            secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? -1,
+                                            thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? -1,
+                                            medalIconSize: largeMedalSize
+                                        )
+                                    )),
+                                    CardItem(content: AnyView(
+                                        StreakCardView(
+                                            streakCount: viewModel.profile?.streakCount ?? 0,
+                                            totalDrawings: viewModel.profile?.totalDrawingCount ?? 0,
+                                            memberSince: viewModel.profile?.memberSince ?? Date(),
+                                            iconSize: largeMedalSize
+                                        )
+                                    ))
+                                ])
                         .frame(height: cardHeight)
                         .padding(.horizontal, cardStackHorizontalPadding)
                         .padding(.top, isIpad ? 60 : 40) // ✅ gives more space below header

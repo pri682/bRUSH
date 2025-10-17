@@ -23,6 +23,7 @@ public struct UserProfile: Codable, Equatable {
     var bronzeMedalsAwarded: Int
     var totalDrawingCount: Int
     var streakCount: Int
+    var memberSince: Date
 }
 
 final class UserService {
@@ -51,7 +52,8 @@ final class UserService {
             "silverMedalsAwarded": userProfile.silverMedalsAwarded,
             "bronzeMedalsAwarded": userProfile.bronzeMedalsAwarded,
             "totalDrawingCount": userProfile.totalDrawingCount,
-            "streakCount": userProfile.streakCount
+            "streakCount": userProfile.streakCount,
+            "memberSince": userProfile.memberSince
         ]
         
         // Add avatar fields if they exist
@@ -110,6 +112,7 @@ final class UserService {
         let bronzeMedalsAwarded = data["bronzeMedalsAwarded"] as? Int ?? 0
         let totalDrawingCount = data["totalDrawingCount"] as? Int ?? 0
         let streakCount = data["streakCount"] as? Int ?? 0
+        let memberSince = (data["memberSince"] as? Timestamp)?.dateValue() ?? Date()
         
         return UserProfile(
             uid: uid,
@@ -129,13 +132,29 @@ final class UserService {
             silverMedalsAwarded: silverMedalsAwarded,
             bronzeMedalsAwarded: bronzeMedalsAwarded,
             totalDrawingCount: totalDrawingCount,
-            streakCount: streakCount
+            streakCount: streakCount,
+            memberSince: memberSince
         )
     }
     
     func updateProfile(uid: String, data: [String: Any]) async throws {
         let userRef = db.collection(usersCollection).document(uid)
         try await userRef.updateData(data)
+    }
+    
+    // MARK: - Date Formatting Utility
+    static func formatMemberSinceDate(_ date: Date) -> (year: String, monthDay: String) {
+        let formatter = DateFormatter()
+        
+        // Get year
+        formatter.dateFormat = "yyyy"
+        let year = formatter.string(from: date)
+        
+        // Get month abbreviation and day
+        formatter.dateFormat = "MMM d"
+        let monthDay = formatter.string(from: date)
+        
+        return (year: year, monthDay: monthDay)
     }
 
 }
