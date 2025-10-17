@@ -149,6 +149,57 @@ struct StreakRowView: View {
     private let baseCountTopPadding: CGFloat = 10
     private let baseIconTopOffset: CGFloat = 0 // Center icons vertically
     
+    // MARK: - Number Formatting Functions
+    
+    private func formatNumber(_ count: Any) -> (display: String, subtitle: String?) {
+        if let intCount = count as? Int {
+            if intCount == -1 {
+                return ("--", nil)
+            }
+            
+            if intCount >= 1_000_000 {
+                let millions = Double(intCount) / 1_000_000
+                let display = millions.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(millions))M" : String(format: "%.1fM", millions)
+                return (display, "\(intCount)")
+            } else if intCount >= 1_000 {
+                let thousands = Double(intCount) / 1_000
+                let display = thousands.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(thousands))K" : String(format: "%.1fK", thousands)
+                return (display, "\(intCount)")
+            } else {
+                return ("\(intCount)", nil)
+            }
+        } else if let stringCount = count as? String {
+            // For string counts (like year "2025"), just return as-is
+            return (stringCount, nil)
+        } else {
+            return ("--", nil)
+        }
+    }
+    
+    private func calculateFontSize(for count: Any, baseSize: CGFloat, scaling: CGFloat) -> CGFloat {
+        let numberString: String
+        if let intCount = count as? Int {
+            numberString = "\(intCount)"
+        } else if let stringCount = count as? String {
+            numberString = stringCount
+        } else {
+            numberString = "--"
+        }
+        
+        let characterCount = numberString.count
+        
+        // Scale down font size based on character count
+        if characterCount <= 4 {
+            return baseSize
+        } else if characterCount <= 6 {
+            return baseSize * 0.85
+        } else if characterCount <= 8 {
+            return baseSize * 0.75
+        } else {
+            return baseSize * 0.65
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
@@ -157,9 +208,20 @@ struct StreakRowView: View {
             HStack(alignment: .top) {
                 // Count + Title
                 VStack(alignment: .leading, spacing: 2 * fontScalingFactor) {
-                    Text(count is Int ? "\(count as! Int)" : "\(count as! String)")
-                        .font(.system(size: (65 * fontScalingFactor * scaling) * 1.1, weight: .bold))
+                    let formattedNumber = formatNumber(count)
+                    let baseFontSize = (65 * fontScalingFactor * scaling) * 1.1
+                    let dynamicFontSize = calculateFontSize(for: count, baseSize: baseFontSize, scaling: scaling)
+                    
+                    Text(formattedNumber.display)
+                        .font(.system(size: dynamicFontSize, weight: .bold))
                         .foregroundColor(countColor)
+                    
+                    // Show subtitle if we have an abbreviated number
+                    if let numberSubtitle = formattedNumber.subtitle {
+                        Text(numberSubtitle)
+                            .font(.system(size: 14 * fontScalingFactor * scaling))
+                            .foregroundColor(.black.opacity(0.5))
+                    }
                     
                     Text(title)
                         .font(.system(size: 16 * fontScalingFactor * scaling))
