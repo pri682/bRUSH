@@ -11,7 +11,11 @@ struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel = HomeViewModel()
     @State private var isOnboardingPresented: Bool = false
     @State private var isPresentingCreate: Bool = false
+    
     @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
+    
+    @State private var drawingPrompt = "What does your brain look like on a happy day?"
+    @EnvironmentObject var dataModel: DataModel
 
     var body: some View {
         ZStack {
@@ -114,10 +118,10 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $isPresentingCreate) {
             NavigationStack {
-                DrawingView { _, _ in
+                DrawingView(onSave: { newItem in
+                    dataModel.addItem(newItem)
                     hasPostedToday = true
-                }
-                .navigationTitle("New Drawing")
+                }, prompt: drawingPrompt)
             }
         }
     }
