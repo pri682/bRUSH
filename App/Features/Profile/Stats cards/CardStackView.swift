@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct CardStackView<CardContent: View>: View {
-    let cards: [CardItem<CardContent>]
+struct CardStackView: View {
+    let cards: [CardItem<AnyView>]
     @State private var topCardIndex: Int = 0
     // 🔄 dragOffset tracks horizontal movement
     @State private var dragOffset: CGSize = .zero

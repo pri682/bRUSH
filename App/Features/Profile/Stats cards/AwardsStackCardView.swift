@@ -45,7 +45,7 @@ struct AwardsStackCardView: View {
             VStack(spacing: 0) {
                 // MARK: - Gold
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "First Place Awards" : "First Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: firstPlaceCount,
                     imageName: "gold_medal",
                     countColor: goldNumberColor,
@@ -75,7 +75,7 @@ struct AwardsStackCardView: View {
 
                 // MARK: - Silver
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "Second Place Awards" : "Second Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: secondPlaceCount,
                     imageName: "silver_medal",
                     countColor: silverNumberColor,
@@ -104,7 +104,7 @@ struct AwardsStackCardView: View {
 
                 // MARK: - Bronze
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "Third Place Awards" : "Third Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: thirdPlaceCount,
                     imageName: "bronze_medal",
                     countColor: bronzeNumberColor,
