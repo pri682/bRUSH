@@ -3,7 +3,7 @@ import SwiftUI
 struct StreakCardView: View {
     let streakCount: Int
     let totalDrawings: Int
-    let memberSince: String
+    let memberSince: Date
     let iconSize: CGFloat
 
     // Base icon scale
@@ -109,8 +109,8 @@ struct StreakCardView: View {
                 // MARK: - Member Since
                 StreakRowView(
                     title: "Joined on",
-                    count: "2025",
-                    subtitle: "JUL 12",
+                    count: UserService.formatMemberSinceDate(memberSince).year,
+                    subtitle: UserService.formatMemberSinceDate(memberSince).monthDay,
                     imageName: "member_since",
                     countColor: memberColor,
                     iconSize: adjustedIconSize,

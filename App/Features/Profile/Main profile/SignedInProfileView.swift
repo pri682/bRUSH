@@ -151,9 +151,9 @@ struct SignedInProfileView: View {
                                     )),
                                     CardItem(content: AnyView(
                                         StreakCardView(
-                                            streakCount: 10, // Hardcoded for now
-                                            totalDrawings: 10, // Hardcoded for now
-                                            memberSince: "September 2035", // Hardcoded for now
+                                            streakCount: viewModel.profile?.streakCount ?? 0,
+                                            totalDrawings: viewModel.profile?.totalDrawingCount ?? 0,
+                                            memberSince: viewModel.profile?.memberSince ?? Date(),
                                             iconSize: largeMedalSize
                                         )
                                     ))

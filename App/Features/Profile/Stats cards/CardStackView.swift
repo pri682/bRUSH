@@ -19,34 +19,54 @@ struct CardStackView: View {
     private let swipeThreshold: CGFloat = 80       // minimum horizontal drag before swipe triggers
     private let animationSpeed: Double = 0.02      // overall swipe duration (smaller = faster)
     
-    // 🌟 Stacking Visual Parameters (remains the same for the stacked visual)
-    private let stackRotation: Double = -3 // Rotation for the card underneath (left tilt)
-    private let stackYOffset: CGFloat = 15 // Vertical offset for the card underneath
+    // 🌟 Enhanced Stacking Visual Parameters for Apple Messages style
+    private let stackRotation: Double = -8 // More pronounced rotation for cards behind
+    private let stackYOffset: CGFloat = 25 // More vertical offset for better separation
+    private let sideCardOffset: CGFloat = 40 // Horizontal offset for side cards
+    private let sideCardScale: CGFloat = 0.85 // Scale for side cards
+    private let sideCardOpacity: CGFloat = 0.75 // Increased opacity for better visibility
     
     var body: some View {
         ZStack {
-            ForEach(Array(cards.enumerated()), id: \.1.id) { index, card in
+            ForEach(0..<cards.count, id: \.self) { index in
+                let card = cards[index]
                 let isTopCard = index == topCardIndex
-                let isCardBehind = index == (topCardIndex + 1) % cards.count
-                let offset = isTopCard ? dragOffset : .zero
+                let isNextCard = index == (topCardIndex + 1) % cards.count
+                let isPrevCard = index == (topCardIndex - 1 + cards.count) % cards.count
+                let isVisibleCard = isTopCard || isNextCard || isPrevCard
+                
+                // Calculate card position relative to current top card
+                let cardOffset = calculateCardOffset(for: index, dragOffset: dragOffset)
+                let cardRotation = calculateCardRotation(for: index, dragOffset: dragOffset)
+                let cardScale = calculateCardScale(for: index)
+                let cardOpacity = calculateCardOpacity(for: index)
+                let cardZIndex = calculateCardZIndex(for: index)
                 
                 card.content
                     .frame(maxWidth: .infinity)
                     
-                    // MARK: - STACKING EFFECT
-                    // Top card rotates based on horizontal drag (offset.width)
-                    .rotationEffect(.degrees(isTopCard ? Double(offset.width / 15) : (isCardBehind ? stackRotation : 0)), anchor: .bottom)
+                    // MARK: - ENHANCED STACKING EFFECT
+                    .rotationEffect(.degrees(cardRotation), anchor: .center)
+                    .offset(x: cardOffset.width, y: cardOffset.height)
+                    .scaleEffect(cardScale)
+                    .opacity(cardOpacity)
+                    .zIndex(cardZIndex)
                     
-                    // Apply horizontal drag offset for top card (offset.width)
-                    // Back card uses only vertical stack offset
-                    .offset(x: isTopCard ? offset.width : 0,
-                            y: isTopCard ? 0 : (isCardBehind ? stackYOffset : CGFloat(index - topCardIndex) * 10))
+                    // Add subtle shadow to side cards for better visibility
+                    .shadow(
+                        color: isTopCard ? .clear : .black.opacity(0.15),
+                        radius: isTopCard ? 0 : 8,
+                        x: isTopCard ? 0 : 2,
+                        y: isTopCard ? 0 : 4
+                    )
                     
-                    .scaleEffect(isTopCard ? 1.0 : (isCardBehind ? 0.95 : 0.90))
-                    .opacity(isTopCard ? 1.0 : (isCardBehind ? 0.85 : 0.0))
+                    // Add subtle background tint to side cards
+                    .background(
+                        isTopCard ? Color.clear : Color.white.opacity(0.1)
+                    )
                     
-                    .animation(.spring(response: 0.35, dampingFraction: 0.78), value: dragOffset)
-                    .zIndex(isTopCard ? 1 : (isCardBehind ? 0.5 : 0))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: dragOffset)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: topCardIndex)
                     
                     // MARK: - HORIZONTAL DRAG GESTURE
                     .gesture(
@@ -60,7 +80,16 @@ struct CardStackView: View {
                                 guard isTopCard else { return }
                                 // 🔄 Check horizontal swipe threshold (gesture.translation.width)
                                 if abs(gesture.translation.width) > swipeThreshold {
-                                    swipeCard(direction: gesture.translation.width < 0 ? .left : .right)
+                                    let direction = gesture.translation.width < 0 ? SwipeDirection.left : SwipeDirection.right
+                                    // Check if we can swipe in this direction (not at boundaries)
+                                    if canSwipe(direction: direction) {
+                                        swipeCard(direction: direction)
+                                    } else {
+                                        // Can't swipe further, snap back to center
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                            dragOffset = .zero
+                                        }
+                                    }
                                 } else {
                                     // 🔁 Snap back to center
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -70,6 +99,110 @@ struct CardStackView: View {
                             }
                     )
             }
+        }
+    }
+    
+    // MARK: - Card Position Calculation Functions
+    
+    private func calculateCardOffset(for index: Int, dragOffset: CGSize) -> CGSize {
+        let isTopCard = index == topCardIndex
+        let isNextCard = index == topCardIndex + 1 && topCardIndex < cards.count - 1
+        let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
+        
+        if isTopCard {
+            // Top card follows drag gesture
+            return dragOffset
+        } else if isNextCard {
+            // Next card peeks from the right
+            return CGSize(
+                width: sideCardOffset + dragOffset.width * 0.3,
+                height: stackYOffset
+            )
+        } else if isPrevCard {
+            // Previous card peeks from the left
+            return CGSize(
+                width: -sideCardOffset + dragOffset.width * 0.3,
+                height: stackYOffset
+            )
+        } else {
+            // Hidden cards
+            return CGSize(width: 0, height: stackYOffset * 2)
+        }
+    }
+    
+    private func calculateCardRotation(for index: Int, dragOffset: CGSize) -> Double {
+        let isTopCard = index == topCardIndex
+        let isNextCard = index == topCardIndex + 1 && topCardIndex < cards.count - 1
+        let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
+        
+        if isTopCard {
+            // Top card rotates based on drag
+            return Double(dragOffset.width / 20)
+        } else if isNextCard {
+            // Next card has slight right rotation
+            return 3 + Double(dragOffset.width / 30)
+        } else if isPrevCard {
+            // Previous card has slight left rotation
+            return -3 + Double(dragOffset.width / 30)
+        } else {
+            return 0
+        }
+    }
+    
+    private func calculateCardScale(for index: Int) -> CGFloat {
+        let isTopCard = index == topCardIndex
+        let isNextCard = index == topCardIndex + 1 && topCardIndex < cards.count - 1
+        let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
+        
+        if isTopCard {
+            return 1.0
+        } else if isNextCard || isPrevCard {
+            return sideCardScale
+        } else {
+            return 0.8
+        }
+    }
+    
+    private func calculateCardOpacity(for index: Int) -> Double {
+        let isTopCard = index == topCardIndex
+        let isNextCard = index == topCardIndex + 1 && topCardIndex < cards.count - 1
+        let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
+        
+        if isTopCard {
+            return 1.0
+        } else if isNextCard || isPrevCard {
+            return sideCardOpacity
+        } else {
+            return 0.0
+        }
+    }
+    
+    private func calculateCardZIndex(for index: Int) -> Double {
+        let isTopCard = index == topCardIndex
+        let isNextCard = index == topCardIndex + 1 && topCardIndex < cards.count - 1
+        let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
+        
+        if isTopCard {
+            return 3.0
+        } else if isNextCard {
+            return 2.0
+        } else if isPrevCard {
+            return 1.0
+        } else {
+            return 0.0
+        }
+    }
+    
+    // MARK: - Boundary Check Function
+    
+    private func canSwipe(direction: SwipeDirection) -> Bool {
+        switch direction {
+        case .left:
+            // Can swipe left if we're not at the last card
+            return topCardIndex < cards.count - 1
+        case .right:
+            // Can swipe right if we're not at the first card
+            return topCardIndex > 0
         }
     }
     
@@ -90,12 +223,13 @@ struct CardStackView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + animationSpeed) {
             withAnimation(.easeInOut(duration: 0.22)) {
                 dragOffset = .zero
-                // If swiping right (forward), cycle to next card. If swiping left (backward), cycle to previous card.
+                // Linear progression: no circular wrapping
                 if direction == .right {
-                    topCardIndex = (topCardIndex + 1) % cards.count
+                    // Swipe right = go to previous card (backward)
+                    topCardIndex = max(0, topCardIndex - 1)
                 } else { // .left
-                    // Safely calculates the previous index in a circular array
-                    topCardIndex = (topCardIndex - 1 + cards.count) % cards.count
+                    // Swipe left = go to next card (forward)
+                    topCardIndex = min(cards.count - 1, topCardIndex + 1)
                 }
                 isAnimating = false
             }
