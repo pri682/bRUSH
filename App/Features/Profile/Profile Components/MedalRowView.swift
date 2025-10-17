@@ -17,7 +17,7 @@ struct MedalRowView: View {
     var body: some View {
         GeometryReader { geometry in
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-            let scaling = isIpad ? 1.2 : 1.0
+            let scaling = isIpad ? 0.9 : 1.0  // Reduce iPad scaling to prevent overlap
             
             HStack(alignment: .top) {
                 // Count + Title

@@ -27,15 +27,16 @@ struct AwardsStackCardView: View {
         GeometryReader { geometry in
             let cardWidth = geometry.size.width
             let cardHeight = geometry.size.height
-            let rowHeight = cardHeight / 3
-            let radius = min(cardWidth, cardHeight) * 0.06
-
+            
             // Device / size detection
             let isPad = UIDevice.current.userInterfaceIdiom == .pad || cardWidth > 600
+            
+            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)  // Give more height on iPad
+            let radius = min(cardWidth, cardHeight) * 0.06
 
             // Font & medal scaling
             let fontFactorBase = cardWidth / 400
-            let fontFactor = fontFactorBase * (isPad ? 0.88 : 1.0)
+            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)  // More conservative iPad scaling
             
             // 🔧 Slightly smaller medals on iPad
             let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
@@ -60,7 +61,15 @@ struct AwardsStackCardView: View {
                     )
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
-                .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
+                .overlay(
+                    // Gold section drop shadow
+                    Rectangle()
+                        .fill(Color.black.opacity(0.08))
+                        .frame(height: 2)
+                        .offset(y: rowHeight/2)
+                        .blur(radius: 1)
+                        .clipped()
+                )
                 
                 Divider().opacity(0.15)
 
@@ -81,7 +90,15 @@ struct AwardsStackCardView: View {
                         endPoint: .trailing
                     )
                 )
-                .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
+                .overlay(
+                    // Silver section drop shadow
+                    Rectangle()
+                        .fill(Color.black.opacity(0.08))
+                        .frame(height: 2)
+                        .offset(y: rowHeight/2)
+                        .blur(radius: 1)
+                        .clipped()
+                )
 
                 Divider().opacity(0.15)
 
