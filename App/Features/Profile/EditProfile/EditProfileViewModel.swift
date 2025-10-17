@@ -21,6 +21,25 @@ class EditProfileViewModel: ObservableObject {
     var isValid: Bool {
         validateFirstName() == nil && validateDisplayName() == nil
     }
+    
+    // Real-time validation properties for UI feedback
+    var isFirstNameTooLong: Bool {
+        return firstName.count > 10
+    }
+    
+    var isDisplayNameTooLong: Bool {
+        return displayName.count > 15
+    }
+    
+    var isDisplayNameInvalidFormat: Bool {
+        return !displayName.isEmpty && !isValidUsername(displayName)
+    }
+    
+    // Helper function to validate username format (letters, numbers, underscores only)
+    private func isValidUsername(_ username: String) -> Bool {
+        let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        return allowedChars.isSuperset(of: CharacterSet(charactersIn: username))
+    }
 
     /// Save changes to Firestore
     func saveChanges() async -> Bool {

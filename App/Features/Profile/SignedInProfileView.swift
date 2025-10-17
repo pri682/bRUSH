@@ -37,7 +37,8 @@ struct SignedInProfileView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
                             .clipped()
-                            .overlay(Color.black.opacity(0.25))
+//                            .brightness(0.0005)
+//                            .saturation(1)
                             .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         } else {
                             Image("boko")
@@ -45,7 +46,8 @@ struct SignedInProfileView: View {
                                 .scaledToFill()
                                 .frame(maxWidth: .infinity)
                                 .frame(height: headerHeight + 40)
-                                .overlay(Color.black.opacity(0.25))
+//                                .brightness(-0.01)
+//                                .saturation(1)
                                 .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         }
                         
@@ -59,27 +61,27 @@ struct SignedInProfileView: View {
                                         showingEditProfile = true
                                     } label: {
                                         Image(systemName: "pencil")
+                                            .font(.system(size: 24, weight: .medium))
                                             .foregroundColor(.white)
-                                            .padding(8)
-                                            .background(Color.black.opacity(0.4))
-                                            .clipShape(Circle())
+                                            .shadow(color: .black, radius: 0, x: 1, y: 1)
                                     }
                                     .padding(.trailing, standardPadding * 0.75)
-                                    .padding(.bottom, screenHeight * 0.04)
+                                    .padding(.bottom, screenHeight * 0.02)
                                 }
                             }
                         }
                         
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(viewModel.profile?.firstName ?? "Loading...")
                                 .font(.system(size: screenWidth * 0.08, weight: .bold))
                                 .foregroundColor(.white)
+                                .shadow(color: .black, radius: 0, x: 0.9, y: 0.9)
                             
                             Text("@\(viewModel.profile?.displayName ?? "")")
-                                .font(.system(size: screenWidth * 0.045, weight: .semibold))
+                                .font(.system(size: screenWidth * 0.03, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
                         }
-                        .padding(.leading, standardPadding * 0.75)
+                        .padding(.leading, standardPadding * 0.55)
                         .padding(.bottom, screenHeight * 0.04)
                     }
                     .frame(height: headerHeight)

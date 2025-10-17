@@ -39,12 +39,16 @@ class SignUpViewModel: ObservableObject {
     // MARK: - Step 1 Validation & Navigation
 
     var isStep1Valid: Bool {
-        return !firstName.isEmpty && !lastName.isEmpty && email.contains("@") && password.count >= 6 && password == confirmPassword
+        return !firstName.isEmpty && firstName.count <= 10 && !lastName.isEmpty && email.contains("@") && password.count >= 6 && password == confirmPassword
     }
 
     func submitStep1() {
         guard isStep1Valid else {
-            errorMessage = "Please ensure all fields are filled correctly, email is valid, and passwords match (min 6 characters)."
+            if firstName.count > 10 {
+                errorMessage = "First name must be 10 characters or less."
+            } else {
+                errorMessage = "Please ensure all fields are filled correctly, email is valid, and passwords match (min 6 characters)."
+            }
             return
         }
         // Navigate to the next step
@@ -54,7 +58,26 @@ class SignUpViewModel: ObservableObject {
     
     // 🔑 ADDED: Property for basic length validation on Step 2
     var isStep2Valid: Bool {
-        return displayName.count >= 3
+        return displayName.count >= 3 && displayName.count <= 15 && isValidUsername(displayName)
+    }
+    
+    // Helper function to validate username format (letters, numbers, underscores only)
+    private func isValidUsername(_ username: String) -> Bool {
+        let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        return allowedChars.isSuperset(of: CharacterSet(charactersIn: username))
+    }
+    
+    // Real-time validation properties for UI feedback
+    var isFirstNameTooLong: Bool {
+        return firstName.count > 10
+    }
+    
+    var isDisplayNameTooLong: Bool {
+        return displayName.count > 15
+    }
+    
+    var isDisplayNameInvalidFormat: Bool {
+        return !displayName.isEmpty && !isValidUsername(displayName)
     }
 
     // MARK: - Step 2 Display Name Validation
@@ -64,10 +87,17 @@ class SignUpViewModel: ObservableObject {
     // ✨ NEW/MODIFIED: Submit function for Step 2 (navigates to avatar step)
     func submitStep2() {
         guard isStep2Valid else {
-            errorMessage = "Username must be at least 3 characters."
+            if displayName.count < 3 {
+                errorMessage = "Username must be at least 3 characters."
+            } else if displayName.count > 15 {
+                errorMessage = "Username must be 15 characters or less."
+            } else if !isValidUsername(displayName) {
+                errorMessage = "Username can only contain letters, numbers, and underscores."
+            }
             return
         }
         
+        // Navigate to avatar step
         errorMessage = nil
         currentStep = .avatar
     }

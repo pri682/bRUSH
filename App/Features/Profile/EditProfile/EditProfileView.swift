@@ -42,30 +42,59 @@ struct EditProfileView: View {
                 // Tab Content
                 TabView(selection: $selectedTab) {
                     // Profile Information Tab
-                    Form {
-                        Section(header: Text("First Name")) {
-                            TextField("Enter your first name", text: $viewModel.firstName)
-                                .autocapitalization(.words)
-
-                            if let error = viewModel.firstNameError {
+                    VStack(spacing: 16) {
+                        // First Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("First Name")
+                                .font(.headline)
+                            InputField(
+                                placeholder: "Enter your first name (max 10 chars)",
+                                text: $viewModel.firstName,
+                                isSecure: false,
+                                hasError: viewModel.isFirstNameTooLong
+                            )
+                            .autocapitalization(.words)
+                            
+                            if viewModel.isFirstNameTooLong {
+                                Text("Too long. 10 max length")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            } else if let error = viewModel.firstNameError {
                                 Text(error)
                                     .foregroundColor(.red)
                                     .font(.caption)
                             }
                         }
-
-                        Section(header: Text("Username")) {
-                            TextField("Enter your username", text: $viewModel.displayName)
-                                .autocapitalization(.none)
-                                .textInputAutocapitalization(.never)
-
-                            if let error = viewModel.displayNameError {
+                        
+                        // Username
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Username")
+                                .font(.headline)
+                            InputField(
+                                placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
+                                text: $viewModel.displayName,
+                                isSecure: false,
+                                hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
+                            )
+                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
+                            
+                            if viewModel.isDisplayNameTooLong {
+                                Text("Too long. 15 max length")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            } else if viewModel.isDisplayNameInvalidFormat {
+                                Text("Invalid characters. Only letters, numbers, and _ allowed")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            } else if let error = viewModel.displayNameError {
                                 Text(error)
                                     .foregroundColor(.red)
                                     .font(.caption)
                             }
                         }
                     }
+                    .padding()
                     .tag(0)
                     
                     // Avatar Tab
@@ -84,8 +113,10 @@ struct EditProfileView: View {
                         Task {
                             var success = true
                             
-                            if selectedTab == 0 {
-                                // Save profile information
+                            // Always save profile information if there are changes
+                            if let originalProfile = userProfile,
+                               (viewModel.firstName != originalProfile.firstName || 
+                                viewModel.displayName != originalProfile.displayName) {
                                 success = await viewModel.saveChanges()
                                 if success {
                                     // Push changes back into parent binding
@@ -95,18 +126,19 @@ struct EditProfileView: View {
                                         userProfile = updated
                                     }
                                 }
-                            } else {
-                                // Save avatar changes
-                                if let profile = userProfile {
-                                    let avatarParts = AvatarParts(
-                                        background: profile.avatarBackground ?? "background_1",
-                                        face: profile.avatarFace,
-                                        eyes: profile.avatarEyes,
-                                        mouth: profile.avatarMouth,
-                                        hair: profile.avatarHair
-                                    )
-                                    success = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
-                                }
+                            }
+                            
+                            // Always save avatar changes if we're on avatar tab
+                            if selectedTab == 1, let profile = userProfile {
+                                let avatarParts = AvatarParts(
+                                    background: profile.avatarBackground ?? "background_1",
+                                    face: profile.avatarFace,
+                                    eyes: profile.avatarEyes,
+                                    mouth: profile.avatarMouth,
+                                    hair: profile.avatarHair
+                                )
+                                let avatarSuccess = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
+                                success = success && avatarSuccess
                             }
                             
                             if success {

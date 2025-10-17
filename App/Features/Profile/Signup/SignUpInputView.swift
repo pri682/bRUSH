@@ -7,8 +7,16 @@ struct SignUpInputView: View {
         VStack(spacing: 16) {
             Group {
                 // First Name
-                InputField(placeholder: "First Name", text: $viewModel.firstName, isSecure: false)
-                    .textContentType(.givenName)
+                VStack(alignment: .leading, spacing: 4) {
+                    InputField(placeholder: "First Name (max 10 chars)", text: $viewModel.firstName, isSecure: false, hasError: viewModel.isFirstNameTooLong)
+                        .textContentType(.givenName)
+                    
+                    if viewModel.isFirstNameTooLong {
+                        Text("Too long. 10 max length")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
                 
                 // Last Name
                 InputField(placeholder: "Last Name", text: $viewModel.lastName, isSecure: false)
