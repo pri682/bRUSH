@@ -50,7 +50,7 @@ struct EditAvatarView: View {
                         } label: {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canUndo ? .blue : .gray)
+                                .foregroundColor(canUndo ? .accentColor : .gray)
                         }
                         .disabled(!canUndo)
                         
@@ -59,7 +59,7 @@ struct EditAvatarView: View {
                         } label: {
                             Image(systemName: "arrow.uturn.forward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canRedo ? .blue : .gray)
+                                .foregroundColor(canRedo ? .accentColor : .gray)
                         }
                         .disabled(!canRedo)
                     }
@@ -71,22 +71,9 @@ struct EditAvatarView: View {
                     
                     Spacer()
                     
-                    // Save Button
-                    Button {
-                        saveAvatar()
-                    } label: {
-                        HStack(spacing: screenWidth * 0.015) {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: screenWidth * 0.035, weight: .semibold))
-                            Text("Save")
-                                .font(.system(size: screenWidth * 0.04, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, screenWidth * 0.04)
-                        .padding(.vertical, screenWidth * 0.02)
-                        .background(Color.green)
-                        .clipShape(RoundedRectangle(cornerRadius: screenWidth * 0.05))
-                    }
+                    // Placeholder for spacing
+                    Color.clear
+                        .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
@@ -113,14 +100,14 @@ struct EditAvatarView: View {
                             VStack(spacing: 4) {
                                 Text(categories[index])
                                     .font(.system(size: screenWidth * 0.04, weight: .bold))
-                                    .foregroundColor(selectedCategory == index ? .blue : .gray)
+                                    .foregroundColor(selectedCategory == index ? .accentColor : .gray)
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                     .frame(maxWidth: screenWidth * 0.18)
                                 
                                 // Underline indicator
                                 Rectangle()
-                                    .fill(selectedCategory == index ? Color.blue : Color.clear)
+                                    .fill(selectedCategory == index ? Color.accentColor : Color.clear)
                                     .frame(height: 3)
                                     .frame(width: screenWidth * 0.12)
                             }
@@ -217,20 +204,20 @@ struct EditAvatarView: View {
                                     }
                                     .overlay(
                                         RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .stroke(isSelected(option) ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
+                                            .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
                                     )
                                     .background(
                                         RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .fill(isSelected(option) ? Color.blue.opacity(0.1) : Color.clear)
+                                            .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
                                     )
                                     
                                     // Selection indicator
                                     Circle()
-                                        .fill(isSelected(option) ? Color.blue : Color.clear)
+                                        .fill(isSelected(option) ? Color.accentColor : Color.clear)
                                         .frame(width: screenWidth * 0.03, height: screenWidth * 0.03)
                                         .overlay(
                                             Circle()
-                                                .stroke(Color.blue, lineWidth: isSelected(option) ? 0 : 2)
+                                                .stroke(Color.accentColor, lineWidth: isSelected(option) ? 0 : 2)
                                         )
                                 }
                             }
@@ -271,6 +258,16 @@ struct EditAvatarView: View {
         case 4: selectedBackground = option
         default: break
         }
+        
+        // Update local userProfile binding for real-time preview
+        if var profile = userProfile {
+            profile.avatarBackground = selectedBackground
+            profile.avatarFace = selectedFace
+            profile.avatarEyes = selectedEyes
+            profile.avatarMouth = selectedMouth
+            profile.avatarHair = selectedHair
+            userProfile = profile
+        }
     }
     
     private func isSelected(_ option: String) -> Bool {
@@ -284,30 +281,6 @@ struct EditAvatarView: View {
         }
     }
     
-    private func saveAvatar() {
-        Task {
-            let avatarParts = AvatarParts(
-                background: selectedBackground,
-                face: selectedFace,
-                eyes: selectedEyes,
-                mouth: selectedMouth,
-                hair: selectedHair
-            )
-            
-            let success = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
-            if success {
-                // Update the userProfile binding
-                if var profile = userProfile {
-                    profile.avatarBackground = selectedBackground
-                    profile.avatarFace = selectedFace
-                    profile.avatarEyes = selectedEyes
-                    profile.avatarMouth = selectedMouth
-                    profile.avatarHair = selectedHair
-                    userProfile = profile
-                }
-            }
-        }
-    }
     
     // MARK: - Undo/Redo functionality
     

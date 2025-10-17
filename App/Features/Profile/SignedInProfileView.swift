@@ -49,24 +49,32 @@ struct SignedInProfileView: View {
                                 .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         }
                         
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack(spacing: 8) {
-                                Text(viewModel.profile?.firstName ?? "Loading...")
-                                    .font(.system(size: screenWidth * 0.08, weight: .bold))
-                                    .foregroundColor(.white)
-                                
-                                if viewModel.profile != nil {
+                        // Pencil button in bottom right
+                        if viewModel.profile != nil {
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
                                     Button {
                                         showingEditProfile = true
                                     } label: {
                                         Image(systemName: "pencil")
                                             .foregroundColor(.white)
-                                            .padding(6)
+                                            .padding(8)
                                             .background(Color.black.opacity(0.4))
                                             .clipShape(Circle())
                                     }
+                                    .padding(.trailing, standardPadding * 0.75)
+                                    .padding(.bottom, screenHeight * 0.04)
                                 }
                             }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(viewModel.profile?.firstName ?? "Loading...")
+                                .font(.system(size: screenWidth * 0.08, weight: .bold))
+                                .foregroundColor(.white)
+                            
                             Text("@\(viewModel.profile?.displayName ?? "")")
                                 .font(.system(size: screenWidth * 0.045, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))

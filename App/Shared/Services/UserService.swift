@@ -13,6 +13,16 @@ public struct UserProfile: Codable, Equatable {
     var avatarEyes: String?
     var avatarMouth: String?
     var avatarHair: String?
+    
+    // Medal and statistics fields
+    var goldMedalsAccumulated: Int
+    var silverMedalsAccumulated: Int
+    var bronzeMedalsAccumulated: Int
+    var goldMedalsAwarded: Int
+    var silverMedalsAwarded: Int
+    var bronzeMedalsAwarded: Int
+    var totalDrawingCount: Int
+    var streakCount: Int
 }
 
 final class UserService {
@@ -32,7 +42,16 @@ final class UserService {
             "lastName": userProfile.lastName,
             "displayName": userProfile.displayName,
             "email": userProfile.email.lowercased(),
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
+            // Medal and statistics fields - initialized to 0
+            "goldMedalsAccumulated": userProfile.goldMedalsAccumulated,
+            "silverMedalsAccumulated": userProfile.silverMedalsAccumulated,
+            "bronzeMedalsAccumulated": userProfile.bronzeMedalsAccumulated,
+            "goldMedalsAwarded": userProfile.goldMedalsAwarded,
+            "silverMedalsAwarded": userProfile.silverMedalsAwarded,
+            "bronzeMedalsAwarded": userProfile.bronzeMedalsAwarded,
+            "totalDrawingCount": userProfile.totalDrawingCount,
+            "streakCount": userProfile.streakCount
         ]
         
         // Add avatar fields if they exist
@@ -82,6 +101,16 @@ final class UserService {
         let avatarMouth = data["avatarMouth"] as? String
         let avatarHair = data["avatarHair"] as? String
         
+        // Medal and statistics fields - default to 0 if not present (for existing profiles)
+        let goldMedalsAccumulated = data["goldMedalsAccumulated"] as? Int ?? 0
+        let silverMedalsAccumulated = data["silverMedalsAccumulated"] as? Int ?? 0
+        let bronzeMedalsAccumulated = data["bronzeMedalsAccumulated"] as? Int ?? 0
+        let goldMedalsAwarded = data["goldMedalsAwarded"] as? Int ?? 0
+        let silverMedalsAwarded = data["silverMedalsAwarded"] as? Int ?? 0
+        let bronzeMedalsAwarded = data["bronzeMedalsAwarded"] as? Int ?? 0
+        let totalDrawingCount = data["totalDrawingCount"] as? Int ?? 0
+        let streakCount = data["streakCount"] as? Int ?? 0
+        
         return UserProfile(
             uid: uid,
             firstName: firstName,
@@ -92,7 +121,15 @@ final class UserService {
             avatarFace: avatarFace,
             avatarEyes: avatarEyes,
             avatarMouth: avatarMouth,
-            avatarHair: avatarHair
+            avatarHair: avatarHair,
+            goldMedalsAccumulated: goldMedalsAccumulated,
+            silverMedalsAccumulated: silverMedalsAccumulated,
+            bronzeMedalsAccumulated: bronzeMedalsAccumulated,
+            goldMedalsAwarded: goldMedalsAwarded,
+            silverMedalsAwarded: silverMedalsAwarded,
+            bronzeMedalsAwarded: bronzeMedalsAwarded,
+            totalDrawingCount: totalDrawingCount,
+            streakCount: streakCount
         )
     }
     

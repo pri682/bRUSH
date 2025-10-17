@@ -109,7 +109,16 @@ class SignUpViewModel: ObservableObject {
                     avatarFace: selectedAvatar?.face,
                     avatarEyes: selectedAvatar?.eyes,
                     avatarMouth: selectedAvatar?.mouth,
-                    avatarHair: selectedAvatar?.hair
+                    avatarHair: selectedAvatar?.hair,
+                    // Initialize all medal and statistics fields to 0
+                    goldMedalsAccumulated: 0,
+                    silverMedalsAccumulated: 0,
+                    bronzeMedalsAccumulated: 0,
+                    goldMedalsAwarded: 0,
+                    silverMedalsAwarded: 0,
+                    bronzeMedalsAwarded: 0,
+                    totalDrawingCount: 0,
+                    streakCount: 0
                 )
                 try await userService.createProfile(userProfile: profile)
                 

@@ -25,10 +25,10 @@ struct EditProfileView: View {
                             VStack(spacing: 8) {
                                 Text(index == 0 ? "Profile Information" : "Avatar")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(selectedTab == index ? .blue : .gray)
+                                    .foregroundColor(selectedTab == index ? .accentColor : .gray)
                                 
                                 Rectangle()
-                                    .fill(selectedTab == index ? Color.blue : Color.clear)
+                                    .fill(selectedTab == index ? Color.accentColor : Color.clear)
                                     .frame(height: 3)
                                     .frame(maxWidth: .infinity)
                             }
@@ -82,19 +82,39 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
-                            let success = await viewModel.saveChanges()
-                            if success {
-                                // Push changes back into parent binding
-                                if var updated = userProfile {
-                                    updated.firstName = viewModel.firstName
-                                    updated.displayName = viewModel.displayName
-                                    userProfile = updated
+                            var success = true
+                            
+                            if selectedTab == 0 {
+                                // Save profile information
+                                success = await viewModel.saveChanges()
+                                if success {
+                                    // Push changes back into parent binding
+                                    if var updated = userProfile {
+                                        updated.firstName = viewModel.firstName
+                                        updated.displayName = viewModel.displayName
+                                        userProfile = updated
+                                    }
                                 }
+                            } else {
+                                // Save avatar changes
+                                if let profile = userProfile {
+                                    let avatarParts = AvatarParts(
+                                        background: profile.avatarBackground ?? "background_1",
+                                        face: profile.avatarFace,
+                                        eyes: profile.avatarEyes,
+                                        mouth: profile.avatarMouth,
+                                        hair: profile.avatarHair
+                                    )
+                                    success = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
+                                }
+                            }
+                            
+                            if success {
                                 dismiss()
                             }
                         }
                     }
-                    .disabled(viewModel.isSaving || !viewModel.isValid)
+                    .disabled(viewModel.isSaving || (selectedTab == 0 && !viewModel.isValid))
                 }
             }
         }
