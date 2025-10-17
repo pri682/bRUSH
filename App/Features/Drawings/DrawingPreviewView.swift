@@ -86,8 +86,9 @@ struct DrawingPreviewView: View {
                 .sheet(isPresented: $isSharing) {
                     let itemSource = ImageActivityItemSource(title: item.prompt, image: image)
                     ShareSheet(
-                        activityItems: [itemSource]
+                        activityItems: [itemSource],
                     )
+                    .presentationDetents([.medium, .large])
                 }
                 .onAppear(perform: startAnimation)
             } else {
