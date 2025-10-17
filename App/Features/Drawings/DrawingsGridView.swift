@@ -20,10 +20,12 @@ struct DrawingsGridView: View {
                 .padding()
             }
             .navigationTitle("Previous Drawings")
-            .navigationDestination(isPresented: $isAddingNewDrawing) {
-                DrawingView(onSave: { newItem in
-                    dataModel.addItem(newItem)
-                }, prompt: drawingPrompt)
+            .fullScreenCover(isPresented: $isAddingNewDrawing) {
+                NavigationStack {
+                    DrawingView(onSave: { newItem in
+                        dataModel.addItem(newItem)
+                    }, prompt: drawingPrompt)
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
