@@ -8,10 +8,10 @@ struct AwardsStackCardView: View {
     let medalIconSize: CGFloat
 
     // Base medal scale
-    private let baseMedalScaleFactor: CGFloat = 1.7
+    private let baseMedalScaleFactor: CGFloat = 1.8
 
     // Colors
-    private let goldNumberColor = Color(red: 90/255, green: 80/255, blue: 70/255)
+    private let goldNumberColor = Color(hex: "#ff9c00")!
     private let goldBackgroundStart = Color(hex: "#f8f1d5")!
     private let goldBackgroundEnd = Color(hex: "#eadba7")!
     
@@ -19,7 +19,7 @@ struct AwardsStackCardView: View {
     private let silverBackgroundStart = Color(hex: "#e2e4e3")!
     private let silverBackgroundEnd = Color(hex: "#b1b6b2")!
     
-    private let bronzeNumberColor = Color(red: 200/255, green: 170/255, blue: 120/255)
+    private let bronzeNumberColor = Color(hex: "#8c5735")!
     private let bronzeBackgroundStart = Color(hex: "#dcc3ad")!
     private let bronzeBackgroundEnd = Color(hex: "#c98954")!
 
@@ -27,15 +27,16 @@ struct AwardsStackCardView: View {
         GeometryReader { geometry in
             let cardWidth = geometry.size.width
             let cardHeight = geometry.size.height
-            let rowHeight = cardHeight / 3
-            let radius = min(cardWidth, cardHeight) * 0.06
-
+            
             // Device / size detection
             let isPad = UIDevice.current.userInterfaceIdiom == .pad || cardWidth > 600
+            
+            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)  // Give more height on iPad
+            let radius = min(cardWidth, cardHeight) * 0.06
 
             // Font & medal scaling
             let fontFactorBase = cardWidth / 400
-            let fontFactor = fontFactorBase * (isPad ? 0.88 : 1.0)
+            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)  // More conservative iPad scaling
             
             // 🔧 Slightly smaller medals on iPad
             let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
@@ -44,7 +45,7 @@ struct AwardsStackCardView: View {
             VStack(spacing: 0) {
                 // MARK: - Gold
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "First Place Awards" : "First Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: firstPlaceCount,
                     imageName: "gold_medal",
                     countColor: goldNumberColor,
@@ -60,12 +61,21 @@ struct AwardsStackCardView: View {
                     )
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
+                .overlay(
+                    // Gold section drop shadow
+                    Rectangle()
+                        .fill(Color.black.opacity(0.08))
+                        .frame(height: 2)
+                        .offset(y: rowHeight/2)
+                        .blur(radius: 1)
+                        .clipped()
+                )
                 
                 Divider().opacity(0.15)
 
                 // MARK: - Silver
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "Second Place Awards" : "Second Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: secondPlaceCount,
                     imageName: "silver_medal",
                     countColor: silverNumberColor,
@@ -80,12 +90,21 @@ struct AwardsStackCardView: View {
                         endPoint: .trailing
                     )
                 )
+                .overlay(
+                    // Silver section drop shadow
+                    Rectangle()
+                        .fill(Color.black.opacity(0.08))
+                        .frame(height: 2)
+                        .offset(y: rowHeight/2)
+                        .blur(radius: 1)
+                        .clipped()
+                )
 
                 Divider().opacity(0.15)
 
                 // MARK: - Bronze
                 MedalRowView(
-                    title: cardTypeTitle.contains("Received") ? "Third Place Awards" : "Third Place Given",
+                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
                     count: thirdPlaceCount,
                     imageName: "bronze_medal",
                     countColor: bronzeNumberColor,

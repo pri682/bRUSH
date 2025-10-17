@@ -148,7 +148,8 @@ class SignUpViewModel: ObservableObject {
                     silverMedalsAwarded: 0,
                     bronzeMedalsAwarded: 0,
                     totalDrawingCount: 0,
-                    streakCount: 0
+                    streakCount: 0,
+                    memberSince: Date()
                 )
                 try await userService.createProfile(userProfile: profile)
                 
