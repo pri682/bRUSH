@@ -110,7 +110,7 @@ struct DrawingView: View {
                 .disabled(!canUndo)
                 .font(.title3)
                 .frame(width: 44, height: 44)
-                .glassEffect()
+                .glassEffect(.regular.interactive())
                 .glassEffectID("undoButton", in: namespace)
 
                 if canRedo {
@@ -122,7 +122,7 @@ struct DrawingView: View {
                     }
                     .font(.title3)
                     .frame(width: 44, height: 44)
-                    .glassEffect()
+                    .glassEffect(.regular.interactive())
                     .glassEffectID("redoButton", in: namespace)
                 }
             }
@@ -140,34 +140,36 @@ struct DrawingView: View {
                     
                     Spacer()
 
-                    HStack(spacing: 12) {
-                        Button {
-                            isPromptPresented.toggle()
-                        } label: {
-                            Image(systemName: "lightbulb")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
-                            promptView
-                        }
-                        
-                        Button {
-                            isThemePickerPresented = true
-                        } label: {
-                            Image(systemName: "paintpalette")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .sheet(isPresented: $isThemePickerPresented) {
-                            themePickerView
-                                .presentationDetents([.fraction(0.8), .large])
-                        }
-                        .onChange(of: isThemePickerPresented) { oldValue, newValue in
-                            if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
-                                picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                    GlassEffectContainer {
+                        HStack(spacing: 12) {
+                            Button {
+                                isPromptPresented.toggle()
+                            } label: {
+                                Image(systemName: "lightbulb")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                                promptView
+                            }
+                            
+                            Button {
+                                isThemePickerPresented = true
+                            } label: {
+                                Image(systemName: "paintpalette")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .sheet(isPresented: $isThemePickerPresented) {
+                                themePickerView
+                                    .presentationDetents([.fraction(0.8), .large])
+                            }
+                            .onChange(of: isThemePickerPresented) { oldValue, newValue in
+                                if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
+                                    picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                                }
                             }
                         }
                     }
