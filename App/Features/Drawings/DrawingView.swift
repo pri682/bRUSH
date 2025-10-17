@@ -230,7 +230,7 @@ struct DrawingView: View {
                             }
                             .sheet(isPresented: $isThemePickerPresented) {
                                 themePickerView
-                                    .presentationDetents([.fraction(0.8), .large])
+                                    .presentationDetents([.fraction(0.8)])
                             }
                             .onChange(of: isThemePickerPresented) { oldValue, newValue in
                                 if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
@@ -314,6 +314,7 @@ struct DrawingView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Custom Backgrounds")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
