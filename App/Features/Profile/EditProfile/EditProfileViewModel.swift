@@ -49,6 +49,41 @@ class EditProfileViewModel: ObservableObject {
             return false
         }
     }
+    
+    /// Save avatar changes to Firestore
+    func saveAvatarChanges(avatarParts: AvatarParts) async -> Bool {
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            var avatarData: [String: Any] = [:]
+            
+            // Background is always required, others are optional
+            avatarData["avatarBackground"] = avatarParts.background
+            
+            if let face = avatarParts.face {
+                avatarData["avatarFace"] = face
+            }
+            if let eyes = avatarParts.eyes {
+                avatarData["avatarEyes"] = eyes
+            }
+            if let mouth = avatarParts.mouth {
+                avatarData["avatarMouth"] = mouth
+            }
+            if let hair = avatarParts.hair {
+                avatarData["avatarHair"] = hair
+            }
+            
+            try await UserService.shared.updateProfile(
+                uid: userProfile.uid,
+                data: avatarData
+            )
+            return true
+        } catch {
+            firstNameError = "Failed to save avatar: \(error.localizedDescription)"
+            return false
+        }
+    }
 
     // MARK: - Validation
     private func validateFirstName() -> String? {
