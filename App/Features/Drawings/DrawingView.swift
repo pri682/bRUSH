@@ -3,7 +3,7 @@ import PencilKit
 import Combine
 
 struct DrawingView: View {
-    let onSave: (URL, UIImage) -> Void
+    let onSave: (Item) -> Void
     let prompt: String
     
     @State private var pkCanvasView = PKCanvasView()
@@ -329,9 +329,24 @@ struct DrawingView: View {
         let image = createCompositeImage()
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
         let filename = UUID().uuidString + ".jpg"
+        
         if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename) {
-            try? data.write(to: fileURL, options: .atomic)
-            onSave(fileURL, image)
+            do {
+                try data.write(to: fileURL, options: .atomic)
+                
+                let newItem = Item(
+                    id: UUID(uuidString: filename.replacingOccurrences(of: ".jpg", with: ""))!,
+                    url: fileURL,
+                    prompt: self.prompt,
+                    date: Date(),
+                    image: image
+                )
+                
+                onSave(newItem)
+                
+            } catch {
+                print("Error saving image: \(error)")
+            }
         }
     }
     

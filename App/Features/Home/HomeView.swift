@@ -118,8 +118,7 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $isPresentingCreate) {
             NavigationStack {
-                DrawingView(onSave: { url, image in
-                    let newItem = Item(url: url, image: image)
+                DrawingView(onSave: { newItem in
                     dataModel.addItem(newItem)
                     hasPostedToday = true
                 }, prompt: drawingPrompt)
