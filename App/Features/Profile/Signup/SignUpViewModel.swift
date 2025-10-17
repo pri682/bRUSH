@@ -105,9 +105,11 @@ class SignUpViewModel: ObservableObject {
                     lastName: lastName,
                     displayName: displayName,
                     email: email,
+                    avatarBackground: selectedAvatar?.background,
                     avatarFace: selectedAvatar?.face,
                     avatarEyes: selectedAvatar?.eyes,
-                    avatarMouth: selectedAvatar?.mouth
+                    avatarMouth: selectedAvatar?.mouth,
+                    avatarHair: selectedAvatar?.hair
                 )
                 try await userService.createProfile(userProfile: profile)
                 

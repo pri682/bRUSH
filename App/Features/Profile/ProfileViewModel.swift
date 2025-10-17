@@ -94,13 +94,17 @@ class ProfileViewModel: ObservableObject {
             try await auth.deleteUser()
             
             // Clear local state
-            self.user = nil
-            self.profile = nil
-            self.email = ""
-            self.password = ""
-            LocalUserStorage.shared.clearProfile()
+            await MainActor.run {
+                self.user = nil
+                self.profile = nil
+                self.email = ""
+                self.password = ""
+                LocalUserStorage.shared.clearProfile()
+            }
         } catch {
-            self.errorMessage = error.localizedDescription
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
     

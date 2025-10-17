@@ -12,8 +12,8 @@ struct SignedInProfileView: View {
             let standardPadding = screenWidth * 0.05
             let contentWidth = screenWidth - (standardPadding * 2)
             
-            let headerHeight = screenHeight * 0.25
-            let containerTopSpacing = screenHeight * 0.03
+            let headerHeight = screenHeight * 0.30 // Increased height for more background
+            let containerTopSpacing = screenHeight * 0.08 // More spacing from top
             let cardHeight: CGFloat = screenHeight * 0.52 // ⬆ slightly taller visually
             
             let largeMedalSize = contentWidth * 0.16
@@ -26,16 +26,17 @@ struct SignedInProfileView: View {
                     ZStack(alignment: .bottomLeading) {
                         // Use custom avatar if available, otherwise use default "boko" image
                         if let profile = viewModel.profile,
-                           let face = profile.avatarFace,
-                           let eyes = profile.avatarEyes,
-                           let mouth = profile.avatarMouth {
+                           let background = profile.avatarBackground {
                             AvatarView(
-                                face: face,
-                                eyes: eyes,
-                                mouth: mouth
+                                background: background,
+                                face: profile.avatarFace,
+                                eyes: profile.avatarEyes,
+                                mouth: profile.avatarMouth,
+                                hair: profile.avatarHair
                             )
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
+                            .clipped()
                             .overlay(Color.black.opacity(0.25))
                             .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         } else {

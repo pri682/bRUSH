@@ -8,9 +8,11 @@ public struct UserProfile: Codable, Equatable {
     let lastName: String
     var displayName: String
     let email: String
+    var avatarBackground: String?
     var avatarFace: String?
     var avatarEyes: String?
     var avatarMouth: String?
+    var avatarHair: String?
 }
 
 final class UserService {
@@ -34,6 +36,9 @@ final class UserService {
         ]
         
         // Add avatar fields if they exist
+        if let background = userProfile.avatarBackground {
+            profileData["avatarBackground"] = background
+        }
         if let face = userProfile.avatarFace {
             profileData["avatarFace"] = face
         }
@@ -42,6 +47,9 @@ final class UserService {
         }
         if let mouth = userProfile.avatarMouth {
             profileData["avatarMouth"] = mouth
+        }
+        if let hair = userProfile.avatarHair {
+            profileData["avatarHair"] = hair
         }
         
         // This is the single critical database write
@@ -68,9 +76,11 @@ final class UserService {
             throw AuthError.backend("Invalid profile data.")
         }
         
+        let avatarBackground = data["avatarBackground"] as? String
         let avatarFace = data["avatarFace"] as? String
         let avatarEyes = data["avatarEyes"] as? String
         let avatarMouth = data["avatarMouth"] as? String
+        let avatarHair = data["avatarHair"] as? String
         
         return UserProfile(
             uid: uid,
@@ -78,9 +88,11 @@ final class UserService {
             lastName: lastName,
             displayName: displayName,
             email: email,
+            avatarBackground: avatarBackground,
             avatarFace: avatarFace,
             avatarEyes: avatarEyes,
-            avatarMouth: avatarMouth
+            avatarMouth: avatarMouth,
+            avatarHair: avatarHair
         )
     }
     
