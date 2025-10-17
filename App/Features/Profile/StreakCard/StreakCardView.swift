@@ -47,10 +47,12 @@ struct StreakCardView: View {
                 StreakRowView(
                     title: "Current Streak",
                     count: streakCount,
+                    subtitle: nil,
                     imageName: "streak_icon",
                     countColor: streakColor,
                     iconSize: adjustedIconSize,
-                    fontScalingFactor: fontFactor
+                    fontScalingFactor: fontFactor,
+                    screenHeight: UIScreen.main.bounds.height
                 )
                 .frame(height: rowHeightAdjusted)
                 .background(
@@ -77,10 +79,12 @@ struct StreakCardView: View {
                 StreakRowView(
                     title: "Total Drawings",
                     count: totalDrawings,
+                    subtitle: nil,
                     imageName: "pencil_art_icon",
                     countColor: drawingsColor,
                     iconSize: adjustedIconSize,
-                    fontScalingFactor: fontFactor
+                    fontScalingFactor: fontFactor,
+                    screenHeight: UIScreen.main.bounds.height
                 )
                 .frame(height: rowHeightAdjusted)
                 .background(
@@ -104,12 +108,14 @@ struct StreakCardView: View {
 
                 // MARK: - Member Since
                 StreakRowView(
-                    title: "Member Since",
-                    count: memberSince,
+                    title: "Joined on",
+                    count: "2025",
+                    subtitle: "JUL 12",
                     imageName: "member_since",
                     countColor: memberColor,
                     iconSize: adjustedIconSize,
-                    fontScalingFactor: fontFactor
+                    fontScalingFactor: fontFactor,
+                    screenHeight: UIScreen.main.bounds.height
                 )
                 .frame(height: rowHeightAdjusted)
                 .background(
@@ -131,15 +137,17 @@ struct StreakCardView: View {
 struct StreakRowView: View {
     let title: String
     let count: Any // Can be Int or String
+    let subtitle: String? // Optional subtitle for member since
     let imageName: String
     let countColor: Color
     let iconSize: CGFloat
     let fontScalingFactor: CGFloat
+    let screenHeight: CGFloat
     
     private let baseLeadingPadding: CGFloat = 20
     private let baseTrailingPadding: CGFloat = 20
     private let baseCountTopPadding: CGFloat = 10
-    private let baseIconTopOffset: CGFloat = -25
+    private let baseIconTopOffset: CGFloat = 0 // Center icons vertically
     
     var body: some View {
         GeometryReader { geometry in
@@ -156,19 +164,28 @@ struct StreakRowView: View {
                     Text(title)
                         .font(.system(size: 16 * fontScalingFactor * scaling))
                         .foregroundColor(.black.opacity(0.65))
+                    
+                    // Optional subtitle for member since
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 14 * fontScalingFactor * scaling))
+                            .foregroundColor(.black.opacity(0.5))
+                    }
                 }
                 .padding(.top, baseCountTopPadding * fontScalingFactor)
                 
                 Spacer()
                 
-                // Icon Image
-                Image(imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: iconSize * scaling, height: iconSize * scaling)
-                    .alignmentGuide(.top) { d in d[.top] }
-                    .padding(.trailing, baseTrailingPadding * fontScalingFactor)
-                    .padding(.top, baseIconTopOffset)
+                // Icon Image - Centered vertically in section
+                VStack {
+                    Spacer()
+                    Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize * scaling, height: iconSize * scaling)
+                    Spacer()
+                }
+                .padding(.trailing, baseTrailingPadding * fontScalingFactor)
             }
             .padding(.leading, baseLeadingPadding * fontScalingFactor)
         }
