@@ -22,8 +22,8 @@ struct MedalRowView: View {
             HStack(alignment: .top) {
                 // Count + Title
                 VStack(alignment: .leading, spacing: 2 * fontScalingFactor) {
-                    Text("\(count)")
-                        .font(.system(size: 60 * fontScalingFactor * scaling, weight: .bold))
+                    Text(count == -1 ? "--" : "\(count)")
+                        .font(.system(size: (65 * fontScalingFactor * scaling) * 1.1, weight: .bold))
                         .foregroundColor(countColor)
                     
                     Text(title)

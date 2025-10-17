@@ -8,10 +8,10 @@ struct AwardsStackCardView: View {
     let medalIconSize: CGFloat
 
     // Base medal scale
-    private let baseMedalScaleFactor: CGFloat = 1.7
+    private let baseMedalScaleFactor: CGFloat = 1.8
 
     // Colors
-    private let goldNumberColor = Color(red: 90/255, green: 80/255, blue: 70/255)
+    private let goldNumberColor = Color(hex: "#ff9c00")!
     private let goldBackgroundStart = Color(hex: "#f8f1d5")!
     private let goldBackgroundEnd = Color(hex: "#eadba7")!
     
@@ -19,7 +19,7 @@ struct AwardsStackCardView: View {
     private let silverBackgroundStart = Color(hex: "#e2e4e3")!
     private let silverBackgroundEnd = Color(hex: "#b1b6b2")!
     
-    private let bronzeNumberColor = Color(red: 200/255, green: 170/255, blue: 120/255)
+    private let bronzeNumberColor = Color(hex: "#8c5735")!
     private let bronzeBackgroundStart = Color(hex: "#dcc3ad")!
     private let bronzeBackgroundEnd = Color(hex: "#c98954")!
 
@@ -60,6 +60,7 @@ struct AwardsStackCardView: View {
                     )
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
+                .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
                 
                 Divider().opacity(0.15)
 
@@ -80,6 +81,7 @@ struct AwardsStackCardView: View {
                         endPoint: .trailing
                     )
                 )
+                .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
 
                 Divider().opacity(0.15)
 
