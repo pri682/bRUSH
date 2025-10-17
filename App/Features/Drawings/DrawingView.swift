@@ -11,6 +11,9 @@ struct DrawingView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.displayScale) var displayScale
     
+    @State private var showDoneAlert = false
+    @State private var showCancelAlert = false
+    
     @State private var canUndo = false
     @State private var canRedo = false
     @Namespace private var namespace
