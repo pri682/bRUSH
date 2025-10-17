@@ -20,9 +20,9 @@ struct DrawingView: View {
     @State private var isThemePickerPresented = false
     @State private var isPromptPresented = true
     
-    private let totalTime: Double = 900
-        @State private var timeRemaining: Double = 900
-        @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let totalTime: Double = 30
+    @State private var timeRemaining: Double = 30
+    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     enum CanvasTheme: Equatable, Identifiable {
         case color(Color)
@@ -46,12 +46,51 @@ struct DrawingView: View {
         }
     }
     
-    // A list of available texture assets
-    private let textureAssets = [
-        "notebook", "canvas", "Sticky Note", "scroll",
-        "chalkboard", "Classroom", "bathroom", "Wall",
-        "Brick", "Grass", "Underwater"
-    ]
+    private let textureAssets = [ "notebook", "canvas", "Sticky Note", "scroll", "chalkboard", "Classroom", "bathroom", "Wall", "Brick", "Grass", "Underwater" ]
+
+    private var timerColor: Color {
+        let threeQuarterPoint = totalTime * (3 / 4.0)
+        let halfPoint = totalTime * (1 / 2.0)
+        let quarterPoint = totalTime * (1 / 4.0)
+
+        if timeRemaining > threeQuarterPoint {
+            return Color(red: 0.65, green: 0.85, blue: 0.45)
+        } else if timeRemaining > halfPoint {
+            let phaseDuration = threeQuarterPoint - halfPoint
+            let timeIntoPhase = threeQuarterPoint - timeRemaining
+            let progress = timeIntoPhase / phaseDuration
+            return Color(
+                UIColor.blend(
+                    color1: UIColor(red: 0.65, green: 0.85, blue: 0.45, alpha: 1.0),
+                    color2: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                    ratio: CGFloat(progress)
+                )
+            )
+        } else if timeRemaining > quarterPoint {
+            let phaseDuration = halfPoint - quarterPoint
+            let timeIntoPhase = halfPoint - timeRemaining
+            let progress = timeIntoPhase / phaseDuration
+            return Color(
+                UIColor.blend(
+                    color1: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                    color2: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                    ratio: CGFloat(progress)
+                )
+            )
+        } else {
+            let phaseDuration = quarterPoint
+            let timeIntoPhase = quarterPoint - timeRemaining
+            let progress = timeIntoPhase / phaseDuration
+            return Color(
+                UIColor.blend(
+                    color1: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                    color2: UIColor(red: 0.9, green: 0.2, blue: 0.25, alpha: 1.0),
+                    ratio: CGFloat(progress)
+                )
+            )
+        }
+    }
+
 
     var body: some View {
         Color(uiColor: .systemGray6)
@@ -63,13 +102,15 @@ struct DrawingView: View {
                     ZStack {
                         ProgressBorder(
                             progress: CGFloat(timeRemaining / totalTime),
-                            cornerRadius: 45,
-                            lineWidth: 6
+                            cornerRadius: 40,
+                            lineWidth: 6,
+                            color: timerColor
                         )
+                        .scaleEffect(x: -1, y: 1)
                         .animation(.linear(duration: 1.0), value: timeRemaining)
                         
                         canvasView
-                            .padding(10)
+                            .padding(6)
                     }
                     .aspectRatio(9/16, contentMode: .fit)
                     
@@ -109,7 +150,7 @@ struct DrawingView: View {
                 .disabled(!canUndo)
                 .font(.title3)
                 .frame(width: 44, height: 44)
-                .glassEffect()
+                .glassEffect(.regular.interactive())
                 .glassEffectID("undoButton", in: namespace)
 
                 if canRedo {
@@ -121,7 +162,7 @@ struct DrawingView: View {
                     }
                     .font(.title3)
                     .frame(width: 44, height: 44)
-                    .glassEffect()
+                    .glassEffect(.regular.interactive())
                     .glassEffectID("redoButton", in: namespace)
                 }
             }
@@ -139,34 +180,36 @@ struct DrawingView: View {
                     
                     Spacer()
 
-                    HStack(spacing: 12) {
-                        Button {
-                            isPromptPresented.toggle()
-                        } label: {
-                            Image(systemName: "lightbulb")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
-                            promptView
-                        }
-                        
-                        Button {
-                            isThemePickerPresented = true
-                        } label: {
-                            Image(systemName: "paintpalette")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .sheet(isPresented: $isThemePickerPresented) {
-                            themePickerView
-                                .presentationDetents([.fraction(0.8), .large])
-                        }
-                        .onChange(of: isThemePickerPresented) { oldValue, newValue in
-                            if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
-                                picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                    GlassEffectContainer {
+                        HStack(spacing: 12) {
+                            Button {
+                                isPromptPresented.toggle()
+                            } label: {
+                                Image(systemName: "lightbulb")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                                promptView
+                            }
+                            
+                            Button {
+                                isThemePickerPresented = true
+                            } label: {
+                                Image(systemName: "paintpalette")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .sheet(isPresented: $isThemePickerPresented) {
+                                themePickerView
+                                    .presentationDetents([.fraction(0.8), .large])
+                            }
+                            .onChange(of: isThemePickerPresented) { oldValue, newValue in
+                                if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
+                                    picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                                }
                             }
                         }
                     }
@@ -206,7 +249,6 @@ struct DrawingView: View {
         }
         .background(canvasBackground)
         .cornerRadius(34)
-        .shadow(radius: 5)
         .onTapGesture {
             if isPromptPresented {
                 isPromptPresented = false
@@ -391,18 +433,19 @@ struct ProgressBorder: View {
     var progress: CGFloat
     var cornerRadius: CGFloat
     var lineWidth: CGFloat
+    var color: Color
     
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
-                .stroke(Color.accentColor.opacity(0.2), lineWidth: lineWidth)
+                .stroke(color.opacity(0.2), lineWidth: lineWidth)
             
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.accentColor,
+                    color,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                 )
         }
@@ -428,5 +471,23 @@ extension Color {
 extension String {
     var displayName: String {
         self.capitalized
+    }
+}
+
+extension UIColor {
+    static func blend(color1: UIColor, color2: UIColor, ratio: CGFloat) -> UIColor {
+        let clampedRatio = max(0, min(1, ratio))
+        
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        color1.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        color2.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        
+        let newRed = r1 * (1 - clampedRatio) + r2 * clampedRatio
+        let newGreen = g1 * (1 - clampedRatio) + g2 * clampedRatio
+        let newBlue = b1 * (1 - clampedRatio) + b2 * clampedRatio
+        
+        return UIColor(red: newRed, green: newGreen, blue: newBlue, alpha: 1.0)
     }
 }
