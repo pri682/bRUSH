@@ -20,9 +20,9 @@ struct DrawingView: View {
     @State private var isThemePickerPresented = false
     @State private var isPromptPresented = true
     
-    private let totalTime: Double = 20
-        @State private var timeRemaining: Double = 20
-        @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let totalTime: Double = 30
+    @State private var timeRemaining: Double = 30
+    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     enum CanvasTheme: Equatable, Identifiable {
         case color(Color)
@@ -64,7 +64,8 @@ struct DrawingView: View {
                         ProgressBorder(
                             progress: CGFloat(timeRemaining / totalTime),
                             cornerRadius: 40,
-                            lineWidth: 6
+                            lineWidth: 6,
+                            color: timerColor
                         )
                         .scaleEffect(x: -1, y: 1)
                         .animation(.linear(duration: 1.0), value: timeRemaining)
@@ -393,18 +394,19 @@ struct ProgressBorder: View {
     var progress: CGFloat
     var cornerRadius: CGFloat
     var lineWidth: CGFloat
+    var color: Color
     
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
-                .stroke(Color.accentColor.opacity(0.2), lineWidth: lineWidth)
+                .stroke(color.opacity(0.2), lineWidth: lineWidth)
             
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.accentColor,
+                    color,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                 )
         }
@@ -430,5 +432,23 @@ extension Color {
 extension String {
     var displayName: String {
         self.capitalized
+    }
+}
+
+extension UIColor {
+    static func blend(color1: UIColor, color2: UIColor, ratio: CGFloat) -> UIColor {
+        let clampedRatio = max(0, min(1, ratio))
+        
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        color1.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        color2.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        
+        let newRed = r1 * (1 - clampedRatio) + r2 * clampedRatio
+        let newGreen = g1 * (1 - clampedRatio) + g2 * clampedRatio
+        let newBlue = b1 * (1 - clampedRatio) + b2 * clampedRatio
+        
+        return UIColor(red: newRed, green: newGreen, blue: newBlue, alpha: 1.0)
     }
 }
