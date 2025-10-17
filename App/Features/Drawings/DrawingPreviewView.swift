@@ -4,6 +4,10 @@ struct DrawingPreviewView: View {
     let item: Item
     
     @State private var isSharing = false
+    @State private var rotationAngle: Double = -10
+    @State private var isAnimating = true
+    @GestureState private var dragOffset: CGSize = .zero
+    @State private var accumulatedRotation: Double = 0
     
     private var formattedDate: String {
         item.date.formatted(date: .long, time: .omitted)
@@ -87,6 +91,16 @@ struct DrawingPreviewView: View {
                 ProgressView()
                     .navigationTitle("Loading...")
             }
+        }
+    }
+    
+    private func startAnimation() {
+        guard isAnimating else { return }
+        
+        let targetAngle = rotationAngle > 0 ? -10.0 : 10.0
+        
+        withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+            rotationAngle = targetAngle
         }
     }
 }
