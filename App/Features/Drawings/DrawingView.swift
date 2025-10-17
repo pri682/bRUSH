@@ -20,8 +20,8 @@ struct DrawingView: View {
     @State private var isThemePickerPresented = false
     @State private var isPromptPresented = true
     
-    private let totalTime: Double = 30
-    @State private var timeRemaining: Double = 30
+    private let totalTime: Double = 900
+    @State private var timeRemaining: Double = 900
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     enum CanvasTheme: Equatable, Identifiable {
@@ -47,47 +47,45 @@ struct DrawingView: View {
     }
     
     private let textureAssets = [ "notebook", "canvas", "Sticky Note", "scroll", "chalkboard", "Classroom", "bathroom", "Wall", "Brick", "Grass", "Underwater" ]
+    
+    private var isFlashing: Bool {
+        guard timeRemaining <= 30 else { return false }
+        return Int(timeRemaining) % 2 == 0
+    }
 
     private var timerColor: Color {
-        let threeQuarterPoint = totalTime * (3 / 4.0)
-        let halfPoint = totalTime * (1 / 2.0)
-        let quarterPoint = totalTime * (1 / 4.0)
+        if isFlashing { return .white }
+
+        let threeQuarterPoint = totalTime * 3 / 4
+        let halfPoint = totalTime / 2
+        let quarterPoint = totalTime / 4
 
         if timeRemaining > threeQuarterPoint {
             return Color(red: 0.65, green: 0.85, blue: 0.45)
         } else if timeRemaining > halfPoint {
             let phaseDuration = threeQuarterPoint - halfPoint
-            let timeIntoPhase = threeQuarterPoint - timeRemaining
-            let progress = timeIntoPhase / phaseDuration
-            return Color(
-                UIColor.blend(
-                    color1: UIColor(red: 0.65, green: 0.85, blue: 0.45, alpha: 1.0),
-                    color2: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
-                    ratio: CGFloat(progress)
-                )
-            )
+            let progress = (threeQuarterPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 0.65, green: 0.85, blue: 0.45, alpha: 1.0),
+                color2: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
         } else if timeRemaining > quarterPoint {
             let phaseDuration = halfPoint - quarterPoint
-            let timeIntoPhase = halfPoint - timeRemaining
-            let progress = timeIntoPhase / phaseDuration
-            return Color(
-                UIColor.blend(
-                    color1: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
-                    color2: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
-                    ratio: CGFloat(progress)
-                )
-            )
+            let progress = (halfPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                color2: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
         } else {
             let phaseDuration = quarterPoint
-            let timeIntoPhase = quarterPoint - timeRemaining
-            let progress = timeIntoPhase / phaseDuration
-            return Color(
-                UIColor.blend(
-                    color1: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
-                    color2: UIColor(red: 0.9, green: 0.2, blue: 0.25, alpha: 1.0),
-                    ratio: CGFloat(progress)
-                )
-            )
+            let progress = (quarterPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                color2: UIColor(red: 0.9, green: 0.2, blue: 0.25, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
         }
     }
 
