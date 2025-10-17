@@ -20,8 +20,8 @@ struct DrawingView: View {
     @State private var isThemePickerPresented = false
     @State private var isPromptPresented = true
     
-    private let totalTime: Double = 900
-        @State private var timeRemaining: Double = 900
+    private let totalTime: Double = 20
+        @State private var timeRemaining: Double = 20
         @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     enum CanvasTheme: Equatable, Identifiable {
@@ -63,13 +63,14 @@ struct DrawingView: View {
                     ZStack {
                         ProgressBorder(
                             progress: CGFloat(timeRemaining / totalTime),
-                            cornerRadius: 45,
+                            cornerRadius: 40,
                             lineWidth: 6
                         )
+                        .scaleEffect(x: -1, y: 1)
                         .animation(.linear(duration: 1.0), value: timeRemaining)
                         
                         canvasView
-                            .padding(10)
+                            .padding(6)
                     }
                     .aspectRatio(9/16, contentMode: .fit)
                     
@@ -206,7 +207,6 @@ struct DrawingView: View {
         }
         .background(canvasBackground)
         .cornerRadius(34)
-        .shadow(radius: 5)
         .onTapGesture {
             if isPromptPresented {
                 isPromptPresented = false
