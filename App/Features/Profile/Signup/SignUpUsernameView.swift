@@ -25,11 +25,9 @@ struct SignUpUsernameView: View {
 
             // 🗑️ REMOVED: All status indicators related to checking unique name
 
-            Button("Complete Sign Up") {
-                Task {
-                    // Calls the updated submitStep2() in the ViewModel
-                    await viewModel.submitStep2()
-                }
+            Button("Next: Create Avatar") {
+                // Calls the updated submitStep2() in the ViewModel (no longer async)
+                viewModel.submitStep2()
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 16)

@@ -15,6 +15,9 @@ class SignUpViewModel: ObservableObject {
     // MARK: - Step 2 Fields (UsernameView)
     @Published var displayName = ""
     
+    // MARK: - Step 3 Fields (AvatarView)
+    @Published var selectedAvatar: AvatarParts? = nil
+    
     // 🗑️ REMOVED: isCheckingDisplayName (No longer needed)
     // 🗑️ REMOVED: displayNameError (No longer needed since uniqueness check is gone)
 
@@ -29,6 +32,7 @@ class SignUpViewModel: ObservableObject {
     enum SignUpStep {
         case input      // First Name, Last Name, Email, Passwords
         case username   // Choose Display Name
+        case avatar     // Choose Avatar
         case complete   // ✨ ADDED: Final step for flow control
     }
 
@@ -57,15 +61,24 @@ class SignUpViewModel: ObservableObject {
 
     // 🗑️ REMOVED: The entire async validateDisplayName() function.
     
-    // ✨ NEW/MODIFIED: Submit function for Step 2 (only checks length, then signs up)
-    func submitStep2() async {
+    // ✨ NEW/MODIFIED: Submit function for Step 2 (navigates to avatar step)
+    func submitStep2() {
         guard isStep2Valid else {
             errorMessage = "Username must be at least 3 characters."
             return
         }
         
         errorMessage = nil
-        // Proceed directly to the sign-up execution
+        currentStep = .avatar
+    }
+    
+    // MARK: - Step 3 Avatar Selection
+    
+    func submitStep3() async {
+        await completeSignUp()
+    }
+    
+    func skipPhotoStep() async {
         await completeSignUp()
     }
 
@@ -91,7 +104,12 @@ class SignUpViewModel: ObservableObject {
                     firstName: firstName,
                     lastName: lastName,
                     displayName: displayName,
-                    email: email
+                    email: email,
+                    avatarBackground: selectedAvatar?.background,
+                    avatarFace: selectedAvatar?.face,
+                    avatarEyes: selectedAvatar?.eyes,
+                    avatarMouth: selectedAvatar?.mouth,
+                    avatarHair: selectedAvatar?.hair
                 )
                 try await userService.createProfile(userProfile: profile)
                 
