@@ -21,6 +21,25 @@ class EditProfileViewModel: ObservableObject {
     var isValid: Bool {
         validateFirstName() == nil && validateDisplayName() == nil
     }
+    
+    // Real-time validation properties for UI feedback
+    var isFirstNameTooLong: Bool {
+        return firstName.count > 10
+    }
+    
+    var isDisplayNameTooLong: Bool {
+        return displayName.count > 15
+    }
+    
+    var isDisplayNameInvalidFormat: Bool {
+        return !displayName.isEmpty && !isValidUsername(displayName)
+    }
+    
+    // Helper function to validate username format (letters, numbers, underscores only)
+    private func isValidUsername(_ username: String) -> Bool {
+        let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        return allowedChars.isSuperset(of: CharacterSet(charactersIn: username))
+    }
 
     /// Save changes to Firestore
     func saveChanges() async -> Bool {
@@ -46,6 +65,41 @@ class EditProfileViewModel: ObservableObject {
             return true
         } catch {
             firstNameError = "Failed to save: \(error.localizedDescription)"
+            return false
+        }
+    }
+    
+    /// Save avatar changes to Firestore
+    func saveAvatarChanges(avatarParts: AvatarParts) async -> Bool {
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            var avatarData: [String: Any] = [:]
+            
+            // Background is always required, others are optional
+            avatarData["avatarBackground"] = avatarParts.background
+            
+            if let face = avatarParts.face {
+                avatarData["avatarFace"] = face
+            }
+            if let eyes = avatarParts.eyes {
+                avatarData["avatarEyes"] = eyes
+            }
+            if let mouth = avatarParts.mouth {
+                avatarData["avatarMouth"] = mouth
+            }
+            if let hair = avatarParts.hair {
+                avatarData["avatarHair"] = hair
+            }
+            
+            try await UserService.shared.updateProfile(
+                uid: userProfile.uid,
+                data: avatarData
+            )
+            return true
+        } catch {
+            firstNameError = "Failed to save avatar: \(error.localizedDescription)"
             return false
         }
     }
