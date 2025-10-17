@@ -21,8 +21,7 @@ struct DrawingsGridView: View {
             }
             .navigationTitle("Previous Drawings")
             .navigationDestination(isPresented: $isAddingNewDrawing) {
-                DrawingView(onSave: { url, image in
-                    let newItem = Item(url: url, image: image)
+                DrawingView(onSave: { newItem in
                     dataModel.addItem(newItem)
                 }, prompt: drawingPrompt)
             }
