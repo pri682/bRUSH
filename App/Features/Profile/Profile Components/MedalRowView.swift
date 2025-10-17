@@ -17,13 +17,13 @@ struct MedalRowView: View {
     var body: some View {
         GeometryReader { geometry in
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-            let scaling = isIpad ? 1.2 : 1.0
+            let scaling = isIpad ? 0.9 : 1.0  // Reduce iPad scaling to prevent overlap
             
             HStack(alignment: .top) {
                 // Count + Title
                 VStack(alignment: .leading, spacing: 2 * fontScalingFactor) {
-                    Text("\(count)")
-                        .font(.system(size: 60 * fontScalingFactor * scaling, weight: .bold))
+                    Text(count == -1 ? "--" : "\(count)")
+                        .font(.system(size: (65 * fontScalingFactor * scaling) * 1.1, weight: .bold))
                         .foregroundColor(countColor)
                     
                     Text(title)

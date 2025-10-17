@@ -43,6 +43,12 @@ class ProfileViewModel: ObservableObject {
             await MainActor.run { self.errorMessage = error.localizedDescription }
         }
     }
+    
+    // MARK: - Public Refresh Method
+    func refreshProfile() async {
+        guard let uid = user?.id else { return }
+        await loadProfile(uid: uid)
+    }
 
     // MARK: - Email Validation
     private func validateEmail() throws {

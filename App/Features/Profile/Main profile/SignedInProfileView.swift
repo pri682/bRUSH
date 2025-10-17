@@ -3,6 +3,45 @@ import SwiftUI
 struct SignedInProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingEditProfile = false
+    @State private var lastMedalUpdate: Date? = nil
+    @State private var isRefreshingMedals = false
+    @State private var lastRefreshAttempt: Date? = nil
+    
+    // Helper function to format time display
+    private func timeDisplayString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .none
+        return formatter.string(from: date)
+    }
+    
+    // Helper function to check if update is needed (more than 30 minutes ago)
+    private func needsUpdate(from date: Date) -> Bool {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        return timeInterval > 1800 // 30 minutes = 1800 seconds
+    }
+    
+    // Helper function to check if refresh button can be clicked (1 minute cooldown)
+    private func canRefresh() -> Bool {
+        guard let lastAttempt = lastRefreshAttempt else { return true }
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(lastAttempt)
+        return timeInterval > 60 // 1 minute = 60 seconds
+    }
+    
+    // Function to refresh medal data
+    private func refreshMedalData() {
+        guard canRefresh() else { return } // Prevent overuse
+        
+        lastRefreshAttempt = Date() // Track this attempt
+        isRefreshingMedals = true
+        Task {
+            await viewModel.refreshProfile()
+            lastMedalUpdate = Date()
+            isRefreshingMedals = false
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -92,19 +131,21 @@ struct SignedInProfileView: View {
                         CardStackView(cards: [
                             CardItem(content:
                                 AwardsStackCardView(
-                                    cardTypeTitle: "Awards Received",
-                                    firstPlaceCount: 128,
-                                    secondPlaceCount: 421,
-                                    thirdPlaceCount: 67,
+                                    cardTypeTitle: "Awards Accumulated",
+                                    // get the real amounts from firebase:
+                                    firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? -1,
+                                    secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? -1,
+                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? -1,
                                     medalIconSize: largeMedalSize
                                 )
                             ),
                             CardItem(content:
                                 AwardsStackCardView(
-                                    cardTypeTitle: "Awards Given",
-                                    firstPlaceCount: 45,
-                                    secondPlaceCount: 110,
-                                    thirdPlaceCount: 20,
+                                    cardTypeTitle: "Awarded to Friends",
+                                    // get the real amounts from firebase:
+                                    firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? -1,
+                                    secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? -1,
+                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? -1,
                                     medalIconSize: largeMedalSize
                                 )
                             )
@@ -114,6 +155,47 @@ struct SignedInProfileView: View {
                         .padding(.top, isIpad ? 60 : 40) // ✅ gives more space below header
                         .scaleEffect(isIpad ? 1.12 : 1.05) // ✅ slightly bigger visually
                         .animation(.easeInOut(duration: 0.4), value: isIpad)
+                        
+                        // Last Updated text
+                        HStack {
+                            Spacer()
+                            Button {
+                                refreshMedalData()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    if isRefreshingMedals {
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                    } else {
+                                        Image(systemName: "arrow.clockwise")
+                                            .font(.caption)
+                                    }
+                                    
+                                    if let lastUpdate = lastMedalUpdate {
+                                        if needsUpdate(from: lastUpdate) {
+                                            if canRefresh() {
+                                                Text("Last Updated \(timeDisplayString(from: lastUpdate)), Update now?")
+                                            } else {
+                                                Text("Last Updated \(timeDisplayString(from: lastUpdate)), Please wait...")
+                                            }
+                                        } else {
+                                            Text("Last Updated \(timeDisplayString(from: lastUpdate))")
+                                        }
+                                    } else {
+                                        if canRefresh() {
+                                            Text("Update medal counts now?")
+                                        } else {
+                                            Text("Please wait before updating again...")
+                                        }
+                                    }
+                                }
+                                .font(.caption)
+                                .foregroundColor(canRefresh() ? .blue : .gray)
+                            }
+                            .disabled(isRefreshingMedals || !canRefresh())
+                            Spacer()
+                        }
+                        .padding(.top, 8)
                         
                         Spacer(minLength: 100)
                         
