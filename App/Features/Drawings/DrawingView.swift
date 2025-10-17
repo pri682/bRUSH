@@ -130,10 +130,35 @@ struct DrawingView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage();
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showCancelAlert = true
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        showDoneAlert = true
+                    }
+                }
+            }
+            .alert("Submit Early?", isPresented: $showDoneAlert) {
+                Button("Submit", role: .destructive) {
+                    saveDrawingAsImage()
                     streakManager.markCompletedToday()
-                    NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0); dismiss() } }
+                    NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+                    dismiss()
+                }
+                Button("Keep Drawing", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to finish? You won't be able to edit this after submitting.")
+            }
+            .alert("Cancel Drawing?", isPresented: $showCancelAlert) {
+                Button("Yes, Cancel", role: .destructive) {
+                    dismiss()
+                }
+                Button("Keep Drawing", role: .cancel) { }
+            } message: {
+                Text("If you cancel, you won't get another chance to draw today. Are you sure?")
             }
             .toolbar(.hidden, for: .tabBar)
             .navigationBarBackButtonHidden(true)
