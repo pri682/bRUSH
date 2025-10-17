@@ -25,27 +25,47 @@ struct DrawingPreviewView: View {
                 .ignoresSafeArea()
 
             if let image = resolvedImage {
-                VStack(spacing: 20) {
-                    Spacer()
-
+                ZStack(alignment: .bottom) {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
                         .cornerRadius(24)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                        )
                         .shadow(radius: 10, y: 5)
+                        .rotation3DEffect(
+                            .degrees(rotationAngle + dragOffset.width),
+                            axis: (x: 0, y: 1, z: 0),
+                            perspective: 0.35
+                        )
+                        .gesture(
+                            DragGesture()
+                                .updating($dragOffset, body: { (value, state, _) in
+                                    state = value.translation
+                                })
+                                .onChanged({ _ in
+                                    isAnimating = false
+                                })
+                                .onEnded({ value in
+                                    self.rotationAngle += value.translation.width
+                                    self.accumulatedRotation = self.rotationAngle
+                                    isAnimating = true
+                                    startAnimation()
+                                })
+                        )
                     
                     VStack(spacing: 12) {
                         Text(item.prompt)
-                            .font(.headline)
+                            .font(.title3)
                             .fontWeight(.semibold)
                             .multilineTextAlignment(.center)
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .glassEffect(.clear.interactive())
-                    .cornerRadius(20)
-                    
-                    Spacer()
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 25)
+                    .glassEffect(.regular.interactive())
+                    .offset(y: -20)
                 }
                 .padding()
                 .navigationTitle(formattedDate)
@@ -62,6 +82,7 @@ struct DrawingPreviewView: View {
                 .sheet(isPresented: $isSharing) {
                     ShareSheet(activityItems: [item.url])
                 }
+                .onAppear(perform: startAnimation)
             } else {
                 ProgressView()
                     .navigationTitle("Loading...")
