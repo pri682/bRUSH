@@ -5,7 +5,10 @@ struct DrawingPreviewView: View {
     
     @State private var isSharing = false
     
-    // This computed property resolves the image for display within your app.
+    private var formattedDate: String {
+        item.date.formatted(date: .long, time: .omitted)
+    }
+    
     private var resolvedImage: UIImage? {
         if let img = item.image {
             return img
@@ -17,30 +20,53 @@ struct DrawingPreviewView: View {
     }
     
     var body: some View {
-        Group {
+        ZStack {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+
             if let image = resolvedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .navigationTitle("Drawing")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button {
-                                // Just toggle the sheet's presentation state.
-                                self.isSharing = true
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                            }
+                VStack(spacing: 20) {
+                    Spacer()
+
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .cornerRadius(24)
+                        .shadow(radius: 10, y: 5)
+                    
+                    VStack(spacing: 12) {
+                        Text(item.prompt)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .glassEffect(.clear.interactive())
+                    .cornerRadius(20)
+                    
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle(formattedDate)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            self.isSharing = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
                         }
                     }
-                    // The sheet now receives the item's URL directly.
-                    .sheet(isPresented: $isSharing) {
-                        ShareSheet(activityItems: [item.url])
-                    }
+                }
+                .sheet(isPresented: $isSharing) {
+                    ShareSheet(activityItems: [item.url])
+                }
             } else {
                 ProgressView()
+                    .navigationTitle("Loading...")
             }
         }
     }
 }
+
