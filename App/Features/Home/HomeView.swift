@@ -17,6 +17,9 @@ struct HomeView: View {
     @State private var drawingPrompt = "What does your brain look like on a happy day?"
     @EnvironmentObject var dataModel: DataModel
 
+    @AppStorage("displayName") private var storedDisplayName: String?
+    @AppStorage("username") private var storedUsername: String?
+
     var body: some View {
         ZStack {
             // Plain background – no gradients
@@ -60,8 +63,7 @@ struct HomeView: View {
                 // Feed – scrollable list of user art posts
                 ScrollView {
                     LazyVStack(spacing: 24) {
-                        // Persistent CTA at the top (no gradient)
-                        FirstPostCTA {
+                        FirstPostCTA(displayName: storedDisplayName ?? "Your Name", handle: (storedUsername?.isEmpty == false ? storedUsername! : "@you")) {
                             isPresentingCreate = true
                         }
                         .padding(.top, 8)
@@ -192,35 +194,160 @@ private struct PostActionsBar: View {
 }
 
 private struct FirstPostCTA: View {
+    let displayName: String
+    let handle: String
     var onCreate: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(UIColor.secondarySystemBackground))
+        VStack(alignment: .leading, spacing: 12) {
+            // Header: avatar + name/handle (crisp)
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 36, height: 36)
+                    .clipShape(Circle())
+                    .foregroundColor(.secondary)
 
-            VStack(spacing: 16) {
-                Image(systemName: "scribble.variable")
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundStyle(.secondary)
-
-                Button(action: onCreate) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "plus")
-                        Text("Draw your first drawing")
-                    }
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-                    .background(Color(UIColor.systemGray5))
-                    .clipShape(Capsule())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(displayName)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text(handle.hasPrefix("@") ? handle : "@\(handle)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
+                Spacer()
             }
-            .padding(24)
+
+            // Post card area: background-only watery blur, foreground sharp
+            ZStack(alignment: .bottomLeading) {
+                let corner: CGFloat = 28
+                // Card background with Apple-like glass material strictly confined to the shape
+                let cardShape = RoundedRectangle(cornerRadius: corner, style: .continuous)
+
+                cardShape
+                    .fill(.clear)
+                    .frame(maxWidth: .infinity)
+                    .aspectRatio(16.0/9.0, contentMode: .fit)
+                    // Use a system Material and mask it to the card shape so it never bleeds
+                    .background(
+                        cardShape
+                            .fill(colorScheme == .dark ? .thinMaterial : .ultraThinMaterial)
+                            // Cool Notification Center tone, very subtle
+                            .overlay(
+                                LinearGradient(
+                                    colors: [
+                                        Color(.sRGB, red: 0.10, green: 0.24, blue: 0.35, opacity: 0.10),
+                                        Color(.sRGB, red: 0.05, green: 0.18, blue: 0.30, opacity: 0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            // Slight neutral darkening for depth
+                            .overlay(
+                                LinearGradient(
+                                    colors: [
+                                        Color.black.opacity(colorScheme == .dark ? 0.14 : 0.08),
+                                        Color.black.opacity(colorScheme == .dark ? 0.10 : 0.05)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .blendMode(.overlay)
+                            )
+                            // Ensure all of the above is strictly inside the rounded rect
+                            .compositingGroup()
+                            .mask(cardShape)
+                    )
+                    // Subtle watery depth kept inside the shape
+                    .overlay(
+                        ZStack {
+                            Circle()
+                                .fill(Color.black.opacity(0.06))
+                                .frame(width: 300, height: 300)
+                                .blur(radius: 28)
+                                .offset(x: -60, y: -6)
+
+                            Circle()
+                                .fill(Color.black.opacity(0.05))
+                                .frame(width: 230, height: 230)
+                                .blur(radius: 24)
+                                .offset(x: 80, y: 24)
+
+                            Ellipse()
+                                .fill(Color.black.opacity(0.045))
+                                .frame(width: 360, height: 160)
+                                .blur(radius: 26)
+                                .offset(y: 56)
+
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.05),
+                                    Color.white.opacity(0.01)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            .opacity(0.5)
+                        }
+                        .compositingGroup()
+                        .mask(cardShape)
+                    )
+                    // Keep the CTA crisp above the blur
+                    .overlay(
+                        ZStack {
+                            Button(action: onCreate) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "plus")
+                                    Text("Let’s create your first drawing")
+                                }
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 12)
+                                .background(Color(UIColor.systemBackground).opacity(0.92))
+                                .clipShape(Capsule())
+                                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    )
+                    // Crisp inner/outer edge definition like iOS glass
+                    .overlay(
+                        cardShape.strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+                    )
+
+                // Medal buttons – reuse spacing/sizing from feed (crisp)
+                HStack(spacing: 14) {
+                    medalPill(systemName: "medal.fill", color: .yellow, text: "0")
+                    medalPill(systemName: "medal.fill", color: .gray, text: "0")
+                    medalPill(systemName: "medal.fill", color: .orange, text: "0")
+                }
+                .padding(.leading, 12)
+                .padding(.bottom, 12)
+            }
         }
-        .aspectRatio(16.0/9.0, contentMode: .fit)
+    }
+
+    @ViewBuilder
+    private func medalPill(systemName: String, color: Color, text: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemName)
+                .foregroundColor(color)
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(UIColor.systemBackground).opacity(0.85))
+        )
     }
 }
 
