@@ -3,6 +3,8 @@ import UIKit
 
 struct UserFeedItemView: View {
     let item: FeedItem
+    // When false, the post should be visually redacted/blurred for the user
+    var isRevealed: Bool = true
 
     @State private var goldCount: Int
     @State private var silverCount: Int
@@ -10,16 +12,18 @@ struct UserFeedItemView: View {
     @State private var goldSelected: Bool = false
     @State private var silverSelected: Bool = false
     @State private var bronzeSelected: Bool = false
+    @State private var resolvedUIImage: UIImage? = nil
 
-    init(item: FeedItem) {
+    init(item: FeedItem, isRevealed: Bool = true) {
         self.item = item
+        self.isRevealed = isRevealed
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    VStack(alignment: .leading, spacing: 12) {
             // Header: profile + name/username
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: item.profileSystemImageName)
@@ -48,12 +52,30 @@ struct UserFeedItemView: View {
                     .aspectRatio(16.0/9.0, contentMode: .fit)
                     .overlay(
                         Group {
-                            if let name = item.artImageName, UIImage(named: name) != nil {
-                                Image(name)
-                                    .resizable()
-                                    .scaledToFill()
-                            } else if let artSymbol = item.artSystemImageName {
-                                Image(systemName: artSymbol)
+                            if isRevealed {
+                                if let ui = resolvedUIImage {
+                                    Image(uiImage: ui)
+                                        .resizable()
+                                        .scaledToFill()
+                                } else if let url = item.artImageURL, FileManager.default.fileExists(atPath: url.path) {
+                                    // load the local image only when revealed
+                                    Color.clear.onAppear {
+                                        loadImage(from: url)
+                                    }
+                                } else if let name = item.artImageName, UIImage(named: name) != nil {
+                                    Image(name)
+                                        .resizable()
+                                        .scaledToFill()
+                                } else if let artSymbol = item.artSystemImageName {
+                                    Image(systemName: artSymbol)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundColor(Color(UIColor.tertiaryLabel))
+                                        .padding(48)
+                                }
+                            } else {
+                                // Not revealed: show a neutral placeholder (no real image load)
+                                Image(systemName: "photo.on.rectangle.angled")
                                     .resizable()
                                     .scaledToFit()
                                     .foregroundColor(Color(UIColor.tertiaryLabel))
@@ -72,6 +94,7 @@ struct UserFeedItemView: View {
                 .padding(12)
             }
         }
+        .redacted(reason: isRevealed ? [] : .placeholder)
     }
 
     @ViewBuilder
@@ -107,13 +130,28 @@ struct UserFeedItemView: View {
     }
 }
 
+private extension UserFeedItemView {
+    func loadImage(from url: URL) {
+        // Avoid reloading if already set
+        guard resolvedUIImage == nil else { return }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    resolvedUIImage = image
+                }
+            }
+        }
+    }
+}
+
 #Preview {
     UserFeedItemView(item: FeedItem(
         displayName: "Preview User",
         username: "@preview",
         profileSystemImageName: "person.circle.fill",
         artSystemImageName: "photo.on.rectangle.angled",
-        artImageName: nil,
+        artImageName: nil, artImageURL: nil,
         medalGold: 3,
         medalSilver: 2,
         medalBronze: 1,
