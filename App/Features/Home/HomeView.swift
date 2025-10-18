@@ -274,6 +274,8 @@ private struct PostActionsBar: View {
 }
 
 private struct FirstPostCTA: View {
+    let displayName: String
+    let handle: String
     var onCreate: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
