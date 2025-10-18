@@ -125,9 +125,6 @@ struct DrawingView: View {
                 .onAppear {
                     setupCanvas()
                     hasSubmitted = false
-                    timeRemaining -= 1
-                } else {
-                    saveDrawingAsImage(); dismiss()
                 }
                 .onDisappear {
                     timer.upstream.connect().cancel()
@@ -192,18 +189,17 @@ struct DrawingView: View {
                 .glassEffect(.regular.interactive())
                 .glassEffectID("undoButton", in: namespace)
 
-                if canRedo {
-                    Button {
-                        pkCanvasView.undoManager?.redo()
-                        updateUndoRedoState()
-                    } label: {
-                        Image(systemName: "arrow.uturn.forward")
-                    }
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
-                    .glassEffect(.regular.interactive())
-                    .glassEffectID("redoButton", in: namespace)
+                Button {
+                    pkCanvasView.undoManager?.redo()
+                    updateUndoRedoState()
+                } label: {
+                    Image(systemName: "arrow.uturn.forward")
                 }
+                .disabled(!canRedo)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .glassEffect(.regular.interactive())
+                .glassEffectID("redoButton", in: namespace)
             }
         }
         .animation(.spring(response: 0.8, dampingFraction: 0.8), value: canRedo)
@@ -423,6 +419,24 @@ struct DrawingView: View {
         }
     }
     
+    private func submitDrawing() {
+        hasSubmitted = true
+        saveDrawingAsImage()
+        
+        streakManager.markCompletedToday()
+        NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+        
+        withAnimation(.spring()) {
+            showSubmittedPopup = true
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                dismiss()
+            }
+        }
+    }
+
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
