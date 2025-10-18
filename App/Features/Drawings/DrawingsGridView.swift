@@ -4,6 +4,7 @@ struct DrawingsGridView: View {
     @EnvironmentObject var dataModel: DataModel
     @State private var isAddingNewDrawing = false
     @State private var drawingPrompt = "What does your brain look like on a happy day?"
+    @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
     
     private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
@@ -24,6 +25,9 @@ struct DrawingsGridView: View {
                 NavigationStack {
                     DrawingView(onSave: { newItem in
                         dataModel.addItem(newItem)
+                        // Mark that the user has posted today so other parts of the app react (CTA -> Prompt chip)
+                        PostState.markPostedToday()
+                        hasPostedToday = true
                     }, prompt: drawingPrompt)
                 }
             }
