@@ -1,27 +1,29 @@
 import SwiftUI
 import PencilKit
+import Combine
 
 struct DrawingView: View {
-    // onSave now provides the URL of the saved JPG and the UIImage for the preview cache
-    let onSave: (URL, UIImage) -> Void
+    let onSave: (Item) -> Void
+    let prompt: String
     
     @State private var pkCanvasView = PKCanvasView()
     @State private var streakManager = StreakManager()
     @Environment(\.dismiss) var dismiss
     @Environment(\.displayScale) var displayScale
     
-    // State to track whether undo/redo is available
     @State private var canUndo = false
     @State private var canRedo = false
+    @Namespace private var namespace
     
-    // State for the selected canvas theme, defaulting to a white color
     @State private var selectedTheme: CanvasTheme = .color(.white)
-    // State to manage the color for the ColorPicker
     @State private var customColor: Color = .white
-    // State to present the theme picker as a modern sheet
     @State private var isThemePickerPresented = false
+    @State private var isPromptPresented = true
+    
+    private let totalTime: Double = 900
+        @State private var timeRemaining: Double = 900
+        @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    // Enum to define the available canvas themes
     enum CanvasTheme: Equatable, Identifiable {
         case color(Color)
         case texture(String)
@@ -46,16 +48,9 @@ struct DrawingView: View {
     
     // A list of available texture assets
     private let textureAssets = [
-        "notebook",
-        "canvas",
-        "sticky note",
-        "scroll",
-        "chalkboard",
-        "classroom",
-        "wall",
-        "brick",
-        "grass",
-        "underwater"
+        "notebook", "canvas", "Sticky Note", "scroll",
+        "chalkboard", "Classroom", "bathroom", "Wall",
+        "Brick", "Grass", "Underwater"
     ]
 
     var body: some View {
@@ -64,14 +59,33 @@ struct DrawingView: View {
             .overlay(
                 VStack(spacing: 0) {
                     Spacer(minLength: 16)
-                    canvasView
-                        .aspectRatio(9/16, contentMode: .fit)
+                    
+                    ZStack {
+                        ProgressBorder(
+                            progress: CGFloat(timeRemaining / totalTime),
+                            cornerRadius: 45,
+                            lineWidth: 6
+                        )
+                        .animation(.linear(duration: 1.0), value: timeRemaining)
+                        
+                        canvasView
+                            .padding(10)
+                    }
+                    .aspectRatio(9/16, contentMode: .fit)
+                    
                     Spacer(minLength: 80)
                 }
                 .padding(.horizontal, 16)
             )
             .onAppear(perform: setupCanvas)
             .onChange(of: customColor) { selectedTheme = .color(customColor) }
+            .onReceive(timer) { _ in
+                if timeRemaining > 0 {
+                    timeRemaining -= 1
+                } else {
+                    saveDrawingAsImage(); dismiss()
+                }
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
@@ -83,24 +97,61 @@ struct DrawingView: View {
             .navigationBarBackButtonHidden(true)
     }
 
+    private var undoRedoControls: some View {
+        GlassEffectContainer(spacing: 12) {
+            HStack(spacing: 12) {
+                Button {
+                    pkCanvasView.undoManager?.undo()
+                    updateUndoRedoState()
+                } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                }
+                .disabled(!canUndo)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .glassEffect()
+                .glassEffectID("undoButton", in: namespace)
+
+                if canRedo {
+                    Button {
+                        pkCanvasView.undoManager?.redo()
+                        updateUndoRedoState()
+                    } label: {
+                        Image(systemName: "arrow.uturn.forward")
+                    }
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .glassEffect()
+                    .glassEffectID("redoButton", in: namespace)
+                }
+            }
+        }
+        .animation(.spring(response: 0.8, dampingFraction: 0.8), value: canRedo)
+    }
+
     private var canvasView: some View {
         ZStack(alignment: .top) {
             PKCanvas(canvasView: $pkCanvasView, onDrawingChanged: updateUndoRedoState)
             
             HStack {
                 if UIDevice.current.userInterfaceIdiom == .phone {
-                    // iPhone Left side: Undo/Redo Buttons
-                    HStack {
-                        Button { pkCanvasView.undoManager?.undo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.backward").font(.title2) }.disabled(!canUndo).padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 4))
-                        Divider().frame(height: 20)
-                        Button { pkCanvasView.undoManager?.redo(); updateUndoRedoState() } label: { Image(systemName: "arrow.uturn.forward").font(.title2) }.disabled(!canRedo).padding(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 16))
-                    }
-                    .glassEffect(.regular.interactive())
+                    undoRedoControls
                     
                     Spacer()
 
-                    // iPhone Right side: Theme & Prompt Buttons
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
+                        Button {
+                            isPromptPresented.toggle()
+                        } label: {
+                            Image(systemName: "lightbulb")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                                .glassEffect(.regular.interactive())
+                        }
+                        .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                            promptView
+                        }
+                        
                         Button {
                             isThemePickerPresented = true
                         } label: {
@@ -111,18 +162,30 @@ struct DrawingView: View {
                         }
                         .sheet(isPresented: $isThemePickerPresented) {
                             themePickerView
+                                .presentationDetents([.fraction(0.8), .large])
                         }
-                        
-                        Button {
-                            // Later: show drawing prompt
-                        } label: {
-                            Image(systemName: "lightbulb")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
+                        .onChange(of: isThemePickerPresented) { oldValue, newValue in
+                            if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
+                                picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                            }
                         }
                     }
                 } else {
+                    // iPad Right side: Prompt Button
+                    Button {
+                        isPromptPresented.toggle()
+                    } label: {
+                        Image(systemName: "lightbulb")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                            .glassEffect(.regular.interactive())
+                    }
+                    .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                        promptView
+                    }
+                    
+                    Spacer()
+                    
                     // iPad Left side: Theme Button
                     Button {
                         isThemePickerPresented = true
@@ -135,18 +198,6 @@ struct DrawingView: View {
                     .sheet(isPresented: $isThemePickerPresented) {
                         themePickerView
                     }
-                    
-                    Spacer()
-                    
-                    // iPad Right side: Prompt Button
-                    Button {
-                        // Later: show drawing prompt
-                    } label: {
-                        Image(systemName: "lightbulb")
-                            .font(.title)
-                            .frame(width: 54, height: 54)
-                            .glassEffect(.regular.interactive())
-                    }
                 }
             }
             .foregroundColor(.accentColor)
@@ -156,6 +207,11 @@ struct DrawingView: View {
         .background(canvasBackground)
         .cornerRadius(34)
         .shadow(radius: 5)
+        .onTapGesture {
+            if isPromptPresented {
+                isPromptPresented = false
+            }
+        }
     }
     
     // MARK: - Subviews
@@ -175,7 +231,7 @@ struct DrawingView: View {
                                 isThemePickerPresented = false
                             } label: {
                                 VStack {
-                                    Image(assetName)
+                                    Image(assetName: assetName)
                                         .resizable().scaledToFill()
                                         .frame(width: 60, height: 60)
                                         .clipShape(Circle())
@@ -198,6 +254,39 @@ struct DrawingView: View {
                         .foregroundColor(.primary)
                 }
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var promptView: some View {
+        let content = Text(prompt)
+            .font(.title)
+            .fontWeight(.bold)
+            .lineSpacing(15)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.vertical, 25)
+            .padding(.horizontal, 40)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [
+                        Color(red: 1.0, green: 0.35, blue: 0.2),
+                        Color(red: 1.0, green: 0.25, blue: 0.25),
+                        Color(red: 0.95, green: 0.4, blue: 0.15)
+                    ],
+                    startPoint: .bottomTrailing,
+                    endPoint: .topLeading
+                )
+            )
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            content
+                .frame(width: 500)
+                .presentationCompactAdaptation(.popover)
+        } else {
+            content
+                .frame(width: 450)
+                .presentationCompactAdaptation(.popover)
         }
     }
     
@@ -230,61 +319,107 @@ struct DrawingView: View {
     }
     
     private func updateUndoRedoState() {
-        canUndo = pkCanvasView.undoManager?.canUndo ?? false
-        canRedo = pkCanvasView.undoManager?.canRedo ?? false
+        withAnimation(.spring()) {
+            canUndo = pkCanvasView.undoManager?.canUndo ?? false
+            canRedo = pkCanvasView.undoManager?.canRedo ?? false
+        }
     }
     
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
         let filename = UUID().uuidString + ".jpg"
+        
         if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename) {
-            try? data.write(to: fileURL, options: .atomic)
-            onSave(fileURL, image)
+            do {
+                try data.write(to: fileURL, options: .atomic)
+                
+                let newItem = Item(
+                    id: UUID(uuidString: filename.replacingOccurrences(of: ".jpg", with: ""))!,
+                    url: fileURL,
+                    prompt: self.prompt,
+                    date: Date(),
+                    image: image
+                )
+                
+                onSave(newItem)
+                
+            } catch {
+                print("Error saving image: \(error)")
+            }
         }
     }
     
     private func createCompositeImage() -> UIImage {
-        let canvasSize = pkCanvasView.bounds.size
-        let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        let canvasBounds = pkCanvasView.bounds
+        let renderer = UIGraphicsImageRenderer(size: canvasBounds.size)
         
         return renderer.image { context in
-            let backgroundColor: UIColor = {
-                if case .color(let c) = selectedTheme {
-                    return c.toUIColor()
+            switch selectedTheme {
+            case .color(let color):
+                color.toUIColor().setFill()
+                context.fill(canvasBounds)
+                
+            case .texture(let name):
+                guard let textureImage = UIImage(named: name) else {
+                    UIColor.white.setFill()
+                    context.fill(canvasBounds)
+                    break
                 }
-                return .white
-            }()
-            backgroundColor.setFill()
-            context.fill(CGRect(origin: .zero, size: canvasSize))
-
-            if case .texture(let name) = selectedTheme, let textureImage = UIImage(named: name) {
-                let imageSize = textureImage.size
-                let canvasRect = CGRect(origin: .zero, size: canvasSize)
                 
-                let aspectWidth = canvasRect.width / imageSize.width
-                let aspectHeight = canvasRect.height / imageSize.height
-                let aspectRatio = min(aspectWidth, aspectHeight)
+                let canvasAspect = canvasBounds.width / canvasBounds.height
+                let imageAspect = textureImage.size.width / textureImage.size.height
                 
-                let scaledSize = CGSize(width: imageSize.width * aspectRatio, height: imageSize.height * aspectRatio)
-                
-                let drawingRect = CGRect(
-                    x: (canvasRect.width - scaledSize.width) / 2.0,
-                    y: (canvasRect.height - scaledSize.height) / 2.0,
-                    width: scaledSize.width,
-                    height: scaledSize.height
-                )
-                
-                textureImage.draw(in: drawingRect)
+                var drawRect: CGRect
+                if canvasAspect > imageAspect {
+                    let scaledHeight = canvasBounds.width / imageAspect
+                    drawRect = CGRect(x: 0, y: (canvasBounds.height - scaledHeight) / 2.0, width: canvasBounds.width, height: scaledHeight)
+                } else {
+                    let scaledWidth = canvasBounds.height * imageAspect
+                    drawRect = CGRect(x: (canvasBounds.width - scaledWidth) / 2.0, y: 0, width: scaledWidth, height: canvasBounds.height)
+                }
+                textureImage.draw(in: drawRect)
             }
             
-            let drawingImage = pkCanvasView.drawing.image(from: pkCanvasView.bounds, scale: displayScale)
-            drawingImage.draw(in: CGRect(origin: .zero, size: canvasSize))
+            let drawingImage = pkCanvasView.drawing.image(from: canvasBounds, scale: displayScale)
+            drawingImage.draw(in: canvasBounds)
         }
     }
 }
 
-// MARK: - Helpers
+struct ProgressBorder: View {
+    var progress: CGFloat
+    var cornerRadius: CGFloat
+    var lineWidth: CGFloat
+    
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .inset(by: lineWidth / 2)
+                .stroke(Color.accentColor.opacity(0.2), lineWidth: lineWidth)
+            
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .inset(by: lineWidth / 2)
+                .trim(from: 0, to: progress)
+                .stroke(
+                    Color.accentColor,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
+                )
+        }
+    }
+}
+
+extension Image {
+    init(assetName: String) {
+        if UIImage(named: assetName) != nil {
+            self.init(assetName)
+        } else if UIImage(named: assetName.lowercased()) != nil {
+            self.init(assetName.lowercased())
+        } else {
+            self.init(systemName: "exclamationmark.triangle")
+        }
+    }
+}
 
 extension Color {
     func toUIColor() -> UIColor { UIColor(self) }

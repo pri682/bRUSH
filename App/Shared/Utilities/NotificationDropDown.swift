@@ -34,7 +34,6 @@ struct NotificationsDropdown: View {
                             
                             HStack(alignment: .top, spacing: 12) {
                                 Image(systemName: "bell.fill")
-                                    .foregroundColor(.pink)
                                     .font(.title3)
                                 
                                 VStack(alignment: .leading, spacing: 4) {

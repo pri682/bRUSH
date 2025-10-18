@@ -2,17 +2,22 @@ import SwiftUI
 
 struct Item: Identifiable, Codable, Equatable {
     let id: UUID
-    var url: URL         // URL for the saved JPG image
-    var image: UIImage?  // In-memory cache for the loaded image
+    let url: URL          // URL for the saved JPG image
+    let prompt: String    // The prompt used for the drawing
+    let date: Date        // The date the drawing was saved
+    var image: UIImage?   // In-memory cache for the loaded image
 
-    // The 'image' property is for in-memory use only and should not be saved to JSON.
+    // Add the new properties to the CodingKeys so they get saved to JSON.
     enum CodingKeys: String, CodingKey {
-        case id, url
+        case id, url, prompt, date
     }
 
-    init(id: UUID = UUID(), url: URL, image: UIImage? = nil) {
+    // Update the initializer to include the new properties.
+    init(id: UUID = UUID(), url: URL, prompt: String, date: Date, image: UIImage? = nil) {
         self.id = id
         self.url = url
+        self.prompt = prompt
+        self.date = date
         self.image = image
     }
 

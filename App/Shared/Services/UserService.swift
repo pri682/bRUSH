@@ -8,6 +8,22 @@ public struct UserProfile: Codable, Equatable {
     let lastName: String
     var displayName: String
     let email: String
+    var avatarBackground: String?
+    var avatarFace: String?
+    var avatarEyes: String?
+    var avatarMouth: String?
+    var avatarHair: String?
+    
+    // Medal and statistics fields
+    var goldMedalsAccumulated: Int
+    var silverMedalsAccumulated: Int
+    var bronzeMedalsAccumulated: Int
+    var goldMedalsAwarded: Int
+    var silverMedalsAwarded: Int
+    var bronzeMedalsAwarded: Int
+    var totalDrawingCount: Int
+    var streakCount: Int
+    var memberSince: Date
 }
 
 final class UserService {
@@ -21,14 +37,41 @@ final class UserService {
         let uid = userProfile.uid
         let userRef = db.collection(usersCollection).document(uid)
         
-        let profileData: [String: Any] = [
+        var profileData: [String: Any] = [
             "uid": uid,
             "firstName": userProfile.firstName,
             "lastName": userProfile.lastName,
             "displayName": userProfile.displayName,
             "email": userProfile.email.lowercased(),
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
+            // Medal and statistics fields - initialized to 0
+            "goldMedalsAccumulated": userProfile.goldMedalsAccumulated,
+            "silverMedalsAccumulated": userProfile.silverMedalsAccumulated,
+            "bronzeMedalsAccumulated": userProfile.bronzeMedalsAccumulated,
+            "goldMedalsAwarded": userProfile.goldMedalsAwarded,
+            "silverMedalsAwarded": userProfile.silverMedalsAwarded,
+            "bronzeMedalsAwarded": userProfile.bronzeMedalsAwarded,
+            "totalDrawingCount": userProfile.totalDrawingCount,
+            "streakCount": userProfile.streakCount,
+            "memberSince": userProfile.memberSince
         ]
+        
+        // Add avatar fields if they exist
+        if let background = userProfile.avatarBackground {
+            profileData["avatarBackground"] = background
+        }
+        if let face = userProfile.avatarFace {
+            profileData["avatarFace"] = face
+        }
+        if let eyes = userProfile.avatarEyes {
+            profileData["avatarEyes"] = eyes
+        }
+        if let mouth = userProfile.avatarMouth {
+            profileData["avatarMouth"] = mouth
+        }
+        if let hair = userProfile.avatarHair {
+            profileData["avatarHair"] = hair
+        }
         
         // This is the single critical database write
         try await userRef.setData(profileData)
@@ -44,12 +87,74 @@ final class UserService {
         guard let data = doc.data() else {
             throw AuthError.backend("Profile not found.")
         }
-        return try Firestore.Decoder().decode(UserProfile.self, from: data)
+        
+        // Manual decoding to handle missing avatar fields in existing profiles
+        guard let uid = data["uid"] as? String,
+              let firstName = data["firstName"] as? String,
+              let lastName = data["lastName"] as? String,
+              let displayName = data["displayName"] as? String,
+              let email = data["email"] as? String else {
+            throw AuthError.backend("Invalid profile data.")
+        }
+        
+        let avatarBackground = data["avatarBackground"] as? String
+        let avatarFace = data["avatarFace"] as? String
+        let avatarEyes = data["avatarEyes"] as? String
+        let avatarMouth = data["avatarMouth"] as? String
+        let avatarHair = data["avatarHair"] as? String
+        
+        // Medal and statistics fields - default to 0 if not present (for existing profiles)
+        let goldMedalsAccumulated = data["goldMedalsAccumulated"] as? Int ?? 0
+        let silverMedalsAccumulated = data["silverMedalsAccumulated"] as? Int ?? 0
+        let bronzeMedalsAccumulated = data["bronzeMedalsAccumulated"] as? Int ?? 0
+        let goldMedalsAwarded = data["goldMedalsAwarded"] as? Int ?? 0
+        let silverMedalsAwarded = data["silverMedalsAwarded"] as? Int ?? 0
+        let bronzeMedalsAwarded = data["bronzeMedalsAwarded"] as? Int ?? 0
+        let totalDrawingCount = data["totalDrawingCount"] as? Int ?? 0
+        let streakCount = data["streakCount"] as? Int ?? 0
+        let memberSince = (data["memberSince"] as? Timestamp)?.dateValue() ?? Date()
+        
+        return UserProfile(
+            uid: uid,
+            firstName: firstName,
+            lastName: lastName,
+            displayName: displayName,
+            email: email,
+            avatarBackground: avatarBackground,
+            avatarFace: avatarFace,
+            avatarEyes: avatarEyes,
+            avatarMouth: avatarMouth,
+            avatarHair: avatarHair,
+            goldMedalsAccumulated: goldMedalsAccumulated,
+            silverMedalsAccumulated: silverMedalsAccumulated,
+            bronzeMedalsAccumulated: bronzeMedalsAccumulated,
+            goldMedalsAwarded: goldMedalsAwarded,
+            silverMedalsAwarded: silverMedalsAwarded,
+            bronzeMedalsAwarded: bronzeMedalsAwarded,
+            totalDrawingCount: totalDrawingCount,
+            streakCount: streakCount,
+            memberSince: memberSince
+        )
     }
     
     func updateProfile(uid: String, data: [String: Any]) async throws {
         let userRef = db.collection(usersCollection).document(uid)
         try await userRef.updateData(data)
+    }
+    
+    // MARK: - Date Formatting Utility
+    static func formatMemberSinceDate(_ date: Date) -> (year: String, monthDay: String) {
+        let formatter = DateFormatter()
+        
+        // Get year
+        formatter.dateFormat = "yyyy"
+        let year = formatter.string(from: date)
+        
+        // Get month abbreviation and day
+        formatter.dateFormat = "MMM d"
+        let monthDay = formatter.string(from: date)
+        
+        return (year: year, monthDay: monthDay)
     }
 
 }

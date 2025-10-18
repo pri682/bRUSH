@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct GridItemView: View {
+    @EnvironmentObject var dataModel: DataModel
     let size: Double
     let item: Item
     
@@ -15,9 +16,14 @@ struct GridItemView: View {
                 ProgressView() // Shows while the preview is loading
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: size, height: size * (16 / 9))
         .clipped()
         .cornerRadius(8.0)
         .shadow(radius: 5)
+        .onAppear {
+            if item.image == nil {
+                dataModel.loadImage(for: item.id)
+            }
+        }
     }
 }
