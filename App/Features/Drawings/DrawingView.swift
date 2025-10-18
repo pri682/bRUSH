@@ -13,6 +13,8 @@ struct DrawingView: View {
     
     @State private var showDoneAlert = false
     @State private var showCancelAlert = false
+    @State private var showSubmittedPopup = false
+    @State private var hasSubmitted = false
     
     @State private var canUndo = false
     @State private var canRedo = false
@@ -94,74 +96,82 @@ struct DrawingView: View {
 
 
     var body: some View {
-        Color(uiColor: .systemGray6)
-            .ignoresSafeArea()
-            .overlay(
-                VStack(spacing: 0) {
-                    Spacer(minLength: 16)
-                    
-                    ZStack {
-                        ProgressBorder(
-                            progress: CGFloat(timeRemaining / totalTime),
-                            cornerRadius: 40,
-                            lineWidth: 6,
-                            color: timerColor
-                        )
-                        .scaleEffect(x: -1, y: 1)
-                        .animation(.linear(duration: 1.0), value: timeRemaining)
+        ZStack {
+            Color(uiColor: .systemGray6)
+                .ignoresSafeArea()
+                .overlay(
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 16)
                         
-                        canvasView
-                            .padding(6)
+                        ZStack {
+                            ProgressBorder(
+                                progress: CGFloat(timeRemaining / totalTime),
+                                cornerRadius: 40,
+                                lineWidth: 6,
+                                color: timerColor
+                            )
+                            .scaleEffect(x: -1, y: 1)
+                            .animation(.linear(duration: 1.0), value: timeRemaining)
+                            
+                            canvasView
+                                .padding(6)
+                        }
+                        .aspectRatio(9/16, contentMode: .fit)
+                        
+                        Spacer(minLength: 80)
                     }
-                    .aspectRatio(9/16, contentMode: .fit)
-                    
-                    Spacer(minLength: 80)
+                    .padding(.horizontal, 16)
+                )
+                .onAppear {
+                    setupCanvas()
+                    hasSubmitted = false
                 }
-                .padding(.horizontal, 16)
-            )
-            .onAppear(perform: setupCanvas)
-            .onChange(of: customColor) { selectedTheme = .color(customColor) }
-            .onReceive(timer) { _ in
-                if timeRemaining > 0 {
-                    timeRemaining -= 1
-                } else {
-                    saveDrawingAsImage(); dismiss()
+                .onDisappear {
+                    timer.upstream.connect().cancel()
                 }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        showCancelAlert = true
+                .onChange(of: customColor) { selectedTheme = .color(customColor) }
+                .onReceive(timer) { _ in
+                    if timeRemaining > 0 {
+                        timeRemaining -= 1
+                    } else {
+                        submitDrawing()
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        showDoneAlert = true
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showCancelAlert = true }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showDoneAlert = true }
                     }
                 }
-            }
-            .alert("Submit Early?", isPresented: $showDoneAlert) {
-                Button("Submit", role: .destructive) {
-                    saveDrawingAsImage()
-                    streakManager.markCompletedToday()
-                    NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
-                    dismiss()
+                .alert("Submit Early?", isPresented: $showDoneAlert) {
+                    Button("Submit", role: .destructive) {
+                        submitDrawing()
+                    }
+                    Button("Keep Drawing", role: .cancel) { }
+                } message: {
+                    Text("Are you sure you want to finish? You won't be able to edit this after submitting.")
                 }
-                Button("Keep Drawing", role: .cancel) { }
-            } message: {
-                Text("Are you sure you want to finish? You won't be able to edit this after submitting.")
-            }
-            .alert("Cancel Drawing?", isPresented: $showCancelAlert) {
-                Button("Yes, Cancel", role: .destructive) {
-                    dismiss()
+                .alert("Cancel Drawing?", isPresented: $showCancelAlert) {
+                    Button("Yes, Cancel", role: .destructive) {
+                        dismiss()
+                    }
+                    Button("Keep Drawing", role: .cancel) { }
+                } message: {
+                    Text("If you cancel, you won't get another chance to draw today. Are you sure?")
                 }
-                Button("Keep Drawing", role: .cancel) { }
-            } message: {
-                Text("If you cancel, you won't get another chance to draw today. Are you sure?")
+                .disabled(showSubmittedPopup)
+                .toolbar(.hidden, for: .tabBar)
+                .navigationBarBackButtonHidden(true)
+
+            if showSubmittedPopup {
+                submittedPopup
+                    .zIndex(1)
+                    .transition(.scale.combined(with: .opacity))
             }
-            .toolbar(.hidden, for: .tabBar)
-            .navigationBarBackButtonHidden(true)
+        }
     }
 
     private var undoRedoControls: some View {
@@ -179,18 +189,17 @@ struct DrawingView: View {
                 .glassEffect(.regular.interactive())
                 .glassEffectID("undoButton", in: namespace)
 
-                if canRedo {
-                    Button {
-                        pkCanvasView.undoManager?.redo()
-                        updateUndoRedoState()
-                    } label: {
-                        Image(systemName: "arrow.uturn.forward")
-                    }
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
-                    .glassEffect(.regular.interactive())
-                    .glassEffectID("redoButton", in: namespace)
+                Button {
+                    pkCanvasView.undoManager?.redo()
+                    updateUndoRedoState()
+                } label: {
+                    Image(systemName: "arrow.uturn.forward")
                 }
+                .disabled(!canRedo)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .glassEffect(.regular.interactive())
+                .glassEffectID("redoButton", in: namespace)
             }
         }
         .animation(.spring(response: 0.8, dampingFraction: 0.8), value: canRedo)
@@ -379,6 +388,22 @@ struct DrawingView: View {
         }
     }
     
+    @ViewBuilder
+    private var submittedPopup: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 70))
+                .foregroundColor(.green)
+            
+            Text("Submitted!")
+                .font(.title)
+                .fontWeight(.bold)
+        }
+        .padding(35)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 25))
+        .transition(.scale(scale: 0.5).combined(with: .opacity))
+    }
+    
     // MARK: - Functions
     
     private func setupCanvas() {
@@ -394,6 +419,24 @@ struct DrawingView: View {
         }
     }
     
+    private func submitDrawing() {
+        hasSubmitted = true
+        saveDrawingAsImage()
+        
+        streakManager.markCompletedToday()
+        NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+        
+        withAnimation(.spring()) {
+            showSubmittedPopup = true
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                dismiss()
+            }
+        }
+    }
+
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
