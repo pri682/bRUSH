@@ -21,6 +21,8 @@ class DataModel: ObservableObject {
     /// Adds a new item to the collection.
     func addItem(_ item: Item) {
         items.insert(item, at: 0)
+        // Notify other parts of the app that a new item was created so feeds can update
+        NotificationCenter.default.post(name: .didAddItem, object: item)
     }
 
     /// Loads a specific image from its URL into the in-memory cache.
