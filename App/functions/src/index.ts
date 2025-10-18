@@ -1,32 +1,87 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+import { onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import fetch from "node-fetch";
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+// Reusable function for both HTTP + scheduled
+async function generatePrompt() {
+  const examples = [
+    "What does your brain look like on a happy day?",
+    "Redesign money if it didn’t have numbers.",
+    "If emotions had uniforms, what would 'curiosity' wear?",
+    "Draw the weather inside your head right now.",
+    "Merge two animals that would never meet in real life.",
+    "Turn your favorite song into a creature.",
+    "If dreams had traffic rules, sketch a traffic sign.",
+    "Design a chair for an alien.",
+    "Reimagine Earth if gravity took weekends off.",
+    "Draw a plant that grows emotions instead of fruits.",
+    "If your shadow had a personality, what would it be doing?",
+    "Combine two holidays into one chaotic celebration.",
+    "Design footwear for a time traveler.",
+    "What would your phone look like if it had feelings?",
+    "Create a Pokémon inspired by your morning routine.",
+    "Draw a cloud that just got promoted.",
+    "Reimagine your favorite snack as a superhero.",
+    "Sketch 'Monday' as a living thing.",
+    "Draw a transportation method powered by laughter.",
+    "If colors could argue, draw their fight.",
+  ];
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+  const randomExamples = examples.sort(() => 0.5 - Math.random()).slice(0, 5);
+  const exampleText = randomExamples.join("\n");
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const body = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `You are a creative art prompt generator.
+Here are some example prompts for inspiration:
+${exampleText}
+
+Now create ONE new, original, imaginative, and funny drawing prompt (under 15 words) that matches this style. Return only the new prompt.`,
+          },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const data: any = await response.json();
+  const generatedText =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p: any) => p.text)
+      .join(" ")
+      ?.trim() || "No response generated.";
+
+  console.log("🎨 Daily prompt:", generatedText);
+  return { success: true, prompt: generatedText, raw: data };
+}
+
+// ✅ HTTP trigger for manual testing
+export const generateDailyPrompt = onRequest(async (_req, res) => {
+  try {
+    const result = await generatePrompt();
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ✅ Automatic trigger every 24 hours
+export const autoGeneratePrompt = onSchedule("every 24 hours", async () => {
+  try {
+    const result = await generatePrompt();
+    console.log("✅ Automatically generated daily prompt:", result.prompt);
+  } catch (err) {
+    console.error("❌ Failed to auto-generate prompt:", err);
+  }
+});
