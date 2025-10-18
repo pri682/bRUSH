@@ -9,6 +9,8 @@ struct FeedItem: Identifiable {
     let profileSystemImageName: String
     let artSystemImageName: String?
     let artImageName: String?
+    /// Optional URL on disk for a saved drawing image
+    let artImageURL: URL?
     let medalGold: Int
     let medalSilver: Int
     let medalBronze: Int
@@ -40,6 +42,7 @@ final class HomeViewModel: ObservableObject {
             profileSystemImageName: "person.circle.fill",
             artSystemImageName: "photo.on.rectangle.angled",
             artImageName: "sample_drawing",
+            artImageURL: nil,
             medalGold: 12,
             medalSilver: 5,
             medalBronze: 2,
@@ -54,6 +57,7 @@ final class HomeViewModel: ObservableObject {
             profileSystemImageName: "person.crop.circle.fill",
             artSystemImageName: "scribble",
             artImageName: nil,
+            artImageURL: nil,
             medalGold: 7,
             medalSilver: 9,
             medalBronze: 1,
@@ -68,6 +72,7 @@ final class HomeViewModel: ObservableObject {
             profileSystemImageName: "person.circle.fill",
             artSystemImageName: "paintpalette.fill",
             artImageName: nil,
+            artImageURL: nil,
             medalGold: 20,
             medalSilver: 11,
             medalBronze: 4,
