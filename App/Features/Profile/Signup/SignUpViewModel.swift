@@ -25,6 +25,15 @@ class SignUpViewModel: ObservableObject {
     @Published var currentStep: SignUpStep = .input
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
+    
+    // MARK: - Validation Properties
+    var isValidEmail: Bool {
+        email.contains("@") && email.contains(".")
+    }
+    
+    var passwordsMatch: Bool {
+        password == confirmPassword
+    }
 
     private let auth = AuthService.shared
     private let userService = UserService.shared
