@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct DrawingPreviewView: View {
+    let namespace: Namespace.ID
     let item: Item
+    @Binding var selectedItem: Item?
     
     @State private var isSharing = false
-    @State private var rotationAngle: Double = -10
+    @State private var rotationAngle: Double = 0
     @State private var isAnimating = true
     @GestureState private var dragOffset: CGSize = .zero
     @State private var accumulatedRotation: Double = 0
@@ -24,88 +26,112 @@ struct DrawingPreviewView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
-
-            if let image = resolvedImage {
-                ZStack(alignment: .bottom) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .cornerRadius(24)
-                        .overlay(
+        GeometryReader { geo in
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                if let image = resolvedImage {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        
+                        ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
-                        )
-                        .shadow(radius: 10, y: 5)
-                        .rotation3DEffect(
-                            .degrees(rotationAngle + dragOffset.width),
-                            axis: (x: 0, y: 1, z: 0),
-                            perspective: 0.35
-                        )
-                        .gesture(
-                            DragGesture()
-                                .updating($dragOffset, body: { (value, state, _) in
-                                    state = value.translation
-                                })
-                                .onChanged({ _ in
-                                    isAnimating = false
-                                })
-                                .onEnded({ value in
-                                    self.rotationAngle += value.translation.width
-                                    self.accumulatedRotation = self.rotationAngle
-                                    isAnimating = true
-                                    startAnimation()
-                                })
-                        )
-                    
-                    VStack(spacing: 12) {
-                        Text(item.prompt)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.vertical, 20)
-                    .padding(.horizontal, 25)
-                    .glassEffect(.regular.interactive())
-                    .offset(y: -20)
-                }
-                .padding()
-                .navigationTitle(formattedDate)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            self.isSharing = true
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
+                                .fill(.clear)
+                                .aspectRatio(9/16, contentMode: .fit)
+                                .overlay(
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .aspectRatio(9/16, contentMode: .fit)
+                                        .clipped()
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 24))
+                                .matchedGeometryEffect(id: item.id, in: namespace)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                                )
+                                .shadow(radius: 10, y: 5)
+                                .rotation3DEffect(
+                                    .degrees(rotationAngle + dragOffset.width),
+                                    axis: (x: 0, y: 1, z: 0),
+                                    perspective: 0.35
+                                )
+                                .gesture(
+                                    DragGesture()
+                                        .updating($dragOffset) { value, state, _ in
+                                            state = value.translation
+                                        }
+                                        .onChanged { _ in
+                                            isAnimating = false
+                                        }
+                                        .onEnded { value in
+                                            rotationAngle += value.translation.width
+                                            accumulatedRotation = rotationAngle
+                                            isAnimating = true
+                                            startAnimation()
+                                        }
+                                )
+                            
+                            VStack(spacing: 12) {
+                                Text(item.prompt)
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.vertical, 20)
+                            .padding(.horizontal, 25)
+                            .glassEffect(.regular.interactive())
+                            .offset(y: -20)
                         }
+                        .padding()
+                        .padding(.top, 30)
+                        .onAppear(perform: startAnimation)
+                        
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ProgressView()
+                }
+            }
+            .navigationTitle(formattedDate)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            selectedItem = nil
+                        }
+                    } label: {
+                        Image(systemName: "chevron.backward")
                     }
                 }
-                .sheet(isPresented: $isSharing) {
-                    let itemSource = ImageActivityItemSource(title: item.prompt, image: image)
-                    ShareSheet(
-                        activityItems: [itemSource],
-                    )
-                    .presentationDetents([.medium, .large])
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        self.isSharing = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
                 }
-                .onAppear(perform: startAnimation)
-            } else {
-                ProgressView()
-                    .navigationTitle("Loading...")
             }
         }
+        .sheet(isPresented: $isSharing) {
+            if let image = resolvedImage {
+                let itemSource = ImageActivityItemSource(title: item.prompt, image: image)
+                ShareSheet(activityItems: [itemSource])
+                    .presentationDetents([.medium, .large])
+            }
+        }
+        .transition(.opacity)
     }
     
     private func startAnimation() {
         guard isAnimating else { return }
-        
-        let targetAngle = rotationAngle > 0 ? -10.0 : 10.0
-        
+        let targetAngle = rotationAngle >= 0 ? 10.0 : -10.0
         withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
             rotationAngle = targetAngle
         }
     }
 }
-
