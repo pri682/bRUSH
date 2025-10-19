@@ -177,29 +177,31 @@ struct DrawingView: View {
     private var undoRedoControls: some View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
-                Button {
-                    pkCanvasView.undoManager?.undo()
-                    updateUndoRedoState()
-                } label: {
-                    Image(systemName: "arrow.uturn.backward")
+                if canUndo {
+                    Button {
+                        pkCanvasView.undoManager?.undo()
+                        updateUndoRedoState()
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .glassEffect(.regular.interactive())
+                    .glassEffectID("undoButton", in: namespace)
                 }
-                .disabled(!canUndo)
-                .font(.title3)
-                .frame(width: 44, height: 44)
-                .glassEffect(.regular.interactive())
-                .glassEffectID("undoButton", in: namespace)
 
-                Button {
-                    pkCanvasView.undoManager?.redo()
-                    updateUndoRedoState()
-                } label: {
-                    Image(systemName: "arrow.uturn.forward")
+                if canRedo {
+                    Button {
+                        pkCanvasView.undoManager?.redo()
+                        updateUndoRedoState()
+                    } label: {
+                        Image(systemName: "arrow.uturn.forward")
+                    }
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .glassEffect(.regular.interactive())
+                    .glassEffectID("redoButton", in: namespace)
                 }
-                .disabled(!canRedo)
-                .font(.title3)
-                .frame(width: 44, height: 44)
-                .glassEffect(.regular.interactive())
-                .glassEffectID("redoButton", in: namespace)
             }
         }
         .animation(.spring(response: 0.8, dampingFraction: 0.8), value: canRedo)

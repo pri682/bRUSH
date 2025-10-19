@@ -75,14 +75,22 @@ struct DrawingPreviewView: View {
                                 )
                             
                             VStack(spacing: 12) {
+                                Text(formattedDate)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                    .glassEffect(.regular.interactive())
+
                                 Text(item.prompt)
                                     .font(.title3)
                                     .fontWeight(.semibold)
                                     .multilineTextAlignment(.center)
+                                    .padding(.vertical, 20)
+                                    .padding(.horizontal, 25)
+                                    .glassEffect(.regular.interactive())
                             }
-                            .padding(.vertical, 20)
-                            .padding(.horizontal, 25)
-                            .glassEffect(.regular.interactive())
                             .offset(y: -20)
                         }
                         .padding()
@@ -96,8 +104,6 @@ struct DrawingPreviewView: View {
                     ProgressView()
                 }
             }
-            .navigationTitle(formattedDate)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
