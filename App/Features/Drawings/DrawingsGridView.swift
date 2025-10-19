@@ -27,7 +27,7 @@ struct DrawingsGridView: View {
                     }
                     .padding()
                 }
-                .navigationTitle("Previous Drawings")
+            .navigationTitle("Past Drawings")
                 .navigationBarTitleDisplayMode(.large)
                 .toolbar {
                     if selectedItem == nil {
