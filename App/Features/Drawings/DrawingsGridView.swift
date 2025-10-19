@@ -19,7 +19,7 @@ struct DrawingsGridView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Previous Drawings")
+            .navigationTitle("Past Drawings")
             .fullScreenCover(isPresented: $isAddingNewDrawing) {
                 NavigationStack {
                     DrawingView(onSave: { newItem in
