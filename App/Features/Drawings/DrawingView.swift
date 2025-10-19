@@ -3,13 +3,18 @@ import PencilKit
 import Combine
 
 struct DrawingView: View {
-    let onSave: (Item) -> Void
+    var onSave: (Item) -> Void = { _ in }
     let prompt: String
     
     @State private var pkCanvasView = PKCanvasView()
     @State private var streakManager = StreakManager()
     @Environment(\.dismiss) var dismiss
     @Environment(\.displayScale) var displayScale
+    
+    @State private var showDoneAlert = false
+    @State private var showCancelAlert = false
+    @State private var showSubmittedPopup = false
+    @State private var hasSubmitted = false
     
     @State private var canUndo = false
     @State private var canRedo = false
@@ -21,8 +26,8 @@ struct DrawingView: View {
     @State private var isPromptPresented = true
     
     private let totalTime: Double = 900
-        @State private var timeRemaining: Double = 900
-        @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var timeRemaining: Double = 900
+    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     enum CanvasTheme: Equatable, Identifiable {
         case color(Color)
@@ -46,71 +51,144 @@ struct DrawingView: View {
         }
     }
     
-    // A list of available texture assets
-    private let textureAssets = [
-        "notebook", "canvas", "Sticky Note", "scroll",
-        "chalkboard", "Classroom", "bathroom", "Wall",
-        "Brick", "Grass", "Underwater"
-    ]
+    private let textureAssets = [ "notebook", "canvas", "Sticky Note", "scroll", "chalkboard", "Classroom", "bathroom", "Wall", "Brick", "Grass", "Underwater" ]
+    
+    private var isFlashing: Bool {
+        guard timeRemaining <= 30 else { return false }
+        return Int(timeRemaining) % 2 == 0
+    }
+
+    private var timerColor: Color {
+        if isFlashing { return .white }
+
+        let threeQuarterPoint = totalTime * 3 / 4
+        let halfPoint = totalTime / 2
+        let quarterPoint = totalTime / 4
+
+        if timeRemaining > threeQuarterPoint {
+            return Color(red: 0.65, green: 0.85, blue: 0.45)
+        } else if timeRemaining > halfPoint {
+            let phaseDuration = threeQuarterPoint - halfPoint
+            let progress = (threeQuarterPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 0.65, green: 0.85, blue: 0.45, alpha: 1.0),
+                color2: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
+        } else if timeRemaining > quarterPoint {
+            let phaseDuration = halfPoint - quarterPoint
+            let progress = (halfPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 1.0, green: 0.85, blue: 0.45, alpha: 1.0),
+                color2: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
+        } else {
+            let phaseDuration = quarterPoint
+            let progress = (quarterPoint - timeRemaining) / phaseDuration
+            return Color(UIColor.blend(
+                color1: UIColor(red: 1.0, green: 0.55, blue: 0.3, alpha: 1.0),
+                color2: UIColor(red: 0.9, green: 0.2, blue: 0.25, alpha: 1.0),
+                ratio: CGFloat(progress)
+            ))
+        }
+    }
+
 
     var body: some View {
-        Color(uiColor: .systemGray6)
-            .ignoresSafeArea()
-            .overlay(
-                VStack(spacing: 0) {
-                    Spacer(minLength: 16)
-                    
-                    ZStack {
-                        ProgressBorder(
-                            progress: CGFloat(timeRemaining / totalTime),
-                            cornerRadius: 45,
-                            lineWidth: 6
-                        )
-                        .animation(.linear(duration: 1.0), value: timeRemaining)
+        ZStack {
+            Color(uiColor: .systemGray6)
+                .ignoresSafeArea()
+                .overlay(
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 16)
                         
-                        canvasView
-                            .padding(10)
+                        ZStack {
+                            ProgressBorder(
+                                progress: CGFloat(timeRemaining / totalTime),
+                                cornerRadius: 40,
+                                lineWidth: 6,
+                                color: timerColor
+                            )
+                            .scaleEffect(x: -1, y: 1)
+                            .animation(.linear(duration: 1.0), value: timeRemaining)
+                            
+                            canvasView
+                                .padding(6)
+                        }
+                        .aspectRatio(9/16, contentMode: .fit)
+                        
+                        Spacer(minLength: 80)
                     }
-                    .aspectRatio(9/16, contentMode: .fit)
-                    
-                    Spacer(minLength: 80)
+                    .padding(.horizontal, 16)
+                )
+                .onAppear {
+                    setupCanvas()
+                    hasSubmitted = false
                 }
-                .padding(.horizontal, 16)
-            )
-            .onAppear(perform: setupCanvas)
-            .onChange(of: customColor) { selectedTheme = .color(customColor) }
-            .onReceive(timer) { _ in
-                if timeRemaining > 0 {
-                    timeRemaining -= 1
-                } else {
-                    saveDrawingAsImage(); dismiss()
+                .onDisappear {
+                    timer.upstream.connect().cancel()
                 }
+                .onChange(of: customColor) { selectedTheme = .color(customColor) }
+                .onReceive(timer) { _ in
+                    if timeRemaining > 0 {
+                        timeRemaining -= 1
+                    } else {
+                        submitDrawing()
+                    }
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showCancelAlert = true }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showDoneAlert = true }
+                    }
+                }
+                .alert("Submit Early?", isPresented: $showDoneAlert) {
+                    Button("Submit", role: .destructive) {
+                        submitDrawing()
+                    }
+                    Button("Keep Drawing", role: .cancel) { }
+                } message: {
+                    Text("Are you sure you want to finish? You won't be able to edit this after submitting.")
+                }
+                .alert("Cancel Drawing?", isPresented: $showCancelAlert) {
+                    Button("Yes, Cancel", role: .destructive) {
+                        dismiss()
+                    }
+                    Button("Keep Drawing", role: .cancel) { }
+                } message: {
+                    Text("If you cancel, you won't get another chance to draw today. Are you sure?")
+                }
+                .disabled(showSubmittedPopup)
+                .toolbar(.hidden, for: .tabBar)
+                .navigationBarBackButtonHidden(true)
+
+            if showSubmittedPopup {
+                submittedPopup
+                    .zIndex(1)
+                    .transition(.scale.combined(with: .opacity))
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { saveDrawingAsImage();
-                    streakManager.markCompletedToday()
-                    NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0); dismiss() } }
-            }
-            .toolbar(.hidden, for: .tabBar)
-            .navigationBarBackButtonHidden(true)
+        }
     }
 
     private var undoRedoControls: some View {
         GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
-                Button {
-                    pkCanvasView.undoManager?.undo()
-                    updateUndoRedoState()
-                } label: {
-                    Image(systemName: "arrow.uturn.backward")
+                if canUndo {
+                    Button {
+                        pkCanvasView.undoManager?.undo()
+                        updateUndoRedoState()
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .glassEffect(.regular.interactive())
+                    .glassEffectID("undoButton", in: namespace)
                 }
-                .disabled(!canUndo)
-                .font(.title3)
-                .frame(width: 44, height: 44)
-                .glassEffect()
-                .glassEffectID("undoButton", in: namespace)
 
                 if canRedo {
                     Button {
@@ -121,7 +199,7 @@ struct DrawingView: View {
                     }
                     .font(.title3)
                     .frame(width: 44, height: 44)
-                    .glassEffect()
+                    .glassEffect(.regular.interactive())
                     .glassEffectID("redoButton", in: namespace)
                 }
             }
@@ -139,34 +217,36 @@ struct DrawingView: View {
                     
                     Spacer()
 
-                    HStack(spacing: 12) {
-                        Button {
-                            isPromptPresented.toggle()
-                        } label: {
-                            Image(systemName: "lightbulb")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
-                            promptView
-                        }
-                        
-                        Button {
-                            isThemePickerPresented = true
-                        } label: {
-                            Image(systemName: "paintpalette")
-                                .font(.title3)
-                                .frame(width: 44, height: 44)
-                                .glassEffect(.regular.interactive())
-                        }
-                        .sheet(isPresented: $isThemePickerPresented) {
-                            themePickerView
-                                .presentationDetents([.fraction(0.8), .large])
-                        }
-                        .onChange(of: isThemePickerPresented) { oldValue, newValue in
-                            if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
-                                picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                    GlassEffectContainer {
+                        HStack(spacing: 12) {
+                            Button {
+                                isPromptPresented.toggle()
+                            } label: {
+                                Image(systemName: "lightbulb")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
+                                promptView
+                            }
+                            
+                            Button {
+                                isThemePickerPresented = true
+                            } label: {
+                                Image(systemName: "paintpalette")
+                                    .font(.title3)
+                                    .frame(width: 44, height: 44)
+                                    .glassEffect(.regular.interactive())
+                            }
+                            .sheet(isPresented: $isThemePickerPresented) {
+                                themePickerView
+                                    .presentationDetents([.fraction(0.8)])
+                            }
+                            .onChange(of: isThemePickerPresented) { oldValue, newValue in
+                                if let picker = (pkCanvasView.delegate as? PKCanvas.Coordinator)?.toolPicker {
+                                    picker.setVisible(!newValue, forFirstResponder: pkCanvasView)
+                                }
                             }
                         }
                     }
@@ -206,7 +286,6 @@ struct DrawingView: View {
         }
         .background(canvasBackground)
         .cornerRadius(34)
-        .shadow(radius: 5)
         .onTapGesture {
             if isPromptPresented {
                 isPromptPresented = false
@@ -246,6 +325,7 @@ struct DrawingView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Custom Backgrounds")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -310,6 +390,22 @@ struct DrawingView: View {
         }
     }
     
+    @ViewBuilder
+    private var submittedPopup: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 70))
+                .foregroundColor(.green)
+            
+            Text("Submitted!")
+                .font(.title)
+                .fontWeight(.bold)
+        }
+        .padding(35)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 25))
+        .transition(.scale(scale: 0.5).combined(with: .opacity))
+    }
+    
     // MARK: - Functions
     
     private func setupCanvas() {
@@ -325,28 +421,47 @@ struct DrawingView: View {
         }
     }
     
+    private func submitDrawing() {
+        hasSubmitted = true
+        saveDrawingAsImage()
+        
+        streakManager.markCompletedToday()
+        NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+        
+        withAnimation(.spring()) {
+            showSubmittedPopup = true
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                dismiss()
+            }
+        }
+    }
+
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
+        
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
         let filename = UUID().uuidString + ".jpg"
         
-        if let fileURL = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename) {
-            do {
-                try data.write(to: fileURL, options: .atomic)
-                
-                let newItem = Item(
-                    id: UUID(uuidString: filename.replacingOccurrences(of: ".jpg", with: ""))!,
-                    url: fileURL,
-                    prompt: self.prompt,
-                    date: Date(),
-                    image: image
-                )
-                
-                onSave(newItem)
-                
-            } catch {
-                print("Error saving image: \(error)")
-            }
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsDirectory.appendingPathComponent(filename)
+        
+        do {
+            try data.write(to: fileURL, options: .atomic)
+            
+            let newItem = Item(
+                imageFileName: filename,
+                prompt: self.prompt,
+                date: Date(),
+                image: image
+            )
+            
+            onSave(newItem)
+            
+        } catch {
+            print("Error saving image: \(error)")
         }
     }
     
@@ -391,18 +506,19 @@ struct ProgressBorder: View {
     var progress: CGFloat
     var cornerRadius: CGFloat
     var lineWidth: CGFloat
+    var color: Color
     
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
-                .stroke(Color.accentColor.opacity(0.2), lineWidth: lineWidth)
+                .stroke(color.opacity(0.2), lineWidth: lineWidth)
             
             RoundedRectangle(cornerRadius: cornerRadius)
                 .inset(by: lineWidth / 2)
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.accentColor,
+                    color,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
                 )
         }
@@ -430,3 +546,22 @@ extension String {
         self.capitalized
     }
 }
+
+extension UIColor {
+    static func blend(color1: UIColor, color2: UIColor, ratio: CGFloat) -> UIColor {
+        let clampedRatio = max(0, min(1, ratio))
+        
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        color1.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        color2.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        
+        let newRed = r1 * (1 - clampedRatio) + r2 * clampedRatio
+        let newGreen = g1 * (1 - clampedRatio) + g2 * clampedRatio
+        let newBlue = b1 * (1 - clampedRatio) + b2 * clampedRatio
+        
+        return UIColor(red: newRed, green: newGreen, blue: newBlue, alpha: 1.0)
+    }
+}
+
