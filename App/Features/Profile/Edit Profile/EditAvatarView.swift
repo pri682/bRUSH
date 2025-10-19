@@ -10,14 +10,28 @@ struct EditAvatarView: View {
     @State private var selectedHair: String?
     @State private var selectedCategory = 0 // 0: Face, 1: Eyes, 2: Mouth, 3: Hair, 4: Background
     
+    let onAvatarChange: (AvatarParts) -> Void
+    
+    // Computed property to get current avatar parts
+    var currentAvatarParts: AvatarParts {
+        AvatarParts(
+            background: selectedBackground,
+            face: selectedFace,
+            eyes: selectedEyes,
+            mouth: selectedMouth,
+            hair: selectedHair
+        )
+    }
+    
     // Undo/Redo functionality
     @State private var history: [AvatarParts] = []
     @State private var currentHistoryIndex = -1
     
     private let categories = ["Face", "Eyes", "Mouth", "Hair", "Background"]
     
-    init(userProfile: Binding<UserProfile?>) {
+    init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void) {
         self._userProfile = userProfile
+        self.onAvatarChange = onAvatarChange
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
         // Initialize with current avatar values
         self._selectedBackground = State(initialValue: userProfile.wrappedValue?.avatarBackground ?? "background_1")
@@ -91,32 +105,42 @@ struct EditAvatarView: View {
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.04)
                 
-                // Enhanced Category Selection
-                HStack(spacing: 0) {
-                    ForEach(0..<categories.count, id: \.self) { index in
-                        Button {
-                            selectedCategory = index
-                        } label: {
-                            VStack(spacing: 4) {
-                                Text(categories[index])
-                                    .font(.system(size: screenWidth * 0.04, weight: .bold))
-                                    .foregroundColor(selectedCategory == index ? .accentColor : .gray)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .frame(maxWidth: screenWidth * 0.18)
-                                
-                                // Underline indicator
-                                Rectangle()
-                                    .fill(selectedCategory == index ? Color.accentColor : Color.clear)
-                                    .frame(height: 3)
-                                    .frame(width: screenWidth * 0.12)
+                // Enhanced Category Selection - Horizontal Scroll with Auto-scroll
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(0..<categories.count, id: \.self) { index in
+                                Button {
+                                    selectedCategory = index
+                                    // Auto-scroll to center the selected category
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        proxy.scrollTo(index, anchor: .center)
+                                    }
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Text(categories[index])
+                                            .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                            .foregroundColor(selectedCategory == index ? .accentColor : .gray)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .frame(minWidth: screenWidth * 0.2)
+                                        
+                                        // Underline indicator
+                                        Rectangle()
+                                            .fill(selectedCategory == index ? Color.accentColor : Color.clear)
+                                            .frame(height: 3)
+                                            .frame(width: screenWidth * 0.15)
+                                    }
+                                    .padding(.horizontal, screenWidth * 0.02)
+                                    .padding(.vertical, screenHeight * 0.01)
+                                }
+                                .id(index)
                             }
-                            .padding(.horizontal, screenWidth * 0.02)
-                            .padding(.vertical, screenHeight * 0.015)
                         }
+                        .padding(.horizontal, horizontalPadding)
                     }
                 }
-                .padding(.bottom, screenHeight * 0.03)
+                .padding(.bottom, screenHeight * 0.02)
                 
                 // Options Grid - Vertical Scroll
                 ScrollView {
@@ -259,7 +283,7 @@ struct EditAvatarView: View {
         default: break
         }
         
-        // Update local userProfile binding for real-time preview
+        // Update userProfile binding for real-time preview (but not saved to Firebase yet)
         if var profile = userProfile {
             profile.avatarBackground = selectedBackground
             profile.avatarFace = selectedFace
@@ -268,6 +292,9 @@ struct EditAvatarView: View {
             profile.avatarHair = selectedHair
             userProfile = profile
         }
+        
+        // Notify parent of avatar changes for preview (but not saved yet)
+        onAvatarChange(currentAvatarParts)
     }
     
     private func isSelected(_ option: String) -> Bool {

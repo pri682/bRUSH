@@ -206,24 +206,6 @@ struct SignedInProfileView: View {
                         .padding(.top, 8)
                         
                         Spacer(minLength: 100)
-                        
-                        // MARK: - Sign Out / Delete
-                        Button(action: { viewModel.signOut() }) {
-                            HStack {
-                                Text("Sign Out").font(.headline)
-                                Spacer()
-                                Image(systemName: "arrow.right.square.fill").font(.title2)
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
-                            )
-                        }
-                        .padding(.horizontal, standardPadding)
-                        
-                        DeleteProfileButton(viewModel: viewModel)
-                            .padding(.horizontal, standardPadding)
                     }
                     .padding(.bottom, screenHeight * 0.03)
                 }
@@ -233,7 +215,7 @@ struct SignedInProfileView: View {
             .edgesIgnoringSafeArea(.top)
             .sheet(isPresented: $showingEditProfile) {
                 if let _ = viewModel.profile {
-                    EditProfileView(userProfile: $viewModel.profile)
+                    EditProfileView(userProfile: $viewModel.profile, profileViewModel: viewModel)
                 }
             }
         }
