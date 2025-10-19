@@ -53,6 +53,22 @@ struct HomeView: View {
                 
                 Divider()
                 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("🎨 Today’s Drawing Prompt")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(viewModel.dailyPrompt)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                
                 // Feed – scrollable list of user art posts
                 ScrollView {
                     LazyVStack(spacing: 24) {
@@ -119,6 +135,9 @@ struct HomeView: View {
                 }
                 .navigationTitle("New Drawing")
             }
+        }
+        .task {
+            await viewModel.loadDailyPrompt()
         }
     }
 }
@@ -234,3 +253,5 @@ private enum Formatter {
 #Preview {
     NavigationStack { HomeView() }
 }
+
+

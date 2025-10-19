@@ -77,4 +77,20 @@ final class HomeViewModel: ObservableObject {
             awards: 5
         )
     ]
+    
+    @Published var dailyPrompt: String = "Loading prompt..."
+    func loadDailyPrompt() async {
+        do {
+            let prompt = try await PromptService.shared.fetchPrompt()
+            await MainActor.run {
+                self.dailyPrompt = prompt
+            }
+            print("✅ Loaded prompt:", prompt)
+        } catch {
+            await MainActor.run {
+                self.dailyPrompt = "Failed to load prompt."
+            }
+            print("❌ Error fetching prompt:", error.localizedDescription)
+        }
+    }
 }
