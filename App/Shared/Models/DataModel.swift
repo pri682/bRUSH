@@ -9,9 +9,12 @@ class DataModel: ObservableObject {
         didSet { save() }
     }
     
-    private static var fileURL: URL {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        return documentsDirectory.appendingPathComponent("items.json")
+    private var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    }
+    
+    private var fileURL: URL {
+        documentsDirectory.appendingPathComponent("items.json")
     }
     
     init() {
@@ -23,20 +26,19 @@ class DataModel: ObservableObject {
         items.insert(item, at: 0)
     }
 
-    /// Loads a specific image from its URL into the in-memory cache.
+    /// Loads a specific image from its file into the in-memory cache.
     func loadImage(for itemID: UUID) {
         guard let index = items.firstIndex(where: { $0.id == itemID }),
               items[index].image == nil else {
             return
         }
         
-        let itemUrl = items[index].url
+        // Get the filename and construct the full URL at runtime.
+        let imageFileName = items[index].imageFileName
+        let imageUrl = documentsDirectory.appendingPathComponent(imageFileName)
         
         DispatchQueue.global(qos: .userInitiated).async {
-            guard itemUrl.startAccessingSecurityScopedResource() else { return }
-            defer { itemUrl.stopAccessingSecurityScopedResource() }
-            
-            if let data = try? Data(contentsOf: itemUrl), let image = UIImage(data: data) {
+            if let data = try? Data(contentsOf: imageUrl), let image = UIImage(data: data) {
                 DispatchQueue.main.async {
                     if let finalIndex = self.items.firstIndex(where: { $0.id == itemID }) {
                         self.items[finalIndex].image = image
@@ -50,13 +52,13 @@ class DataModel: ObservableObject {
     private func save() {
         do {
             let data = try JSONEncoder().encode(items)
-            try data.write(to: Self.fileURL, options: .atomic)
+            try data.write(to: fileURL, options: .atomic)
         } catch { print("Error saving items: \(error.localizedDescription)") }
     }
 
     private func load() -> Bool {
         do {
-            let data = try Data(contentsOf: Self.fileURL)
+            let data = try Data(contentsOf: fileURL)
             items = try JSONDecoder().decode([Item].self, from: data)
             return true
         } catch {

@@ -18,10 +18,15 @@ struct DrawingPreviewView: View {
     private var resolvedImage: UIImage? {
         if let img = item.image {
             return img
-        } else if let data = try? Data(contentsOf: item.url),
-                  let img = UIImage(data: data) {
+        }
+        
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let imageUrl = documentsDirectory.appendingPathComponent(item.imageFileName)
+        
+        if let data = try? Data(contentsOf: imageUrl), let img = UIImage(data: data) {
             return img
         }
+        
         return nil
     }
     
