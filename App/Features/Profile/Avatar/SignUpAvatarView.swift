@@ -83,7 +83,7 @@ struct SignUpAvatarView: View {
                         .padding(.horizontal, screenWidth * 0.04)
                         .padding(.vertical, screenWidth * 0.02)
                         .background(Color.green)
-                        .clipShape(RoundedRectangle(cornerRadius: screenWidth * 0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 6)) // Less rounded corners
                     }
                 }
                 .padding(.horizontal, horizontalPadding)

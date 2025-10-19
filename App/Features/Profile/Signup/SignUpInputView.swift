@@ -66,7 +66,12 @@ struct SignUpInputView: View {
             Button("Next: Choose Username") {
                 viewModel.submitStep1()
             }
-            .buttonStyle(.borderedProminent)
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.accentColor)
+            .cornerRadius(6) // Less rounded corners
             .disabled(!viewModel.isStep1Valid || viewModel.isLoading)
             .padding(.top, 16)
         }
