@@ -8,6 +8,7 @@ struct EditProfileView: View {
     @State private var selectedTab = 0
     @State private var showingDeleteConfirmation = false
     @State private var currentAvatarParts: AvatarParts?
+    @State private var originalAvatarParts: AvatarParts?
 
     init(userProfile: Binding<UserProfile?>, profileViewModel: ProfileViewModel) {
         self._userProfile = userProfile
@@ -15,6 +16,17 @@ struct EditProfileView: View {
         _viewModel = StateObject(
             wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!)
         )
+        
+        // Store original avatar state for cancel functionality
+        if let profile = userProfile.wrappedValue {
+            _originalAvatarParts = State(initialValue: AvatarParts(
+                background: profile.avatarBackground ?? "background_1",
+                face: profile.avatarFace,
+                eyes: profile.avatarEyes,
+                mouth: profile.avatarMouth,
+                hair: profile.avatarHair
+            ))
+        }
     }
 
     var body: some View {
@@ -46,7 +58,7 @@ struct EditProfileView: View {
                 // Tab Content
                 TabView(selection: $selectedTab) {
                     // Profile Information Tab
-                    VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 0) {
                         // First Name
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
@@ -69,6 +81,8 @@ struct EditProfileView: View {
                                     .font(.caption)
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
                         
                         // Username
                         VStack(alignment: .leading, spacing: 8) {
@@ -97,8 +111,8 @@ struct EditProfileView: View {
                                     .font(.caption)
                             }
                         }
-                        
-                        Spacer()
+                        .padding(.horizontal)
+                        .padding(.top, 16)
                         
                         // Account Actions Section
                         VStack(alignment: .leading, spacing: 16) {
@@ -159,9 +173,12 @@ struct EditProfileView: View {
                             .background(Color(.systemGray6))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .padding(.top, 20)
+                        .padding(.horizontal)
+                        .padding(.top, 24)
+                        
+                        Spacer()
                     }
-                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
                     .tag(0)
                     
                     // Avatar Tab
@@ -188,7 +205,22 @@ struct EditProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { 
-                        // Revert all changes by dismissing without saving
+                        // Revert avatar changes to original state
+                        if let original = originalAvatarParts, var profile = userProfile {
+                            profile.avatarBackground = original.background
+                            profile.avatarFace = original.face
+                            profile.avatarEyes = original.eyes
+                            profile.avatarMouth = original.mouth
+                            profile.avatarHair = original.hair
+                            userProfile = profile
+                        }
+                        
+                        // Revert profile information changes to original state
+                        if let originalProfile = profileViewModel.profile {
+                            viewModel.firstName = originalProfile.firstName
+                            viewModel.displayName = originalProfile.displayName
+                        }
+                        
                         dismiss() 
                     }
                 }
