@@ -19,7 +19,7 @@ struct SignedInProfileView: View {
     private func needsUpdate(from date: Date) -> Bool {
         let now = Date()
         let timeInterval = now.timeIntervalSince(date)
-        return timeInterval > 1800 // 30 minutes = 1800 seconds
+        return timeInterval > 600 // 10 minutes = 600 seconds
     }
     
     // Helper function to check if refresh button can be clicked (1 minute cooldown)
@@ -90,7 +90,7 @@ struct SignedInProfileView: View {
                                 .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         }
                         
-                        // Pencil button in bottom right
+                        // Gear button in bottom right
                         if viewModel.profile != nil {
                             VStack {
                                 Spacer()
@@ -99,9 +99,9 @@ struct SignedInProfileView: View {
                                     Button {
                                         showingEditProfile = true
                                     } label: {
-                                        Image(systemName: "pencil")
+                                        Image(systemName: "gearshape.fill")
                                             .font(.system(size: 24, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.white.opacity(0.85))
                                             .shadow(color: .black, radius: 0, x: 1, y: 1)
                                     }
                                     .padding(.trailing, standardPadding * 0.75)
