@@ -2,8 +2,8 @@ import Foundation
 import FirebaseFirestore
 
 struct HandleHit {
-    let handle: String     // lowercased handle without @
     let uid: String
+    let handle: String
     let displayName: String
 }
 
@@ -14,20 +14,37 @@ final class HandleServiceFirebase {
     func searchHandles(prefix raw: String, limit: Int = 20) async throws -> [HandleHit] {
         let prefix = raw.replacingOccurrences(of: "@", with: "").lowercased().trimmingCharacters(in: .whitespaces)
         guard !prefix.isEmpty else { return [] }
-        // Store handleLower as the document ID in "handles" collection
-        let q = db.collection("handles")
-            .order(by: FieldPath.documentID())
+
+        let users = db.collection("users")
+       
+        // as typed
+        let q1 = users
+            .order(by: "displayName")
             .start(at: [prefix])
             .end(at: [prefix + "\u{f8ff}"])
             .limit(to: limit)
+
+        // capital first letter
+        let cap = prefix.prefix(1).uppercased() + prefix.dropFirst()
+        let q2 = users
+            .order(by: "displayName")
+            .start(at: [cap])
+            .end(at: [cap + "\u{f8ff}"])
+            .limit(to: limit)
+
+        let (snap1, snap2) = try await (q1.getDocuments(), q2.getDocuments())
         
-        let snap = try await q.getDocuments()
-        return snap.documents.compactMap { doc in
-            let handleLower = doc.documentID
-            let data = doc.data()
-            guard let uid = data["uid"] as? String else { return nil }
-            let displayName = (data["displayName"] as? String) ?? handleLower
-            return HandleHit(handle: handleLower, uid: uid, displayName: displayName)
+        var seen = Set<String>()
+        var hits: [HandleHit] = []
+
+        for doc in (snap1.documents + snap2.documents) {
+            let uid = doc.documentID
+            guard !seen.contains(uid) else { continue }
+            let dn = (doc.data()["displayName"] as? String) ?? ""
+                hits.append(HandleHit(uid: uid, handle: dn, displayName: dn))
+                seen.insert(uid)
+            if hits.count >= limit { break }
         }
+        return hits
     }
 }

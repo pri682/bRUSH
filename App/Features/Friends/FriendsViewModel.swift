@@ -25,21 +25,6 @@ class FriendsViewModel: ObservableObject {
     
     private let handleService = HandleServiceFirebase()
 
-    
-   /* private let _mockDirectory: [FriendSearchResult] = [
-        .init(handle: "jesse",  displayName: "Jesse Flynn"),
-        .init(handle: "kelvin",  displayName: "Kelvin Mathew"),
-        .init(handle: "priyanka", displayName: "Priyanka Karki"),
-        .init(handle: "vaidic",  displayName: "Vaidic Soni"),
-        .init(handle: "meidad",  displayName: "Meidad Troper")
-    ]
-    func loadMock() {
-        friends = [
-            Friend(name: "Ted", handle: "@grumpyoldman"),
-            Friend(name: "Aaron", handle: "@lunchalone"),
-            Friend(name: "Jeffrey", handle: "@dahmer")
-        ]
-    } */
     var filteredFriends: [Friend] {
         guard !searchText.isEmpty else { return friends }
         return friends.filter { $0.name.lowercased().contains(searchText.lowercased()) ||
@@ -56,16 +41,21 @@ class FriendsViewModel: ObservableObject {
         let raw = addQuery
             .replacingOccurrences(of: "@", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        guard raw.count >= 2 else { self.addResults = []; return }
+        
+        guard raw.count >= 2 else {
+            addResults = []
+            addError = nil
+            return }
+        
         isSearchingAdd = true
         addError = nil
+        let prefix = raw
         
     Task { @MainActor in
         do {
             let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
             self.addResults = hits.map { hit in
-                FriendSearchResult(handle: hit.handle, displayName: hit.displayName)
+                FriendSearchResult(uid: hit.uid, handle: hit.handle, displayName: hit.displayName)
             }
         }
         catch {
@@ -79,25 +69,14 @@ class FriendsViewModel: ObservableObject {
         let handle = "@\(user.handle)"
             guard !sent.contains(where: { $0.handle == handle }) else { return }
             sent.append(.init(toName: user.displayName, handle: handle))
-        try await FriendRequestServiceFirebase().sendRequest(fromUid: me.id, fromHandle: myHandle, toUid: user.uid)
+      //  try await FriendRequestServiceFirebase().sendRequest(fromUid: me.id, fromHandle: myHandle, toUid: user.uid)
     }
     init() {
         $addQuery
             .removeDuplicates()
             .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
-            .sink { [weak self] q in
-                guard let self else { return }
-                let trimmed = q.replacingOccurrences(of: "@", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.count >= 2 {
-                    self.isSearchingAdd = true
-                   // self.addResults = self._mockDirectory
-                        .filter { $0.handle.contains(trimmed.lowercased()) }
-                        .sorted { $0.handle < $1.handle }
-                    self.isSearchingAdd = false
-                } else {
-                    self.addResults = []
-                }
+            .sink { [weak self] _ in
+                self?.performAddSearch()
             }
             .store(in: &cancellables)
         }
