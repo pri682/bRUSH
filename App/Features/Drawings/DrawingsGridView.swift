@@ -96,8 +96,28 @@ struct DrawingsGridView: View {
                         selectedItem: $selectedItem
                     )
                     .ignoresSafeArea()
+                    .zIndex(1)
                 }
+            }
+            .alert("Delete Drawing?", isPresented: $showSingleDeleteAlert, presenting: itemToDelete) { item in
+                Button("Delete", role: .destructive) {
+                    dataModel.deleteItem(with: item.id)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("This drawing cannot be restored.")
+            }
+            .alert("Delete \(selection.count) Drawings?", isPresented: $showMultiDeleteAlert) {
+                Button("Delete", role: .destructive) {
+                    dataModel.deleteItems(with: selection)
+                    selection.removeAll()
+                    isEditing = false
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("These drawings cannot be restored.")
             }
         }
     }
 }
+
