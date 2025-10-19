@@ -53,10 +53,6 @@ struct DrawingPreviewView: View {
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 24))
                                 .matchedGeometryEffect(id: item.id, in: namespace)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .stroke(Color.white.opacity(0.8), lineWidth: 1)
-                                )
                                 .shadow(radius: 10, y: 5)
                                 .rotation3DEffect(
                                     .degrees(rotationAngle + dragOffset.width),
