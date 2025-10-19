@@ -27,23 +27,9 @@
 		57ECDBF92E9DD56C001364CA /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		57863D3E2EA4A145009BCBB1 /* Exceptions for "App" folder in "brush" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				functions/.eslintrc.js,
-				functions/package.json,
-			);
-			target = 1033B8D72E863B8800111590 /* brush */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1033B8DA2E863B8800111590 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				57863D3E2EA4A145009BCBB1 /* Exceptions for "App" folder in "brush" target */,
-			);
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -91,7 +77,6 @@
 			buildPhases = (
 				1033B8D42E863B8800111590 /* Sources */,
 				1033B8D52E863B8800111590 /* Frameworks */,
-				1033B8D62E863B8800111590 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -158,16 +143,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		1033B8D62E863B8800111590 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1033B8D42E863B8800111590 /* Sources */ = {
