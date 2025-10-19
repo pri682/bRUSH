@@ -89,38 +89,48 @@ struct EditAvatarView: View {
                     hair: selectedHair
                 )
                 .frame(width: avatarSize, height: avatarSize)
-                .padding(.bottom, screenHeight * 0.04)
+                .padding(.bottom, screenHeight * 0.02)
                 
-                // Enhanced Category Selection
-                HStack(spacing: 0) {
-                    ForEach(0..<categories.count, id: \.self) { index in
-                        Button {
-                            selectedCategory = index
-                        } label: {
-                            VStack(spacing: 4) {
-                                Text(categories[index])
-                                    .font(.system(size: screenWidth * 0.04, weight: .bold))
-                                    .foregroundColor(selectedCategory == index ? .accentColor : .gray)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                                    .frame(maxWidth: screenWidth * 0.18)
-                                
-                                // Underline indicator
-                                Rectangle()
-                                    .fill(selectedCategory == index ? Color.accentColor : Color.clear)
-                                    .frame(height: 3)
-                                    .frame(width: screenWidth * 0.12)
+                // Enhanced Category Selection - Horizontal Scroll with Auto-scroll
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(0..<categories.count, id: \.self) { index in
+                                Button {
+                                    selectedCategory = index
+                                    // Auto-scroll to center the selected category
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        proxy.scrollTo(index, anchor: .center)
+                                    }
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Text(categories[index])
+                                            .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                            .foregroundColor(selectedCategory == index ? .accentColor : .gray)
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                            .frame(minWidth: screenWidth * 0.2)
+                                        
+                                        // Underline indicator
+                                        Rectangle()
+                                            .fill(selectedCategory == index ? Color.accentColor : Color.clear)
+                                            .frame(height: 3)
+                                            .frame(width: screenWidth * 0.15)
+                                    }
+                                    .padding(.horizontal, screenWidth * 0.02)
+                                    .padding(.vertical, screenHeight * 0.01)
+                                }
+                                .id(index)
                             }
-                            .padding(.horizontal, screenWidth * 0.02)
-                            .padding(.vertical, screenHeight * 0.015)
                         }
+                        .padding(.horizontal, horizontalPadding)
                     }
                 }
-                .padding(.bottom, screenHeight * 0.03)
+                .padding(.bottom, screenHeight * 0.02)
                 
                 // Options Grid - Vertical Scroll
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
+                    LazyVGrid(columns: columns, spacing: screenWidth * 0.03) {
                         ForEach(currentOptions, id: \.self) { option in
                             Button {
                                 updateSelection(option)
