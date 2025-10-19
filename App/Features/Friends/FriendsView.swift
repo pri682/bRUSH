@@ -114,7 +114,7 @@ struct FriendsView: View {
                 AddFriendView(vm: vm)
             }
         }
-        .onAppear { vm.loadMock(); vm.loadLeaderboard() }
+    //    .onAppear { vm.loadMock(); vm.loadLeaderboard() }
         .searchable(text: $vm.searchText, prompt: "Search friends")
     }
 }

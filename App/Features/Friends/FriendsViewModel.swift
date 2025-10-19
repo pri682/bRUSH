@@ -38,6 +38,13 @@ class FriendsViewModel: ObservableObject {
         requests.removeAll { $0.id == req.id }
     }
     func performAddSearch() {
+        // require sign in to search users
+        guard AuthService.shared.user != nil else {
+                self.addResults = []
+                self.addError = "Sign in to search for friends."
+                return
+            }
+        
         let raw = addQuery
             .replacingOccurrences(of: "@", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -49,7 +56,6 @@ class FriendsViewModel: ObservableObject {
         
         isSearchingAdd = true
         addError = nil
-        let prefix = raw
         
     Task { @MainActor in
         do {

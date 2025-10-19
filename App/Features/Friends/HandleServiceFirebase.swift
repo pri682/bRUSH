@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseFirestore
+import FirebaseCore
 
 struct HandleHit {
     let uid: String
@@ -12,6 +13,8 @@ final class HandleServiceFirebase {
     
     // Prefix search by @handle (case insensitive). Min length guard (>= 2) recommended in caller.
     func searchHandles(prefix raw: String, limit: Int = 20) async throws -> [HandleHit] {
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
+
         let prefix = raw.replacingOccurrences(of: "@", with: "").lowercased().trimmingCharacters(in: .whitespaces)
         guard !prefix.isEmpty else { return [] }
 
@@ -45,6 +48,7 @@ final class HandleServiceFirebase {
                 seen.insert(uid)
             if hits.count >= limit { break }
         }
+        print("[HandleServiceFirebase] prefix='\(prefix)' -> \(hits.count) hit(s)")
         return hits
     }
 }
