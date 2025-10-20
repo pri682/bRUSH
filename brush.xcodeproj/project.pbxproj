@@ -24,13 +24,42 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		57ECDBF92E9DD56C001364CA /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DF035842EA1B6DE009A748A /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DF0361D2EA1FA40009A748A /* brush-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "brush-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		57863E1A2EA60391009BCBB1 /* Exceptions for "App" folder in "brush" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				.gitignore,
+				Resources/animals.jpg,
+				Resources/brush_logo.png,
+				Resources/bubbles.jpg,
+				Resources/business.jpg,
+				Resources/den.jpg,
+				Resources/frames.jpg,
+				Resources/fruits.jpg,
+				Resources/girl.jpg,
+				Resources/intro.jpg,
+				"Resources/nemodians-burnup-chart-1.png",
+				Resources/rose.jpg,
+				Resources/smiles.jpg,
+				Resources/tea.jpg,
+				Resources/trees.jpg,
+				Resources/vesuvius.jpg,
+			);
+			target = 1033B8D72E863B8800111590 /* brush */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1033B8DA2E863B8800111590 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				57863E1A2EA60391009BCBB1 /* Exceptions for "App" folder in "brush" target */,
+			);
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -66,6 +95,7 @@
 			children = (
 				5DF0361D2EA1FA40009A748A /* brush-Info.plist */,
 				1033B8DA2E863B8800111590 /* App */,
+				57ECDBF92E9DD56C001364CA /* brush.app */,
 				5DF035842EA1B6DE009A748A /* brush.app */,
 			);
 			sourceTree = "<group>";
@@ -79,7 +109,7 @@
 			buildPhases = (
 				1033B8D42E863B8800111590 /* Sources */,
 				1033B8D52E863B8800111590 /* Frameworks */,
-				1033B8D62E863B8800111590 /* Resources */,
+				57863E192EA60391009BCBB1 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -106,6 +136,7 @@
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
 			);
 			productName = brush;
+			productReference = 57ECDBF92E9DD56C001364CA /* brush.app */;
 			productReference = 5DF035842EA1B6DE009A748A /* brush.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -148,7 +179,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1033B8D62E863B8800111590 /* Resources */ = {
+		57863E192EA60391009BCBB1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -321,6 +352,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/App/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
@@ -378,6 +413,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/App/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
