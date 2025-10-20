@@ -14,38 +14,61 @@ struct DrawingsGridView: View {
     @State private var showSingleDeleteAlert = false
     @State private var showMultiDeleteAlert = false
     
+    @State private var itemsAnimatingDelete = Set<UUID>()
+    
     private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
         NavigationStack {
             ZStack {
+                Color(.systemGray6)
+                    .ignoresSafeArea()
+                
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: 20) {
                         ForEach(dataModel.items) { item in
-                            GridItemView(namespace: namespace, size: 100, item: item, isSelected: selection.contains(item.id))
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        if isEditing {
-                                            if selection.contains(item.id) {
-                                                selection.remove(item.id)
-                                            } else {
-                                                selection.insert(item.id)
-                                            }
+                            GridItemView(
+                                namespace: namespace,
+                                size: 100,
+                                item: item,
+                                isSelected: selection.contains(item.id),
+                                isDeleting: itemsAnimatingDelete.contains(item.id),
+                                onDeletionFinished: {
+                                    withAnimation(.spring()) {
+                                        dataModel.deleteItem(with: item.id)
+                                        itemsAnimatingDelete.remove(item.id)
+                                    }
+                                }
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if isEditing {
+                                        if selection.contains(item.id) {
+                                            _ = selection.remove(item.id)
                                         } else {
-                                            selectedItem = item
+                                            _ = selection.insert(item.id)
                                         }
+                                    } else {
+                                        selectedItem = item
                                     }
                                 }
-                                .contextMenu {
-                                    if !isEditing {
-                                        Button(role: .destructive) {
-                                            itemToDelete = item
-                                            showSingleDeleteAlert = true
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
+                            }
+                            .contextMenu {
+                                if !isEditing {
+                                    Button(role: .destructive) {
+                                        itemToDelete = item
+                                        showSingleDeleteAlert = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
+                            } preview: {
+                                if let image = item.image {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFit()
+                                }
+                            }
                         }
                     }
                     .padding()
@@ -101,7 +124,7 @@ struct DrawingsGridView: View {
             }
             .alert("Delete Drawing?", isPresented: $showSingleDeleteAlert, presenting: itemToDelete) { item in
                 Button("Delete", role: .destructive) {
-                    dataModel.deleteItem(with: item.id)
+                    triggerShredder(for: [item.id])
                 }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
@@ -109,7 +132,7 @@ struct DrawingsGridView: View {
             }
             .alert("Delete \(selection.count) Drawings?", isPresented: $showMultiDeleteAlert) {
                 Button("Delete", role: .destructive) {
-                    dataModel.deleteItems(with: selection)
+                    triggerShredder(for: Array(selection))
                     selection.removeAll()
                     isEditing = false
                 }
@@ -117,6 +140,12 @@ struct DrawingsGridView: View {
             } message: {
                 Text("These drawings cannot be restored.")
             }
+        }
+    }
+    
+    private func triggerShredder(for itemIDs: [UUID]) {
+        withAnimation {
+            itemsAnimatingDelete.formUnion(itemIDs)
         }
     }
 }
