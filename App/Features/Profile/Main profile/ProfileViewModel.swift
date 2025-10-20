@@ -10,6 +10,7 @@ class ProfileViewModel: ObservableObject {
     @Published private(set) var user: AppUser? = nil
     @Published var profile: UserProfile? = nil   // 🔥 New: Firestore profile
     @Published var errorMessage: String? = nil
+    @Published var isLoadingProfile: Bool = false
 
     private let auth = AuthService.shared
     private let db = Firestore.firestore()
@@ -36,11 +37,33 @@ class ProfileViewModel: ObservableObject {
 
     // MARK: - Profile Loading
     private func loadProfile(uid: String) async {
+        await MainActor.run { self.isLoadingProfile = true }
+        
+        // Set up timeout for profile loading
+        let timeoutTask = Task {
+            try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
+            await MainActor.run {
+                if self.isLoadingProfile {
+                    // If still loading after 10 seconds, sign out user
+                    self.signOut()
+                    self.errorMessage = "Account not found. Please sign in again."
+                }
+            }
+        }
+        
         do {
             let loadedProfile = try await UserService.shared.fetchProfile(uid: uid)
-            await MainActor.run { self.profile = loadedProfile }
+            timeoutTask.cancel() // Cancel timeout if profile loads successfully
+            await MainActor.run { 
+                self.profile = loadedProfile
+                self.isLoadingProfile = false
+            }
         } catch {
-            await MainActor.run { self.errorMessage = error.localizedDescription }
+            timeoutTask.cancel() // Cancel timeout on error
+            await MainActor.run { 
+                self.errorMessage = error.localizedDescription
+                self.isLoadingProfile = false
+            }
         }
     }
     

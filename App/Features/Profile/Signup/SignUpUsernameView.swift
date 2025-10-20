@@ -57,13 +57,17 @@ struct SignUpUsernameView: View {
                 // Calls the updated submitStep2() in the ViewModel (no longer async)
                 viewModel.submitStep2()
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.top, 16)
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.accentColor)
+            .cornerRadius(6) // Less rounded corners
             .disabled(
-                // SIMPLIFIED disable logic
                 !viewModel.isStep2Valid ||
                 viewModel.isLoading
             )
+            .padding(.top, 16)
         }
         .padding(.horizontal) // Add padding to make the view look good
     }

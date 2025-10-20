@@ -19,7 +19,7 @@ struct SignedInProfileView: View {
     private func needsUpdate(from date: Date) -> Bool {
         let now = Date()
         let timeInterval = now.timeIntervalSince(date)
-        return timeInterval > 1800 // 30 minutes = 1800 seconds
+        return timeInterval > 600 // 10 minutes = 600 seconds
     }
     
     // Helper function to check if refresh button can be clicked (1 minute cooldown)
@@ -90,7 +90,7 @@ struct SignedInProfileView: View {
                                 .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
                         }
                         
-                        // Pencil button in bottom right
+                        // Gear button in bottom right
                         if viewModel.profile != nil {
                             VStack {
                                 Spacer()
@@ -99,9 +99,9 @@ struct SignedInProfileView: View {
                                     Button {
                                         showingEditProfile = true
                                     } label: {
-                                        Image(systemName: "pencil")
+                                        Image(systemName: "gearshape.fill")
                                             .font(.system(size: 24, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.white.opacity(0.85))
                                             .shadow(color: .black, radius: 0, x: 1, y: 1)
                                     }
                                     .padding(.trailing, standardPadding * 0.75)
@@ -206,24 +206,6 @@ struct SignedInProfileView: View {
                         .padding(.top, 8)
                         
                         Spacer(minLength: 100)
-                        
-                        // MARK: - Sign Out / Delete
-                        Button(action: { viewModel.signOut() }) {
-                            HStack {
-                                Text("Sign Out").font(.headline)
-                                Spacer()
-                                Image(systemName: "arrow.right.square.fill").font(.title2)
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
-                            )
-                        }
-                        .padding(.horizontal, standardPadding)
-                        
-                        DeleteProfileButton(viewModel: viewModel)
-                            .padding(.horizontal, standardPadding)
                     }
                     .padding(.bottom, screenHeight * 0.03)
                 }
@@ -233,7 +215,7 @@ struct SignedInProfileView: View {
             .edgesIgnoringSafeArea(.top)
             .sheet(isPresented: $showingEditProfile) {
                 if let _ = viewModel.profile {
-                    EditProfileView(userProfile: $viewModel.profile)
+                    EditProfileView(userProfile: $viewModel.profile, profileViewModel: viewModel)
                 }
             }
         }

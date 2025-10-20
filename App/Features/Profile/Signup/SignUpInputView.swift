@@ -23,8 +23,21 @@ struct SignUpInputView: View {
                     .textContentType(.familyName)
 
                 // Email
-                InputField(placeholder: "Email", text: $viewModel.email, isSecure: false)
+                VStack(alignment: .leading, spacing: 4) {
+                    InputField(
+                        placeholder: "Email", 
+                        text: $viewModel.email, 
+                        isSecure: false, 
+                        hasError: !viewModel.email.isEmpty && !viewModel.isValidEmail
+                    )
                     .textContentType(.emailAddress)
+                    
+                    if !viewModel.email.isEmpty && !viewModel.isValidEmail {
+                        Text("Invalid email address")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
                 
                 // Password
                 InputField(placeholder: "Password (min 6 chars)", text: $viewModel.password, isSecure: true)
@@ -32,16 +45,33 @@ struct SignUpInputView: View {
                     .textContentType(.password)
                 
                 // Confirm Password
-                InputField(placeholder: "Confirm Password", text: $viewModel.confirmPassword, isSecure: true)
-                    // ✨ THE FIX: Change to .password
+                VStack(alignment: .leading, spacing: 4) {
+                    InputField(
+                        placeholder: "Confirm Password", 
+                        text: $viewModel.confirmPassword, 
+                        isSecure: true,
+                        hasError: !viewModel.confirmPassword.isEmpty && !viewModel.passwordsMatch
+                    )
                     .textContentType(.password)
+                    
+                    if !viewModel.confirmPassword.isEmpty && !viewModel.passwordsMatch {
+                        Text("Passwords don't match")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
             }
             .autocapitalization(.none)
 
             Button("Next: Choose Username") {
                 viewModel.submitStep1()
             }
-            .buttonStyle(.borderedProminent)
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.accentColor)
+            .cornerRadius(6) // Less rounded corners
             .disabled(!viewModel.isStep1Valid || viewModel.isLoading)
             .padding(.top, 16)
         }
