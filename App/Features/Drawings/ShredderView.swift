@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ShredderView: View {
     let image: UIImage
-    let itemHeight: CGFloat
     let onFinished: () -> Void
     
     private let sliceCount = 10
@@ -21,27 +20,28 @@ struct ShredderView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(slices) { slice in
-                Image(uiImage: slice.image)
-                    .resizable()
-                    .scaledToFit()
-                    .offset(x: slice.xOffset, y: slice.yOffset)
-                    .rotation3DEffect(
-                        .degrees(slice.rotation),
-                        axis: (x: Double.random(in: -1...1),
-                               y: Double.random(in: -1...1),
-                               z: 0)
-                    )
-                    .animation(.easeOut(duration: 1.2).delay(slice.delay), value: slice.rotation)
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                ForEach(slices) { slice in
+                    Image(uiImage: slice.image)
+                        .resizable()
+                        .scaledToFit()
+                        .offset(x: slice.xOffset, y: slice.yOffset)
+                        .rotation3DEffect(
+                            .degrees(slice.rotation),
+                            axis: (x: Double.random(in: -1...1), y: Double.random(in: -1...1), z: 0)
+                        )
+                        .animation(.easeOut(duration: 1.5).delay(slice.delay), value: slice.rotation)
+                }
             }
+            .onAppear {
+                setupAndAnimate(size: geo.size)
+            }
+            .clipped()
         }
-        .onAppear(perform: setupAndAnimate)
-        .clipped()
-        .frame(width: itemHeight * (16/9), height: itemHeight)
     }
     
-    private func setupAndAnimate() {
+    private func setupAndAnimate(size: CGSize) {
         guard !hasStartedAnimation, let cgImage = image.cgImage else { return }
         
         let totalWidth = CGFloat(cgImage.width)
@@ -56,7 +56,7 @@ struct ShredderView: View {
                     image: sliceImage,
                     delay: Double(i) * 0.03,
                     xOffset: 0,
-                    yOffset: -itemHeight,
+                    yOffset: 0,
                     rotation: 0
                 )
                 self.slices.append(newSlice)
@@ -67,14 +67,15 @@ struct ShredderView: View {
         
         DispatchQueue.main.async {
             for i in 0..<self.slices.count {
-                self.slices[i].yOffset = CGFloat.random(in: 200...400)
-                self.slices[i].xOffset = CGFloat.random(in: -150...150)
+                self.slices[i].yOffset = CGFloat.random(in: 400...600)
+                self.slices[i].xOffset = CGFloat.random(in: -100...100)
                 self.slices[i].rotation = Double.random(in: 360...720) * (i % 2 == 0 ? 1 : -1)
             }
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             onFinished()
         }
     }
 }
+

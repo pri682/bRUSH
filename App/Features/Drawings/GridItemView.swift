@@ -6,17 +6,23 @@ struct GridItemView: View {
     let size: Double
     let item: Item
     var isSelected: Bool = false
-    
+    var isDeleting: Bool = false
+    var onDeletionFinished: () -> Void = {}
+
     var body: some View {
         imageContent
-            .background(
-                GeometryReader { geo in
-                    Color.clear.preference(
-                        key: FramePreferenceKey.self,
-                        value: [item.id: geo.frame(in: .global)]
-                    )
+            .opacity(isDeleting ? 0 : 1)
+            .overlay {
+                if isDeleting, let image = item.image {
+                    ShredderView(image: image, onFinished: onDeletionFinished)
+                        .clipShape(.rect(cornerRadius: 8.0))
                 }
-            )
+            }
+            .onAppear {
+                if item.image == nil {
+                    dataModel.loadImage(for: item.id)
+                }
+            }
     }
 
     private var imageContent: some View {
@@ -41,11 +47,6 @@ struct GridItemView: View {
                         .foregroundColor(.accentColor)
                         .font(.title)
                 }
-            }
-        }
-        .onAppear {
-            if item.image == nil {
-                dataModel.loadImage(for: item.id)
             }
         }
     }
