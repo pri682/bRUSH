@@ -21,19 +21,16 @@ class DataModel: ObservableObject {
         _ = load()
     }
 
-    /// Adds a new item to the collection.
     func addItem(_ item: Item) {
         items.insert(item, at: 0)
     }
 
-    /// Loads a specific image from its file into the in-memory cache.
     func loadImage(for itemID: UUID) {
         guard let index = items.firstIndex(where: { $0.id == itemID }),
               items[index].image == nil else {
             return
         }
         
-        // Get the filename and construct the full URL at runtime.
         let imageFileName = items[index].imageFileName
         let imageUrl = documentsDirectory.appendingPathComponent(imageFileName)
         
@@ -47,8 +44,23 @@ class DataModel: ObservableObject {
             }
         }
     }
+
+    func deleteItems(with ids: Set<UUID>) {
+        let filenamesToDelete = items.filter { ids.contains($0.id) }.map { $0.imageFileName }
+        items.removeAll { ids.contains($0.id) }
+        
+        DispatchQueue.global(qos: .background).async {
+            for filename in filenamesToDelete {
+                let fileURL = self.documentsDirectory.appendingPathComponent(filename)
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
+    }
+
+    func deleteItem(with id: UUID) {
+        deleteItems(with: [id])
+    }
     
-    // MARK: - Persistence
     private func save() {
         do {
             let data = try JSONEncoder().encode(items)
@@ -67,3 +79,4 @@ class DataModel: ObservableObject {
         }
     }
 }
+
