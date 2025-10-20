@@ -27,59 +27,47 @@ struct DrawingsGridView: View {
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: 20) {
                         ForEach(dataModel.items) { item in
-                            if !itemsAnimatingDelete.contains(item.id) {
-                                GridItemView(
-                                    namespace: namespace,
-                                    size: 100,
-                                    item: item,
-                                    isSelected: selection.contains(item.id),
-                                    isDeleting: itemsAnimatingDelete.contains(item.id),
-                                    onDeletionFinished: {
+                            GridItemView(
+                                namespace: namespace,
+                                size: 100,
+                                item: item,
+                                isSelected: selection.contains(item.id),
+                                isDeleting: itemsAnimatingDelete.contains(item.id),
+                                onDeletionFinished: {
+                                    withAnimation(.spring()) {
                                         dataModel.deleteItem(with: item.id)
                                         itemsAnimatingDelete.remove(item.id)
                                     }
-                                )
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        if isEditing {
-                                            if selection.contains(item.id) {
-                                                _ = selection.remove(item.id)
-                                            } else {
-                                                _ = selection.insert(item.id)
-                                            }
+                                }
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if isEditing {
+                                        if selection.contains(item.id) {
+                                            _ = selection.remove(item.id)
                                         } else {
-                                            selectedItem = item
+                                            _ = selection.insert(item.id)
                                         }
+                                    } else {
+                                        selectedItem = item
                                     }
                                 }
-                                .contextMenu {
-                                    if !isEditing {
-                                        Button(role: .destructive) {
-                                            itemToDelete = item
-                                            showSingleDeleteAlert = true
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
-                                } preview: {
-                                    if let image = item.image {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .scaledToFit()
+                            }
+                            .contextMenu {
+                                if !isEditing {
+                                    Button(role: .destructive) {
+                                        itemToDelete = item
+                                        showSingleDeleteAlert = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
-                            } else {
-                                // A placeholder that shows the animation
-                                GridItemView(
-                                    namespace: namespace,
-                                    size: 100,
-                                    item: item,
-                                    isDeleting: true,
-                                    onDeletionFinished: {
-                                        dataModel.deleteItem(with: item.id)
-                                        itemsAnimatingDelete.remove(item.id)
-                                    }
-                                )
+                            } preview: {
+                                if let image = item.image {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFit()
+                                }
                             }
                         }
                     }

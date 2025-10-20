@@ -42,6 +42,11 @@ struct ShredderView: View {
                                 x: 2 + slice.zDepth * 0.1,
                                 y: 4 + slice.zDepth * 0.15
                             )
+                            .animation(
+                                .easeOut(duration: 3.0)
+                                    .delay(slice.delay),
+                                value: slice.rotation
+                            )
                     }
                 }
             }
