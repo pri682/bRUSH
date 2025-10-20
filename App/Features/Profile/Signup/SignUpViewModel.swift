@@ -17,14 +17,20 @@ class SignUpViewModel: ObservableObject {
     
     // MARK: - Step 3 Fields (AvatarView)
     @Published var selectedAvatar: AvatarParts? = nil
-    
-    // 🗑️ REMOVED: isCheckingDisplayName (No longer needed)
-    // 🗑️ REMOVED: displayNameError (No longer needed since uniqueness check is gone)
 
     // MARK: - State Management
     @Published var currentStep: SignUpStep = .input
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
+    
+    // MARK: - Validation Properties
+    var isValidEmail: Bool {
+        email.contains("@") && email.contains(".")
+    }
+    
+    var passwordsMatch: Bool {
+        password == confirmPassword
+    }
 
     private let auth = AuthService.shared
     private let userService = UserService.shared
@@ -81,8 +87,6 @@ class SignUpViewModel: ObservableObject {
     }
 
     // MARK: - Step 2 Display Name Validation
-
-    // 🗑️ REMOVED: The entire async validateDisplayName() function.
     
     // ✨ NEW/MODIFIED: Submit function for Step 2 (navigates to avatar step)
     func submitStep2() {
