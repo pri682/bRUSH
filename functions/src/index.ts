@@ -1,11 +1,24 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 import fetch from "node-fetch";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!admin.apps.length) admin.initializeApp();
+const db = admin.firestore();
 
-// Reusable function for both HTTP + scheduled
-async function generatePrompt() {
+const GEMINI_API_KEY =
+  process.env.GEMINI_API_KEY || functions.config().gemini?.key;
+
+// ✅ Corrected Gemini response type
+interface GeminiResponse {
+  candidates?: {
+    content?: {
+      parts?: { text?: string }[];
+    };
+  }[];
+}
+
+// ✅ Function to generate a new creative prompt
+async function generatePrompt(): Promise<string> {
   const examples = [
     "What does your brain look like on a happy day?",
     "Redesign money if it didn’t have numbers.",
@@ -17,71 +30,76 @@ async function generatePrompt() {
     "Design a chair for an alien.",
     "Reimagine Earth if gravity took weekends off.",
     "Draw a plant that grows emotions instead of fruits.",
-    "If your shadow had a personality, what would it be doing?",
-    "Combine two holidays into one chaotic celebration.",
-    "Design footwear for a time traveler.",
-    "What would your phone look like if it had feelings?",
-    "Create a Pokémon inspired by your morning routine.",
-    "Draw a cloud that just got promoted.",
-    "Reimagine your favorite snack as a superhero.",
-    "Sketch 'Monday' as a living thing.",
-    "Draw a transportation method powered by laughter.",
-    "If colors could argue, draw their fight.",
   ];
 
-  const randomExamples = examples.sort(() => 0.5 - Math.random()).slice(0, 5);
-  const exampleText = randomExamples.join("\n");
-
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-  const body = {
+  const promptBody = {
     contents: [
       {
         parts: [
           {
-            text: `You are a creative art prompt generator.
-Here are some example prompts for inspiration:
-${exampleText}
-
-Now create ONE new, original, imaginative, and funny drawing prompt (under 15 words) that matches this style. Return only the new prompt.`,
+            text: `Generate ONE funny, creative, short drawing prompt (under 15 words).
+Example ideas:
+${examples.join("\n")}`,
           },
         ],
       },
     ],
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(promptBody),
+    }
+  );
 
-  const data: any = await response.json();
-  const generatedText =
-    data?.candidates?.[0]?.content?.parts
-      ?.map((p: any) => p.text)
-      .join(" ")
-      ?.trim() || "No response generated.";
+  const data = (await response.json()) as GeminiResponse;
 
-  console.log("🎨 Daily prompt:", generatedText);
-  return { success: true, prompt: generatedText, raw: data };
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+    "No prompt generated.";
+
+  return text;
 }
 
-// ✅ HTTP trigger for manual testing
-export const generateDailyPrompt = onRequest(async (_req, res) => {
-  try {
-    const result = await generatePrompt();
-    res.status(200).json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// ✅ Function — returns same prompt for 24 hrs, refreshes after midnight
+export const generateDailyPrompt = functions.https.onRequest(
+  async (_req, res): Promise<void> => {
+    try {
+      const today = new Date().toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+      });
 
-// ✅ Automatic trigger every 24 hours
-export const autoGeneratePrompt = onSchedule("every 24 hours", async () => {
-  try {
-    const result = await generatePrompt();
-    console.log("✅ Automatically generated daily prompt:", result.prompt);
-  } catch (err) {
-    console.error("❌ Failed to auto-generate prompt:", err);
+      const ref = db.collection("prompts").doc("daily");
+      const doc = await ref.get();
+
+      // 🔹 If today's prompt already exists → reuse it
+      if (doc.exists && doc.data()?.date === today) {
+        res.status(200).json({
+          success: true,
+          prompt: doc.data()?.prompt,
+          date: doc.data()?.date,
+        });
+        return;
+      }
+
+      // 🔹 Otherwise, generate new and save it
+      const prompt = await generatePrompt();
+      await ref.set({ prompt, date: today });
+
+      res.status(200).json({
+        success: true,
+        prompt,
+        date: today,
+      });
+    } catch (err) {
+      console.error("❌ Error:", err);
+      res.status(500).json({
+        success: false,
+        prompt: "Error generating prompt.",
+      });
+    }
   }
-});
+);
