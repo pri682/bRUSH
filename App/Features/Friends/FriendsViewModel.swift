@@ -16,19 +16,36 @@ class FriendsViewModel: ObservableObject {
     @Published var leaderboard: [LeaderboardEntry] = []
     @Published var isLoadingLeaderboard = false
     @Published var leaderboardError: String?
+    @Published var currentUserHandle: String?
     
     private var cancellables = Set<AnyCancellable>()
     private var leaderboardService: LeaderboardService = FriendsLeaderboardServiceStub()
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
     private var meUid: String? { AuthService.shared.user?.id }
-    private var myHandle: String { AuthService.shared.user?.displayName ?? "unknown" }
-
+    private var myHandle: String { currentUserHandle ?? AuthService.shared.user?.displayName ?? "unknown" }
+    
     var filteredFriends: [Friend] {
         guard !searchText.isEmpty else { return friends }
         return friends.filter { $0.name.lowercased().contains(searchText.lowercased()) ||
                                 $0.handle.lowercased().contains(searchText.lowercased()) }
     }
+    
+    func loadMyHandle() {
+        guard let me = meUid else { return }
+        Task { @MainActor in
+            do {
+                let doc = try await Firestore.firestore()
+                    .collection("users").document(me).getDocument()
+                if let dn = doc.data()?["displayName"] as? String {
+                    self.currentUserHandle = dn
+                }
+            } catch {
+                // non-fatal; UI can still function with optimistic pending state
+            }
+        }
+    }
+    
     func accept(_ req: FriendRequest) {
         guard let me = meUid else { return }
         Task { @MainActor in
@@ -116,15 +133,16 @@ class FriendsViewModel: ObservableObject {
         }
         func sendFriendRequest(to user: FriendSearchResult) {
             let handleLabel = "@\(user.handle)"
-            guard !sent.contains(where: { $0.handle == handleLabel }) else { return }
-            sent.append(.init(toName: user.displayName, handle: handleLabel))
+            guard !sent.contains(where: { $0.toUid == user.uid }) else { return }
+            sent.append(.init(toName: user.displayName, toUid: user.uid, handle: handleLabel))
             guard let me = meUid else { return }
+            let senderHandle = myHandle
             Task { @MainActor in
                 do {
                     try await FriendRequestServiceFirebase().sendRequest(
                         fromUid: me,
-                        fromHandle: myHandle,
-                        fromDisplay: myHandle,
+                        fromHandle: senderHandle,
+                        fromDisplay: senderHandle,
                         toUid: user.uid)
                 }
                 catch {
