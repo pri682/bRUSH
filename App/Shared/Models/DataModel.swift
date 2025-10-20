@@ -9,11 +9,11 @@ class DataModel: ObservableObject {
         didSet { save() }
     }
     
-    private var documentsDirectory: URL {
+    private static var documentsDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
     
-    private var fileURL: URL {
+    private static var fileURL: URL {
         documentsDirectory.appendingPathComponent("items.json")
     }
     
@@ -32,7 +32,7 @@ class DataModel: ObservableObject {
         }
         
         let imageFileName = items[index].imageFileName
-        let imageUrl = documentsDirectory.appendingPathComponent(imageFileName)
+        let imageUrl = Self.documentsDirectory.appendingPathComponent(imageFileName)
         
         DispatchQueue.global(qos: .userInitiated).async {
             if let data = try? Data(contentsOf: imageUrl), let image = UIImage(data: data) {
@@ -44,33 +44,46 @@ class DataModel: ObservableObject {
             }
         }
     }
-
-    func deleteItems(with ids: Set<UUID>) {
-        let filenamesToDelete = items.filter { ids.contains($0.id) }.map { $0.imageFileName }
-        items.removeAll { ids.contains($0.id) }
-        
-        DispatchQueue.global(qos: .background).async {
-            for filename in filenamesToDelete {
-                let fileURL = self.documentsDirectory.appendingPathComponent(filename)
+    
+    func deleteItem(with id: UUID) {
+        if let index = items.firstIndex(where: { $0.id == id }) {
+            let itemToDelete = items[index]
+            items.remove(at: index)
+            
+            let documentsDirectory = Self.documentsDirectory
+            let fileURL = documentsDirectory.appendingPathComponent(itemToDelete.imageFileName)
+            
+            DispatchQueue.global(qos: .background).async {
                 try? FileManager.default.removeItem(at: fileURL)
             }
         }
     }
-
-    func deleteItem(with id: UUID) {
-        deleteItems(with: [id])
+    
+    func deleteItems(with ids: Set<UUID>) {
+        let itemsToDelete = items.filter { ids.contains($0.id) }
+        items.removeAll { ids.contains($0.id) }
+        
+        let documentsDirectory = Self.documentsDirectory
+        let filenamesToDelete = itemsToDelete.map { $0.imageFileName }
+        
+        DispatchQueue.global(qos: .background).async {
+            for filename in filenamesToDelete {
+                let fileURL = documentsDirectory.appendingPathComponent(filename)
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
     }
     
     private func save() {
         do {
             let data = try JSONEncoder().encode(items)
-            try data.write(to: fileURL, options: .atomic)
+            try data.write(to: Self.fileURL, options: .atomic)
         } catch { print("Error saving items: \(error.localizedDescription)") }
     }
 
     private func load() -> Bool {
         do {
-            let data = try Data(contentsOf: fileURL)
+            let data = try Data(contentsOf: Self.fileURL)
             items = try JSONDecoder().decode([Item].self, from: data)
             return true
         } catch {

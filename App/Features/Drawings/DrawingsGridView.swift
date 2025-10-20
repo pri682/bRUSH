@@ -14,6 +14,9 @@ struct DrawingsGridView: View {
     @State private var showSingleDeleteAlert = false
     @State private var showMultiDeleteAlert = false
     
+    @State private var itemFrames: [UUID: CGRect] = [:]
+    @State private var itemsToAnimate: [(id: UUID, frame: CGRect, image: UIImage)] = []
+    
     private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
     var body: some View {
@@ -23,13 +26,14 @@ struct DrawingsGridView: View {
                     LazyVGrid(columns: gridColumns, spacing: 20) {
                         ForEach(dataModel.items) { item in
                             GridItemView(namespace: namespace, size: 100, item: item, isSelected: selection.contains(item.id))
+                                .opacity(itemsToAnimate.contains(where: { $0.id == item.id }) ? 0 : 1)
                                 .onTapGesture {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                         if isEditing {
                                             if selection.contains(item.id) {
-                                                selection.remove(item.id)
+                                                _ = selection.remove(item.id)
                                             } else {
-                                                selection.insert(item.id)
+                                                _ = selection.insert(item.id)
                                             }
                                         } else {
                                             selectedItem = item
@@ -45,10 +49,19 @@ struct DrawingsGridView: View {
                                             Label("Delete", systemImage: "trash")
                                         }
                                     }
+                                } preview: {
+                                    if let image = item.image {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .scaledToFit()
+                                    }
                                 }
                         }
                     }
                     .padding()
+                }
+                .onPreferenceChange(FramePreferenceKey.self) {
+                    self.itemFrames = $0
                 }
                 .navigationTitle("Past Drawings")
                 .navigationBarTitleDisplayMode(.large)
@@ -98,10 +111,22 @@ struct DrawingsGridView: View {
                     .ignoresSafeArea()
                     .zIndex(1)
                 }
+                
+                ForEach(itemsToAnimate, id: \.id) { item in
+                    ShredderView(image: item.image, itemHeight: item.frame.height, onFinished: {
+                        dataModel.deleteItem(with: item.id)
+                        itemsToAnimate.removeAll(where: { $0.id == item.id })
+                    })
+                    .frame(width: item.frame.width, height: item.frame.height)
+                    .position(x: item.frame.midX, y: item.frame.midY)
+                    .offset(y: -item.frame.height)
+                }
+                .zIndex(2)
             }
+            .coordinateSpace(name: "grid")
             .alert("Delete Drawing?", isPresented: $showSingleDeleteAlert, presenting: itemToDelete) { item in
                 Button("Delete", role: .destructive) {
-                    dataModel.deleteItem(with: item.id)
+                    triggerShredder(for: [item.id])
                 }
                 Button("Cancel", role: .cancel) {}
             } message: { _ in
@@ -109,7 +134,7 @@ struct DrawingsGridView: View {
             }
             .alert("Delete \(selection.count) Drawings?", isPresented: $showMultiDeleteAlert) {
                 Button("Delete", role: .destructive) {
-                    dataModel.deleteItems(with: selection)
+                    triggerShredder(for: Array(selection))
                     selection.removeAll()
                     isEditing = false
                 }
@@ -118,6 +143,18 @@ struct DrawingsGridView: View {
                 Text("These drawings cannot be restored.")
             }
         }
+    }
+    
+    private func triggerShredder(for itemIDs: [UUID]) {
+        let itemsToProcess = itemIDs.compactMap { id -> (UUID, CGRect, UIImage)? in
+            guard let frame = itemFrames[id],
+                  let item = dataModel.items.first(where: { $0.id == id }),
+                  let image = item.image
+            else { return nil }
+            return (id, frame, image)
+        }
+        
+        itemsToAnimate.append(contentsOf: itemsToProcess)
     }
 }
 

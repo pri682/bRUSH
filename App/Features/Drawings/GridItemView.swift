@@ -8,6 +8,18 @@ struct GridItemView: View {
     var isSelected: Bool = false
     
     var body: some View {
+        imageContent
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(
+                        key: FramePreferenceKey.self,
+                        value: [item.id: geo.frame(in: .global)]
+                    )
+                }
+            )
+    }
+
+    private var imageContent: some View {
         ZStack {
             if let cachedImage = item.image {
                 Image(uiImage: cachedImage)
@@ -38,3 +50,4 @@ struct GridItemView: View {
         }
     }
 }
+
