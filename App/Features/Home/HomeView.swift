@@ -120,6 +120,9 @@ struct HomeView: View {
                 .navigationTitle("New Drawing")
             }
         }
+        .task {
+            await viewModel.loadDailyPrompt()
+        }
     }
 }
 
@@ -234,3 +237,5 @@ private enum Formatter {
 #Preview {
     NavigationStack { HomeView() }
 }
+
+
