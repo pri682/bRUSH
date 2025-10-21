@@ -4,6 +4,8 @@ struct FriendsView: View {
     @StateObject private var vm = FriendsViewModel()
     @State private var showAddSheet = false
     @State private var showLeaderboard = false
+    @State private var showRemoveConfirm = false
+    @State private var pendingRemoval: Friend? = nil
     
     var body: some View {
         NavigationStack {
@@ -81,22 +83,36 @@ struct FriendsView: View {
                             Text(friend.handle).foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                        .onTapGesture { vm.openProfile(for: friend) }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                pendingRemoval = friend
+                                showRemoveConfirm = true
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
                     }
                 }
             }
             .listStyle(.insetGrouped)
+            .onAppear {
+                vm.loadMyHandle()
+                vm.refreshFriends()
+                vm.refreshIncoming()
+                vm.loadLeaderboard() }
+            .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        withAnimation {
-                            showLeaderboard.toggle()
-                        }
+                        withAnimation { showLeaderboard.toggle() }
                     } label: {
                         Image(systemName: "trophy")
                     }
-                        .accessibilityLabel("Toggle Leaderboard")
-                    }
+                    .accessibilityLabel("Toggle Leaderboard")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         vm.addQuery = ""
@@ -112,8 +128,96 @@ struct FriendsView: View {
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
+            .sheet(isPresented: $vm.showingProfile) {
+                if let p = vm.selectedProfile {
+                    FriendProfileSheet(
+                        profile: p,
+                        onConfirmRemove: { uid in
+                            if let f = vm.friends.first(where: { $0.uid == uid}) {
+                                vm.remove(friend: f)
+                            }
+                        }
+                    )
+                } else {
+                    // Fallback while loading
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading profile…")
+                    }
+                    .padding()
+                    .presentationDetents([.fraction(0.3)])
+                }
+            }
         }
-        .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
-        .searchable(text: $vm.searchText, prompt: "Search friends")
     }
 }
+private struct FriendProfileSheet: View {
+    let profile: UserProfile
+    var onConfirmRemove: (String) -> Void = { _ in }
+    
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmRemove = false
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            // Avatar stub (swap for avatar pieces later)
+            Circle()
+                .frame(width: 72, height: 72)
+                .overlay(Text(profile.displayName.prefix(1)).font(.title))
+                .accessibilityHidden(true)
+            
+            VStack(spacing: 2) {
+                Text(profile.displayName)
+                    .font(.title3).bold()
+                Text("@\(profile.displayName)")
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+            }
+            
+            // Quick stats row
+            HStack(spacing: 24) {
+                Stat("Gold", profile.goldMedalsAccumulated)
+                Stat("Silver", profile.silverMedalsAccumulated)
+                Stat("Bronze", profile.bronzeMedalsAccumulated)
+            }
+            
+            // Actions
+            HStack(spacing: 12) {
+                Button("Close") { dismiss() }
+                    .buttonStyle(.bordered)
+                
+                Button(role: .destructive) {
+                    confirmRemove = true
+                } label: {
+                    Label("Remove Friend", systemImage: "person.fill.xmark")
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.top, 4)
+        }
+        .padding()
+        .presentationDetents([.medium, .large])
+        .presentationBackground(Color(.systemBackground)) // opaque profile sheet
+        
+        .confirmationDialog(
+            "Remove \(profile.displayName) as a friend?",
+            isPresented: $confirmRemove,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                onConfirmRemove(profile.uid)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+}
+            // tiny helper
+            private func Stat(_ label: String, _ value: Int) -> some View {
+                VStack {
+                    Text("\(value)").bold()
+                    Text(label).font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+

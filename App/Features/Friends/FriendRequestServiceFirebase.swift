@@ -77,4 +77,15 @@ final class FriendRequestServiceFirebase {
             .document(other)
             .delete()
     }
+    // Deletes both friendship edges:
+    // /friendships/{me}/friends/{other} and /friendships/{other}/friends/{me}
+    func removeFriend(me: String, other: String) async throws {
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
+        let batch = db.batch()
+        let a = db.collection("friendships").document(me).collection("friends").document(other)
+        let b = db.collection("friendships").document(other).collection("friends").document(me)
+        batch.deleteDocument(a)
+        batch.deleteDocument(b)
+        try await batch.commit()
+    }
 }
