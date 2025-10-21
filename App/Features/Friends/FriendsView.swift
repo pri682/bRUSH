@@ -4,6 +4,8 @@ struct FriendsView: View {
     @StateObject private var vm = FriendsViewModel()
     @State private var showAddSheet = false
     @State private var showLeaderboard = false
+    @State private var showRemoveConfirm = false
+    @State private var pendingRemoval: Friend? = nil
     
     var body: some View {
         NavigationStack {
@@ -81,39 +83,62 @@ struct FriendsView: View {
                             Text(friend.handle).foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                pendingRemoval = friend
+                                showRemoveConfirm = true
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
                     }
                 }
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Friends")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        withAnimation {
-                            showLeaderboard.toggle()
+                .listStyle(.insetGrouped)
+                .navigationTitle("Friends")
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            withAnimation {
+                                showLeaderboard.toggle()
+                            }
+                        } label: {
+                            Image(systemName: "trophy")
                         }
-                    } label: {
-                        Image(systemName: "trophy")
-                    }
                         .accessibilityLabel("Toggle Leaderboard")
                     }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        vm.addQuery = ""
-                        vm.addResults = []
-                        vm.addError = nil
-                        vm.isSearchingAdd = false
-                        showAddSheet = true
-                    } label: {
-                        Label("Add Friend", systemImage: "person.badge.plus")
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            vm.addQuery = ""
+                            vm.addResults = []
+                            vm.addError = nil
+                            vm.isSearchingAdd = false
+                            showAddSheet = true
+                        } label: {
+                            Label("Add Friend", systemImage: "person.badge.plus")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showAddSheet) {
+                    AddFriendView(vm: vm)
+                }
+                .confirmationDialog(
+                    pendingRemoval.map { "Remove \($0.name) as a friend?" } ?? "Remove friend?",
+                    isPresented: $showRemoveConfirm,
+                    titleVisibility: .visible
+                ) {
+                    Button("Remove", role: .destructive) {
+                        if let f = pendingRemoval {
+                            vm.remove(friend: f)                        }
+                        pendingRemoval = nil
+                    }
+                    Button("Cancel", role: .cancel) {
+                        pendingRemoval = nil
                     }
                 }
             }
-            .sheet(isPresented: $showAddSheet) {
-                AddFriendView(vm: vm)
-            }
+            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
+            .searchable(text: $vm.searchText, prompt: "Search friends")
         }
-        .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
-        .searchable(text: $vm.searchText, prompt: "Search friends")
     }
 }

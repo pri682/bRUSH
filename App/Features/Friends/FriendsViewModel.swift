@@ -18,6 +18,9 @@ class FriendsViewModel: ObservableObject {
     @Published var leaderboardError: String?
     @Published var currentUserHandle: String?
     @Published var friendIds: Set<String> = []
+    @Published var showingProfile: Bool = false
+    @Published var selectedProfile: UserProfile? = nil
+    @Published var selectedFriendUid: String? = nil
     
     private var cancellables = Set<AnyCancellable>()
     private var leaderboardService: LeaderboardService = FriendsLeaderboardServiceStub()
@@ -25,6 +28,7 @@ class FriendsViewModel: ObservableObject {
     private let requestService = FriendRequestServiceFirebase()
     private var meUid: String? { AuthService.shared.user?.id }
     private var myHandle: String { currentUserHandle ?? AuthService.shared.user?.displayName ?? "unknown" }
+    private let userService = UserService.shared
     
     private func hydrateFriendsFromIds() {
         self.friends = []
@@ -36,10 +40,10 @@ class FriendsViewModel: ObservableObject {
                 do {
                     let doc = try await db.collection("users").document(uid).getDocument()
                     if let dn = doc.data()?["displayName"] as? String, !dn.isEmpty {
-                        self.friends.append(Friend(name: dn, handle: "@\(dn)"))
+                        self.friends.append(Friend(uid: uid, name: dn, handle: "@\(dn)"))
                     } else {
                         // fallback if profile missing
-                        self.friends.append(Friend(name: uid, handle: "@unknown"))
+                        self.friends.append(Friend(uid: uid, name: uid, handle: "@unknown"))
                     }
                 } catch {
                     // ignore; leave friend out or append placeholder
@@ -90,7 +94,7 @@ class FriendsViewModel: ObservableObject {
             do {
                 try await requestService.accept(me: me, other: req.fromUid)
                 requests.removeAll { $0.id == req.id }
-                friends.append(Friend(name: req.fromName, handle: req.handle))
+                friends.append(Friend(uid: req.fromUid, name: req.fromName, handle: req.handle))
                 refreshFriends()
             }
             catch {
@@ -207,6 +211,33 @@ class FriendsViewModel: ObservableObject {
                     }
                 } catch {
                     addError = "Failed to load friend requests."
+                }
+            }
+        }
+    func remove(friend: Friend) {
+            guard let me = AuthService.shared.user?.id else { return }
+            Task {
+                do {
+                    try await requestService.removeFriend(me: me, other: friend.uid)
+                    // Locally drop it
+                    if let idx = friends.firstIndex(of: friend) {
+                        friends.remove(at: idx)
+                    } else {
+                        friends.removeAll { $0.uid == friend.uid }
+                    }
+                } catch {
+                    print("Failed to remove friend: \(error)")
+                }
+            }
+        }
+    func openProfile(for friend: Friend) {
+            Task {
+                do {
+                    let profile = try await userService.fetchProfile(uid: friend.uid)
+                    self.selectedProfile = profile
+                    self.showingProfile = true
+                } catch {
+                    print("Failed to fetch profile: \(error)")
                 }
             }
         }

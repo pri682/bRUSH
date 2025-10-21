@@ -1,7 +1,8 @@
 import Foundation
 
-struct Friend: Identifiable {
+struct Friend: Identifiable, Hashable, Equatable {
     let id = UUID()
+    let uid: String
     let name: String
     let handle: String
 }
