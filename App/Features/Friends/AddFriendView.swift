@@ -7,7 +7,7 @@ struct AddFriendView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                HStack {
+                HStack (spacing: 8){
                     Text("@").foregroundStyle(.secondary)
                     TextField("username", text: $vm.addQuery)
                         .textInputAutocapitalization(.never)
@@ -16,7 +16,15 @@ struct AddFriendView: View {
                         .onSubmit { vm.performAddSearch() }
                 }
                 .padding(12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
+                                                    to: nil, from: nil, for: nil)
+                }
                 .padding([.horizontal, .top])
                 
                 if vm.isSearchingAdd {

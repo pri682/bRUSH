@@ -10,54 +10,6 @@ struct FriendsView: View {
     var body: some View {
         NavigationStack {
             List {
-                if showLeaderboard {
-                    Section {
-                        if vm.isLoadingLeaderboard {
-                            HStack {
-                                ProgressView()
-                                Text("Loading leaderboard…")
-                            }
-                        } else if let err = vm.leaderboardError {
-                            Text(err).foregroundStyle(.red)
-                        } else if vm.leaderboard.isEmpty {
-                            Text("No friend rankings yet for today.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
-                                HStack {
-                                    Text("\(index + 1)")
-                                        .font(.system(.body, design: .monospaced))
-                                        .bold()
-                                        .frame(width: 30, alignment: .trailing)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(entry.displayName).font(.body.weight(.semibold))
-                                        Text(entry.handle).font(.caption).foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Text("\(entry.points) pts")
-                                        .font(.callout)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.vertical, 6)
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Friends Leaderboard")
-                            Spacer()
-                            Button {
-                                vm.loadLeaderboard()
-                            } label: {
-                                Label("Refresh", systemImage: "arrow.clockwise")
-                            }
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                }
                 if !vm.requests.isEmpty {
                     Section("Friend Requests") {
                         ForEach(vm.requests) { req in
@@ -95,13 +47,10 @@ struct FriendsView: View {
                         }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .listSectionSpacing(.compact)
             }
-            .listStyle(.insetGrouped)
-            .onAppear {
-                vm.loadMyHandle()
-                vm.refreshFriends()
-                vm.refreshIncoming()
-                vm.loadLeaderboard() }
+            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
             .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
             .toolbar {
@@ -148,6 +97,153 @@ struct FriendsView: View {
                     .presentationDetents([.fraction(0.3)])
                 }
             }
+            .sheet(isPresented: $showLeaderboard) {
+                LeaderboardSheet(vm: vm)
+            }
+            
+        }
+    }
+    private struct LeaderboardBarRow: View {
+        let rank: Int
+        let name: String
+        let handle: String
+        let points: Int
+        let maxPoints: Int
+        var useColor: Bool
+        
+        @Environment(\.colorScheme) private var scheme
+        
+        var ratio: CGFloat {
+            guard maxPoints > 0 else { return 0 }
+            return CGFloat(points) / CGFloat(maxPoints)
+        }
+        
+        // Simple color scheme: top 1–3 get distinct tints; others use accent/gray.
+        var barColor: Color {
+            if !useColor {
+                return .accentColor   // neutral-but-on-brand
+            } else {
+                switch rank {
+                case 1: return.yellow     // 🥇
+                case 2: return.gray         // 🥈
+                case 3: return.brown       // 🥉
+                default: return.blue        // everyone else
+                }
+            }
+        }
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                // Title line
+                HStack(spacing: 8) {
+                    Text("\(rank)")
+                        .font(.system(.subheadline, design: .monospaced)).bold()
+                        .frame(width: 22, alignment: .trailing)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name).font(.subheadline).bold()
+                        Text(handle).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                }
+                
+                // Bar line
+                GeometryReader { geo in
+                    let fullW = geo.size.width
+                    let barW = max(0, min(fullW, fullW * ratio))
+                    
+                    ZStack(alignment: .leading) {
+                        // Track
+                        Capsule()
+                            .fill(scheme == .dark ? Color.white.opacity(0.10)
+                                  : Color.black.opacity(0.08))
+                        
+                        // Fill
+                        Capsule()
+                            .fill(barColor)
+                            .frame(width: barW)
+                        
+                        // Points label in bar, right aligned
+                        HStack {
+                            Spacer()
+                            Text("\(points)")
+                                .font(.caption).bold()
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .foregroundStyle( // readable on both light/dark & colors
+                                    useColor ? Color.black : (scheme == .dark ? .white : .black)
+                                )
+                                .padding(.trailing, 4)
+                        }
+                    }
+                }
+                .frame(height: 24)
+            }
+            .animation(.easeOut(duration: 0.22), value: points)
+        }
+    }
+    private struct LeaderboardSheet: View {
+        @ObservedObject var vm: FriendsViewModel
+        @Environment(\.dismiss) private var dismiss
+        
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        let maxPoints = vm.leaderboard.map(\.points).max() ?? 0
+                        
+                        if vm.isLoadingLeaderboard {
+                            HStack {
+                                ProgressView()
+                                Text("Loading leaderboard…")
+                            }
+                        } else if let err = vm.leaderboardError {
+                            Text(err).foregroundStyle(.red)
+                        } else if vm.leaderboard.isEmpty {
+                            Text("No friend rankings yet.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
+                                LeaderboardBarRow(
+                                    rank: index + 1,
+                                    name: entry.displayName,
+                                    handle: entry.handle,
+                                    points: entry.points,
+                                    maxPoints: maxPoints,
+                                    useColor: false // change to true to use colored bars
+                                )
+                                .padding(.vertical, 2)
+                            }
+                        }
+                    } header: {
+                        HStack {
+                            Text("Friends Leaderboard")
+                            Spacer()
+                            Button {
+                                vm.loadLeaderboard()
+                            } label: {
+                                Label("Refresh", systemImage: "arrow.clockwise")
+                            }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+                .listSectionSpacing(.compact)
+                .navigationTitle("Leaderboard")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+                // refresh when sheet opens
+                .onAppear { vm.loadLeaderboard() }
+                // If friend list loads/changes while the sheet is open, refresh
+                .onChange(of: vm.friendIds) { vm.loadLeaderboard() }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color(.systemBackground))
         }
     }
 }

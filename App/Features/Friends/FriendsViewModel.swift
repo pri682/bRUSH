@@ -21,9 +21,9 @@ class FriendsViewModel: ObservableObject {
     @Published var showingProfile: Bool = false
     @Published var selectedProfile: UserProfile? = nil
     @Published var selectedFriendUid: String? = nil
+    @Published var medalCountsByUid: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
     
     private var cancellables = Set<AnyCancellable>()
-    private var leaderboardService: LeaderboardService = FriendsLeaderboardServiceStub()
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
     private var meUid: String? { AuthService.shared.user?.id }
@@ -157,17 +157,62 @@ class FriendsViewModel: ObservableObject {
                 .store(in: &cancellables)
         }
         func loadLeaderboard(for date: Date = Date()) {
+            guard !friendIds.isEmpty else {
+                self.leaderboard = []
+                self.medalCountsByUid = [:]
+                return
+            }
             isLoadingLeaderboard = true
             leaderboardError = nil
             Task { @MainActor in
                 do {
-                    let entries = try await leaderboardService.fetchLeaderboard(for: date)
-                    self.leaderboard = entries.sorted {
-                        if $0.points != $1.points {
-                            return $0.points > $1.points
-                        }
-                        return $0.submittedAt < $1.submittedAt
-                    }
+                    let db = Firestore.firestore()
+                    let ids = Array(friendIds)
+                    let chunkSize = 10
+                    var allEntries: [LeaderboardEntry] = []
+                    var medalMap: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
+                    
+                    for start in stride(from: 0, to: ids.count, by: chunkSize) {
+                                    let end = min(start + chunkSize, ids.count)
+                                    let chunk = Array(ids[start..<end])
+
+                                    let snap = try await db.collection("users")
+                                        .whereField(FieldPath.documentID(), in: chunk)
+                                        .getDocuments()
+
+                                    for doc in snap.documents {
+                                        let uid = doc.documentID
+                                        let data = doc.data()
+
+                                        let displayName = (data["displayName"] as? String) ?? "Unknown"
+                                        // if handle is stored
+                                        let handle = "@\(displayName)"
+
+                                        let gold = (data["goldMedalsAccumulated"] as? Int) ?? 0
+                                        let silver = (data["silverMedalsAccumulated"] as? Int) ?? 0
+                                        let bronze = (data["bronzeMedalsAccumulated"] as? Int) ?? 0
+
+                                        medalMap[uid] = (gold, silver, bronze)
+
+                                        allEntries.append(
+                                            LeaderboardEntry(
+                                                uid: uid,
+                                                displayName: displayName,
+                                                handle: handle,
+                                                gold: gold,
+                                                silver: silver,
+                                                bronze: bronze,
+                                                submittedAt: Date()
+                                        ))
+                                    }
+                                }
+                                // Sort: points desc, then earlier submittedAt first
+                                allEntries.sort {
+                                    if $0.points != $1.points { return $0.points > $1.points }
+                                    return $0.submittedAt < $1.submittedAt
+                                }
+                                self.leaderboard = allEntries
+                                self.medalCountsByUid = medalMap
                 } catch {
                     leaderboardError = "Failed to load leaderboard."
                 }
