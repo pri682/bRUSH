@@ -3,20 +3,24 @@ import SwiftUI
 struct EditAvatarView: View {
     @Binding var userProfile: UserProfile?
     @StateObject private var viewModel: EditProfileViewModel
+    @State private var selectedAvatarType: AvatarType
     @State private var selectedBackground: String
-    @State private var selectedFace: String?
+    @State private var selectedBody: String?
+    @State private var selectedShirt: String?
     @State private var selectedEyes: String?
     @State private var selectedMouth: String?
     @State private var selectedHair: String?
-    @State private var selectedCategory = 0 // 0: Face, 1: Eyes, 2: Mouth, 3: Hair, 4: Background
+    @State private var selectedCategory = 0
     
     let onAvatarChange: (AvatarParts) -> Void
     
     // Computed property to get current avatar parts
     var currentAvatarParts: AvatarParts {
         AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair
@@ -27,15 +31,25 @@ struct EditAvatarView: View {
     @State private var history: [AvatarParts] = []
     @State private var currentHistoryIndex = -1
     
-    private let categories = ["Face", "Eyes", "Mouth", "Hair", "Background"]
+    private var categories: [String] {
+        switch selectedAvatarType {
+        case .personal:
+            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Background"]
+        case .fun:
+            return ["Face", "Eyes", "Mouth", "Hair", "Background"]
+        }
+    }
     
     init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void) {
         self._userProfile = userProfile
         self.onAvatarChange = onAvatarChange
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
         // Initialize with current avatar values
+        let avatarType = AvatarType(rawValue: userProfile.wrappedValue?.avatarType ?? "personal") ?? .personal
+        self._selectedAvatarType = State(initialValue: avatarType)
         self._selectedBackground = State(initialValue: userProfile.wrappedValue?.avatarBackground ?? "background_1")
-        self._selectedFace = State(initialValue: userProfile.wrappedValue?.avatarFace)
+        self._selectedBody = State(initialValue: userProfile.wrappedValue?.avatarBody)
+        self._selectedShirt = State(initialValue: userProfile.wrappedValue?.avatarShirt)
         self._selectedEyes = State(initialValue: userProfile.wrappedValue?.avatarEyes)
         self._selectedMouth = State(initialValue: userProfile.wrappedValue?.avatarMouth)
         self._selectedHair = State(initialValue: userProfile.wrappedValue?.avatarHair)
@@ -94,10 +108,40 @@ struct EditAvatarView: View {
                 
                 Spacer()
                 
+                // Avatar Type Selection Tabs
+                HStack(spacing: 0) {
+                    ForEach(AvatarType.allCases, id: \.self) { avatarType in
+                        Button {
+                            selectedAvatarType = avatarType
+                            // Reset selections when switching types
+                            selectedBody = nil
+                            selectedShirt = nil
+                            selectedEyes = nil
+                            selectedMouth = nil
+                            selectedHair = nil
+                            selectedCategory = 0
+                        } label: {
+                            Text(avatarType.displayName)
+                                .font(.system(size: screenWidth * 0.04, weight: .medium))
+                                .foregroundColor(selectedAvatarType == avatarType ? .white : .gray)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, screenHeight * 0.015)
+                                .background(
+                                    RoundedRectangle(cornerRadius: screenWidth * 0.02)
+                                        .fill(selectedAvatarType == avatarType ? Color.accentColor : Color(.systemGray6))
+                                )
+                        }
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, screenHeight * 0.02)
+                
                 // Large Avatar Preview
                 AvatarView(
+                    avatarType: selectedAvatarType,
                     background: selectedBackground,
-                    face: selectedFace,
+                    avatarBody: selectedBody,
+                    shirt: selectedShirt,
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair
@@ -153,16 +197,16 @@ struct EditAvatarView: View {
                                     // Preview of the option
                                     ZStack {
                                         if selectedCategory == 0 {
-                                            // Face preview
+                                            // Body preview
                                             Image(option)
                                                 .resizable()
                                                 .scaledToFit()
                                                 .frame(width: optionSize, height: optionSize)
                                         } else if selectedCategory == 1 {
-                                            // Eyes preview on face
+                                            // Shirt preview on body
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -173,10 +217,36 @@ struct EditAvatarView: View {
                                                     .frame(width: optionSize, height: optionSize)
                                             }
                                         } else if selectedCategory == 2 {
-                                            // Mouth preview on face
+                                            // Eyes preview on body and shirt
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                Image(option)
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: optionSize, height: optionSize)
+                                            }
+                                        } else if selectedCategory == 3 {
+                                            // Mouth preview on body, shirt, and eyes
+                                            ZStack {
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -192,11 +262,17 @@ struct EditAvatarView: View {
                                                     .scaledToFit()
                                                     .frame(width: optionSize, height: optionSize)
                                             }
-                                        } else if selectedCategory == 3 {
-                                            // Hair preview on full avatar
+                                        } else if selectedCategory == 4 {
+                                            // Hair preview on body, shirt, eyes, and mouth
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -222,7 +298,7 @@ struct EditAvatarView: View {
                                             // Background preview
                                             Image(option)
                                                 .resizable()
-                                                .scaledToFit()
+                                                .scaledToFill()
                                                 .frame(width: optionSize, height: optionSize)
                                         }
                                     }
@@ -234,15 +310,6 @@ struct EditAvatarView: View {
                                         RoundedRectangle(cornerRadius: screenWidth * 0.03)
                                             .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
                                     )
-                                    
-                                    // Selection indicator
-                                    Circle()
-                                        .fill(isSelected(option) ? Color.accentColor : Color.clear)
-                                        .frame(width: screenWidth * 0.03, height: screenWidth * 0.03)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.accentColor, lineWidth: isSelected(option) ? 0 : 2)
-                                        )
                                 }
                             }
                         }
@@ -261,32 +328,60 @@ struct EditAvatarView: View {
     }
     
     private var currentOptions: [String] {
-        switch selectedCategory {
-        case 0: return AvatarOptions.faces
-        case 1: return AvatarOptions.eyes
-        case 2: return AvatarOptions.mouths
-        case 3: return AvatarOptions.hairs
-        case 4: return AvatarOptions.backgrounds
-        default: return []
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: return AvatarOptions.personalBodies
+            case 1: return AvatarOptions.personalShirts
+            case 2: return AvatarOptions.personalEyes
+            case 3: return AvatarOptions.personalMouths
+            case 4: return AvatarOptions.personalHairs
+            case 5: return AvatarOptions.personalBackgrounds
+            default: return []
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return AvatarOptions.funFaces
+            case 1: return AvatarOptions.funEyes
+            case 2: return AvatarOptions.funMouths
+            case 3: return AvatarOptions.funHairs
+            case 4: return AvatarOptions.funBackgrounds
+            default: return []
+            }
         }
     }
     
     private func updateSelection(_ option: String) {
         saveToHistory()
         
-        switch selectedCategory {
-        case 0: selectedFace = option
-        case 1: selectedEyes = option
-        case 2: selectedMouth = option
-        case 3: selectedHair = option
-        case 4: selectedBackground = option
-        default: break
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: selectedBody = option
+            case 1: selectedShirt = option
+            case 2: selectedEyes = option
+            case 3: selectedMouth = option
+            case 4: selectedHair = option
+            case 5: selectedBackground = option
+            default: break
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: selectedBody = option // Face maps to body for fun avatars
+            case 1: selectedEyes = option
+            case 2: selectedMouth = option
+            case 3: selectedHair = option
+            case 4: selectedBackground = option
+            default: break
+            }
         }
         
         // Update userProfile binding for real-time preview (but not saved to Firebase yet)
         if var profile = userProfile {
+            profile.avatarType = selectedAvatarType.rawValue
             profile.avatarBackground = selectedBackground
-            profile.avatarFace = selectedFace
+            profile.avatarBody = selectedBody
+            profile.avatarShirt = selectedShirt
             profile.avatarEyes = selectedEyes
             profile.avatarMouth = selectedMouth
             profile.avatarHair = selectedHair
@@ -298,13 +393,26 @@ struct EditAvatarView: View {
     }
     
     private func isSelected(_ option: String) -> Bool {
-        switch selectedCategory {
-        case 0: return selectedFace == option
-        case 1: return selectedEyes == option
-        case 2: return selectedMouth == option
-        case 3: return selectedHair == option
-        case 4: return selectedBackground == option
-        default: return false
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: return selectedBody == option
+            case 1: return selectedShirt == option
+            case 2: return selectedEyes == option
+            case 3: return selectedMouth == option
+            case 4: return selectedHair == option
+            case 5: return selectedBackground == option
+            default: return false
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return selectedBody == option // Face maps to body
+            case 1: return selectedEyes == option
+            case 2: return selectedMouth == option
+            case 3: return selectedHair == option
+            case 4: return selectedBackground == option
+            default: return false
+            }
         }
     }
     
@@ -321,8 +429,10 @@ struct EditAvatarView: View {
     
     private func initializeHistory() {
         let initialAvatar = AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair
@@ -333,8 +443,10 @@ struct EditAvatarView: View {
     
     private func saveToHistory() {
         let currentAvatar = AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair
@@ -368,8 +480,10 @@ struct EditAvatarView: View {
     
     private func applyHistoryState() {
         let state = history[currentHistoryIndex]
+        selectedAvatarType = state.avatarType
         selectedBackground = state.background
-        selectedFace = state.face
+        selectedBody = state.body
+        selectedShirt = state.shirt
         selectedEyes = state.eyes
         selectedMouth = state.mouth
         selectedHair = state.hair

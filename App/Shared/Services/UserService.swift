@@ -8,8 +8,10 @@ public struct UserProfile: Codable, Equatable {
     let lastName: String
     var displayName: String
     let email: String
+    var avatarType: String // "fun" or "personal"
     var avatarBackground: String?
-    var avatarFace: String?
+    var avatarBody: String?
+    var avatarShirt: String?
     var avatarEyes: String?
     var avatarMouth: String?
     var avatarHair: String?
@@ -43,6 +45,7 @@ final class UserService {
             "lastName": userProfile.lastName,
             "displayName": userProfile.displayName,
             "email": userProfile.email.lowercased(),
+            "avatarType": userProfile.avatarType,
             "createdAt": FieldValue.serverTimestamp(),
             // Medal and statistics fields - initialized to 0
             "goldMedalsAccumulated": userProfile.goldMedalsAccumulated,
@@ -60,8 +63,11 @@ final class UserService {
         if let background = userProfile.avatarBackground {
             profileData["avatarBackground"] = background
         }
-        if let face = userProfile.avatarFace {
-            profileData["avatarFace"] = face
+        if let body = userProfile.avatarBody {
+            profileData["avatarBody"] = body
+        }
+        if let shirt = userProfile.avatarShirt {
+            profileData["avatarShirt"] = shirt
         }
         if let eyes = userProfile.avatarEyes {
             profileData["avatarEyes"] = eyes
@@ -97,8 +103,10 @@ final class UserService {
             throw AuthError.backend("Invalid profile data.")
         }
         
+        let avatarType = data["avatarType"] as? String ?? "personal" // Default to personal for existing profiles
         let avatarBackground = data["avatarBackground"] as? String
-        let avatarFace = data["avatarFace"] as? String
+        let avatarBody = data["avatarBody"] as? String
+        let avatarShirt = data["avatarShirt"] as? String
         let avatarEyes = data["avatarEyes"] as? String
         let avatarMouth = data["avatarMouth"] as? String
         let avatarHair = data["avatarHair"] as? String
@@ -120,8 +128,10 @@ final class UserService {
             lastName: lastName,
             displayName: displayName,
             email: email,
+            avatarType: avatarType,
             avatarBackground: avatarBackground,
-            avatarFace: avatarFace,
+            avatarBody: avatarBody,
+            avatarShirt: avatarShirt,
             avatarEyes: avatarEyes,
             avatarMouth: avatarMouth,
             avatarHair: avatarHair,

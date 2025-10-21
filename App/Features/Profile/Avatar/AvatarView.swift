@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct AvatarView: View {
+    let avatarType: AvatarType
     let background: String
-    let face: String?
+    let avatarBody: String?
+    let shirt: String?
     let eyes: String?
     let mouth: String?
     let hair: String?
@@ -13,17 +15,70 @@ struct AvatarView: View {
                 .resizable()
                 .scaledToFill()
             
-            VStack {
-                if UIDevice.current.userInterfaceIdiom == .phone {
-                    Color.clear
-                        .frame(height: 80)
+            if avatarType == .personal {
+                // Personal avatar layers (human)
+                // Body layer (if exists)
+                if let avatarBody = avatarBody {
+                    Image(avatarBody)
+                        .resizable()
+                        .scaledToFit()
                 }
                 
-                ZStack {
-                    if let face = face { Image(face).resizable().scaledToFit() }
-                    if let eyes = eyes { Image(eyes).resizable().scaledToFit() }
-                    if let mouth = mouth { Image(mouth).resizable().scaledToFit() }
-                    if let hair = hair { Image(hair).resizable().scaledToFit() }
+                // Shirt layer (if exists)
+                if let shirt = shirt {
+                    Image(shirt)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Eyes layer (if exists)
+                if let eyes = eyes {
+                    Image(eyes)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Mouth layer (if exists)
+                if let mouth = mouth {
+                    Image(mouth)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Hair layer (top, if exists)
+                if let hair = hair {
+                    Image(hair)
+                        .resizable()
+                        .scaledToFit()
+                }
+            } else {
+                // Fun avatar layers (alien) - face, eyes, mouth, hair
+                // Face layer (if exists) - mapped from body
+                if let face = avatarBody {
+                    Image(face)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Eyes layer (if exists)
+                if let eyes = eyes {
+                    Image(eyes)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Mouth layer (if exists)
+                if let mouth = mouth {
+                    Image(mouth)
+                        .resizable()
+                        .scaledToFit()
+                }
+                
+                // Hair layer (top, if exists)
+                if let hair = hair {
+                    Image(hair)
+                        .resizable()
+                        .scaledToFit()
                 }
             }
         }
@@ -45,8 +100,10 @@ extension AvatarView {
 struct AvatarView_Previews: PreviewProvider {
     static var previews: some View {
         AvatarView(
+            avatarType: .personal,
             background: "background_1",
-            face: "face_1",
+            avatarBody: "body_1",
+            shirt: "shirt_1",
             eyes: "eyes_1",
             mouth: "mouth_1",
             hair: "hair_1"
