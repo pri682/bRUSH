@@ -18,8 +18,6 @@ class FriendsViewModel: ObservableObject {
     @Published var leaderboardError: String?
     @Published var currentUserHandle: String?
     @Published var friendIds: Set<String> = []
-    @Published var showingProfile: Bool = false
-    @Published var selectedProfile: UserProfile? = nil
     @Published var selectedFriendUid: String? = nil
     @Published var medalCountsByUid: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
     
@@ -31,24 +29,30 @@ class FriendsViewModel: ObservableObject {
     private let userService = UserService.shared
     
     private func hydrateFriendsFromIds() {
-        self.friends = []
         let db = Firestore.firestore()
         let ids = Array(self.friendIds)
-        // fetch each friend's profile (displayName) and append to `friends`
-        for uid in ids {
-            Task { @MainActor in
+        
+        Task { @MainActor in
+            var newFriends: [Friend] = []
+            
+            // Process all friends in a single task to avoid race conditions
+            for uid in ids {
                 do {
                     let doc = try await db.collection("users").document(uid).getDocument()
                     if let dn = doc.data()?["displayName"] as? String, !dn.isEmpty {
-                        self.friends.append(Friend(uid: uid, name: dn, handle: "@\(dn)"))
+                        newFriends.append(Friend(uid: uid, name: dn, handle: "@\(dn)"))
                     } else {
                         // fallback if profile missing
-                        self.friends.append(Friend(uid: uid, name: uid, handle: "@unknown"))
+                        newFriends.append(Friend(uid: uid, name: uid, handle: "@unknown"))
                     }
                 } catch {
                     // ignore; leave friend out or append placeholder
+                    newFriends.append(Friend(uid: uid, name: uid, handle: "@unknown"))
                 }
             }
+            
+            // Update the friends array all at once
+            self.friends = newFriends
         }
     }
     
@@ -277,17 +281,6 @@ class FriendsViewModel: ObservableObject {
                     refreshFriends()
                 } catch {
                     print("Failed to remove friend: \(error)")
-                }
-            }
-        }
-    func openProfile(for friend: Friend) {
-            Task {
-                do {
-                    let profile = try await userService.fetchProfile(uid: friend.uid)
-                    self.selectedProfile = profile
-                    self.showingProfile = true
-                } catch {
-                    print("Failed to fetch profile: \(error)")
                 }
             }
         }
