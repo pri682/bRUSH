@@ -109,7 +109,7 @@ struct FriendsView: View {
         let handle: String
         let points: Int
         let maxPoints: Int
-        var useColor: Bool = true
+        var useColor: Bool
         
         @Environment(\.colorScheme) private var scheme
         
@@ -126,7 +126,7 @@ struct FriendsView: View {
                 switch rank {
                 case 1: return.yellow     // 🥇
                 case 2: return.gray         // 🥈
-                case 3: return.orange       // 🥉 (warmer bronze)
+                case 3: return.brown       // 🥉
                 default: return.blue        // everyone else
                 }
             }
@@ -210,7 +210,7 @@ struct FriendsView: View {
                                     handle: entry.handle,
                                     points: entry.points,
                                     maxPoints: maxPoints,
-                                    useColor: true
+                                    useColor: false // change to true to use colored bars
                                 )
                                 .padding(.vertical, 2)
                             }
