@@ -11,9 +11,13 @@ struct EditAvatarView: View {
     @State private var selectedMouth: String?
     @State private var selectedHair: String?
     @State private var selectedCategory = 0
-    
+
     let onAvatarChange: (AvatarParts) -> Void
-    
+
+    // Undo/Redo functionality
+    @State private var history: [AvatarParts] = []
+    @State private var currentHistoryIndex = -1
+
     // Computed property to get current avatar parts
     var currentAvatarParts: AvatarParts {
         AvatarParts(
@@ -26,11 +30,7 @@ struct EditAvatarView: View {
             hair: selectedHair
         )
     }
-    
-    // Undo/Redo functionality
-    @State private var history: [AvatarParts] = []
-    @State private var currentHistoryIndex = -1
-    
+
     private var categories: [String] {
         switch selectedAvatarType {
         case .personal:
@@ -39,12 +39,12 @@ struct EditAvatarView: View {
             return ["Face", "Eyes", "Mouth", "Hair", "Background"]
         }
     }
-    
+
     init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void) {
         self._userProfile = userProfile
         self.onAvatarChange = onAvatarChange
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
-        // Initialize with current avatar values
+
         let avatarType = AvatarType(rawValue: userProfile.wrappedValue?.avatarType ?? "personal") ?? .personal
         self._selectedAvatarType = State(initialValue: avatarType)
         self._selectedBackground = State(initialValue: userProfile.wrappedValue?.avatarBackground ?? "background_1")
@@ -54,24 +54,21 @@ struct EditAvatarView: View {
         self._selectedMouth = State(initialValue: userProfile.wrappedValue?.avatarMouth)
         self._selectedHair = State(initialValue: userProfile.wrappedValue?.avatarHair)
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-            
-            // Dynamic sizing based on screen
+
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
-            let optionSize = screenWidth * 0.18
             let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
             let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
             let horizontalPadding = screenWidth * 0.05
-            
+
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
                 HStack {
-                    // Undo/Redo buttons
                     HStack(spacing: screenWidth * 0.03) {
                         Button {
                             undo()
@@ -81,7 +78,7 @@ struct EditAvatarView: View {
                                 .foregroundColor(canUndo ? .accentColor : .gray)
                         }
                         .disabled(!canUndo)
-                        
+
                         Button {
                             redo()
                         } label: {
@@ -91,35 +88,28 @@ struct EditAvatarView: View {
                         }
                         .disabled(!canRedo)
                     }
-                    
+
                     Spacer()
-                    
+
                     Text("Edit Avatar")
                         .font(.system(size: screenWidth * 0.05, weight: .bold))
-                    
+
                     Spacer()
-                    
-                    // Placeholder for spacing
+
                     Color.clear
                         .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
-                
+
                 Spacer()
-                
+
                 // Avatar Type Selection Tabs
                 HStack(spacing: 0) {
                     ForEach(AvatarType.allCases, id: \.self) { avatarType in
                         Button {
                             selectedAvatarType = avatarType
-                            // Reset selections when switching types
-                            selectedBody = nil
-                            selectedShirt = nil
-                            selectedEyes = nil
-                            selectedMouth = nil
-                            selectedHair = nil
-                            selectedCategory = 0
+                            resetSelections()
                         } label: {
                             Text(avatarType.displayName)
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
@@ -135,8 +125,8 @@ struct EditAvatarView: View {
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, screenHeight * 0.02)
-                
-                // Large Avatar Preview
+
+                // Avatar Preview
                 AvatarView(
                     avatarType: selectedAvatarType,
                     background: selectedBackground,
@@ -148,45 +138,11 @@ struct EditAvatarView: View {
                 )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.04)
-                
-                // Enhanced Category Selection - Horizontal Scroll with Auto-scroll
-                ScrollViewReader { proxy in
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 0) {
-                            ForEach(0..<categories.count, id: \.self) { index in
-                                Button {
-                                    selectedCategory = index
-                                    // Auto-scroll to center the selected category
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        proxy.scrollTo(index, anchor: .center)
-                                    }
-                                } label: {
-                                    VStack(spacing: 4) {
-                                        Text(categories[index])
-                                            .font(.system(size: screenWidth * 0.04, weight: .bold))
-                                            .foregroundColor(selectedCategory == index ? .accentColor : .gray)
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .frame(minWidth: screenWidth * 0.2)
-                                        
-                                        // Underline indicator
-                                        Rectangle()
-                                            .fill(selectedCategory == index ? Color.accentColor : Color.clear)
-                                            .frame(height: 3)
-                                            .frame(width: screenWidth * 0.15)
-                                    }
-                                    .padding(.horizontal, screenWidth * 0.02)
-                                    .padding(.vertical, screenHeight * 0.01)
-                                }
-                                .id(index)
-                            }
-                        }
-                        .padding(.horizontal, horizontalPadding)
-                    }
-                }
-                .padding(.bottom, screenHeight * 0.02)
-                
-                // Options Grid - Vertical Scroll
+
+                // Category Selection
+                categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
+
+                // Options Grid
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
@@ -318,7 +274,7 @@ struct EditAvatarView: View {
                     .padding(.horizontal, horizontalPadding)
                 }
                 .frame(maxHeight: screenHeight * 0.35)
-                
+
                 Spacer()
             }
             .onAppear {
@@ -326,7 +282,78 @@ struct EditAvatarView: View {
             }
         }
     }
-    
+
+    // MARK: - Subviews
+
+    private func categorySelector(screenWidth: CGFloat, screenHeight: CGFloat, horizontalPadding: CGFloat) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(0..<categories.count, id: \.self) { index in
+                        Button {
+                            selectedCategory = index
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                proxy.scrollTo(index, anchor: .center)
+                            }
+                        } label: {
+                            VStack(spacing: 4) {
+                                Text(categories[index])
+                                    .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                    .foregroundColor(selectedCategory == index ? .accentColor : .gray)
+                                    .frame(minWidth: screenWidth * 0.2)
+
+                                Rectangle()
+                                    .fill(selectedCategory == index ? Color.accentColor : Color.clear)
+                                    .frame(height: 3)
+                                    .frame(width: screenWidth * 0.15)
+                            }
+                            .padding(.horizontal, screenWidth * 0.02)
+                            .padding(.vertical, screenHeight * 0.01)
+                        }
+                        .id(index)
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+            }
+        }
+        .padding(.bottom, screenHeight * 0.02)
+    }
+
+    @ViewBuilder
+    private func optionsGrid(screenWidth: CGFloat, screenHeight: CGFloat, columns: [GridItem], horizontalPadding: CGFloat) -> some View {
+        LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
+            ForEach(currentOptions, id: \.self) { option in
+                Button {
+                    updateSelection(option)
+                } label: {
+                    optionPreview(option, screenWidth: screenWidth, screenHeight: screenHeight)
+                }
+            }
+        }
+        .padding(.horizontal, horizontalPadding)
+    }
+
+    @ViewBuilder
+    private func optionPreview(_ option: String, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
+        let optionSize = screenWidth * 0.18
+        ZStack {
+            Image(option)
+                .resizable()
+                .scaledToFit()
+                .frame(width: optionSize, height: optionSize)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: screenWidth * 0.03)
+                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
+        )
+        .background(
+            RoundedRectangle(cornerRadius: screenWidth * 0.03)
+                .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
+        )
+    }
+
+    // MARK: - Helper Functions
+
     private var currentOptions: [String] {
         switch selectedAvatarType {
         case .personal:
@@ -350,10 +377,18 @@ struct EditAvatarView: View {
             }
         }
     }
-    
+
+    private func resetSelections() {
+        selectedBody = nil
+        selectedShirt = nil
+        selectedEyes = nil
+        selectedMouth = nil
+        selectedHair = nil
+        selectedCategory = 0
+    }
+
     private func updateSelection(_ option: String) {
         saveToHistory()
-        
         switch selectedAvatarType {
         case .personal:
             switch selectedCategory {
@@ -367,7 +402,7 @@ struct EditAvatarView: View {
             }
         case .fun:
             switch selectedCategory {
-            case 0: selectedBody = option // Face maps to body for fun avatars
+            case 0: selectedBody = option
             case 1: selectedEyes = option
             case 2: selectedMouth = option
             case 3: selectedHair = option
@@ -375,8 +410,7 @@ struct EditAvatarView: View {
             default: break
             }
         }
-        
-        // Update userProfile binding for real-time preview (but not saved to Firebase yet)
+
         if var profile = userProfile {
             profile.avatarType = selectedAvatarType.rawValue
             profile.avatarBackground = selectedBackground
@@ -387,11 +421,10 @@ struct EditAvatarView: View {
             profile.avatarHair = selectedHair
             userProfile = profile
         }
-        
-        // Notify parent of avatar changes for preview (but not saved yet)
+
         onAvatarChange(currentAvatarParts)
     }
-    
+
     private func isSelected(_ option: String) -> Bool {
         switch selectedAvatarType {
         case .personal:
@@ -406,7 +439,7 @@ struct EditAvatarView: View {
             }
         case .fun:
             switch selectedCategory {
-            case 0: return selectedBody == option // Face maps to body
+            case 0: return selectedBody == option
             case 1: return selectedEyes == option
             case 2: return selectedMouth == option
             case 3: return selectedHair == option
@@ -415,69 +448,42 @@ struct EditAvatarView: View {
             }
         }
     }
-    
-    
-    // MARK: - Undo/Redo functionality
-    
-    private var canUndo: Bool {
-        return currentHistoryIndex > 0
-    }
-    
-    private var canRedo: Bool {
-        return currentHistoryIndex < history.count - 1
-    }
-    
+
+    // MARK: - Undo/Redo
+
+    private var canUndo: Bool { currentHistoryIndex > 0 }
+    private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
+
     private func initializeHistory() {
-        let initialAvatar = AvatarParts(
-            avatarType: selectedAvatarType,
-            background: selectedBackground,
-            body: selectedBody,
-            shirt: selectedShirt,
-            eyes: selectedEyes,
-            mouth: selectedMouth,
-            hair: selectedHair
-        )
-        history = [initialAvatar]
+        let initial = currentAvatarParts
+        history = [initial]
         currentHistoryIndex = 0
     }
-    
+
     private func saveToHistory() {
-        let currentAvatar = AvatarParts(
-            avatarType: selectedAvatarType,
-            background: selectedBackground,
-            body: selectedBody,
-            shirt: selectedShirt,
-            eyes: selectedEyes,
-            mouth: selectedMouth,
-            hair: selectedHair
-        )
-        
-        // Remove any history after current index
+        let state = currentAvatarParts
         history = Array(history.prefix(currentHistoryIndex + 1))
-        
-        // Add new state
-        history.append(currentAvatar)
+        history.append(state)
         currentHistoryIndex = history.count - 1
-        
-        // Limit history size
+
         if history.count > 20 {
             history.removeFirst()
             currentHistoryIndex -= 1
         }
     }
-    
+
     private func undo() {
         guard canUndo else { return }
         currentHistoryIndex -= 1
         applyHistoryState()
     }
-    
+
     private func redo() {
         guard canRedo else { return }
         currentHistoryIndex += 1
         applyHistoryState()
     }
-    
+
     private func applyHistoryState() {
         let state = history[currentHistoryIndex]
         selectedAvatarType = state.avatarType
