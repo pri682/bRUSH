@@ -141,6 +141,85 @@ struct FriendsView: View {
                     pendingRemoval = nil
                 }
             }
+            .sheet(isPresented: $vm.showingProfile) {
+                if let p = vm.selectedProfile {
+                    FriendProfileSheet(
+                        profile: p,
+                        onRemoveTapped: {
+                            // close sheet, then reuse existing confirm flow
+                            pendingRemoval = Friend(uid: p.uid, name: p.displayName, handle: "@\(p.displayName)")
+                            vm.showingProfile = false
+                            showRemoveConfirm = true
+                        }
+                    )
+                } else {
+                    // Fallback while loading
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading profile…")
+                    }
+                    .padding()
+                    .presentationDetents([.fraction(0.3)])
+                }
+            }
         }
     }
 }
+        private struct FriendProfileSheet: View {
+            let profile: UserProfile
+            var onRemoveTapped: () -> Void = {}
+
+            @Environment(\.dismiss) private var dismiss
+
+            var body: some View {
+                VStack(spacing: 16) {
+                    // Avatar stub (swap for avatar pieces later)
+                    Circle()
+                        .frame(width: 72, height: 72)
+                        .overlay(Text(profile.displayName.prefix(1)).font(.title))
+                        .accessibilityHidden(true)
+
+                    VStack(spacing: 2) {
+                        Text(profile.displayName)
+                            .font(.title3).bold()
+                        Text("@\(profile.displayName)")
+                            .foregroundStyle(.secondary)
+                            .font(.callout)
+                    }
+
+                    // Quick stats row
+                    HStack(spacing: 24) {
+                        Stat("Gold", profile.goldMedalsAccumulated)
+                        Stat("Silver", profile.silverMedalsAccumulated)
+                        Stat("Bronze", profile.bronzeMedalsAccumulated)
+                    }
+
+                    // Actions
+                    HStack(spacing: 12) {
+                        Button("Close") { dismiss() }
+                            .buttonStyle(.bordered)
+
+                        Button(role: .destructive) {
+                            onRemoveTapped()
+                        } label: {
+                            Label("Remove Friend", systemImage: "person.fill.xmark")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(.top, 4)
+                }
+                .padding()
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Color(.systemBackground)) // opaque profile sheet
+            }
+
+            // tiny helper
+            private func Stat(_ label: String, _ value: Int) -> some View {
+                VStack {
+                    Text("\(value)").bold()
+                    Text(label).font(.caption).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+
