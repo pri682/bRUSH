@@ -19,9 +19,12 @@ struct EditProfileView: View {
         
         // Store original avatar state for cancel functionality
         if let profile = userProfile.wrappedValue {
+            let avatarType = AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal
             _originalAvatarParts = State(initialValue: AvatarParts(
+                avatarType: avatarType,
                 background: profile.avatarBackground ?? "background_1",
-                face: profile.avatarFace,
+                body: profile.avatarBody,
+                shirt: profile.avatarShirt,
                 eyes: profile.avatarEyes,
                 mouth: profile.avatarMouth,
                 hair: profile.avatarHair
@@ -185,19 +188,7 @@ struct EditProfileView: View {
                     EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
                         currentAvatarParts = avatarParts
                     })
-                        .tag(1)
-                        .onAppear {
-                            // Initialize with current avatar parts
-                            if let profile = userProfile {
-                                currentAvatarParts = AvatarParts(
-                                    background: profile.avatarBackground ?? "background_1",
-                                    face: profile.avatarFace,
-                                    eyes: profile.avatarEyes,
-                                    mouth: profile.avatarMouth,
-                                    hair: profile.avatarHair
-                                )
-                            }
-                        }
+                    .tag(1)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
@@ -207,8 +198,10 @@ struct EditProfileView: View {
                     Button(role: .cancel) {
                         // Revert avatar changes to original state
                         if let original = originalAvatarParts, var profile = userProfile {
+                            profile.avatarType = original.avatarType.rawValue
                             profile.avatarBackground = original.background
-                            profile.avatarFace = original.face
+                            profile.avatarBody = original.body
+                            profile.avatarShirt = original.shirt
                             profile.avatarEyes = original.eyes
                             profile.avatarMouth = original.mouth
                             profile.avatarHair = original.hair
@@ -248,8 +241,10 @@ struct EditProfileView: View {
                             // Get current avatar state from userProfile (which gets updated in real-time for preview)
                             if let profile = userProfile {
                                 let avatarParts = AvatarParts(
+                                    avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,
                                     background: profile.avatarBackground ?? "background_1",
-                                    face: profile.avatarFace,
+                                    body: profile.avatarBody,
+                                    shirt: profile.avatarShirt,
                                     eyes: profile.avatarEyes,
                                     mouth: profile.avatarMouth,
                                     hair: profile.avatarHair

@@ -77,8 +77,10 @@ struct SignedInProfileView: View {
                         if let profile = viewModel.profile,
                            let background = profile.avatarBackground {
                             AvatarView(
+                                avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,
                                 background: background,
-                                face: profile.avatarFace,
+                                avatarBody: profile.avatarBody,
+                                shirt: profile.avatarShirt,
                                 eyes: profile.avatarEyes,
                                 mouth: profile.avatarMouth,
                                 hair: profile.avatarHair

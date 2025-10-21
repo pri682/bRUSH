@@ -77,11 +77,15 @@ class EditProfileViewModel: ObservableObject {
         do {
             var avatarData: [String: Any] = [:]
             
-            // Background is always required, others are optional
+            // Avatar type and background are always required
+            avatarData["avatarType"] = avatarParts.avatarType.rawValue
             avatarData["avatarBackground"] = avatarParts.background
             
-            if let face = avatarParts.face {
-                avatarData["avatarFace"] = face
+            if let body = avatarParts.body {
+                avatarData["avatarBody"] = body
+            }
+            if let shirt = avatarParts.shirt {
+                avatarData["avatarShirt"] = shirt
             }
             if let eyes = avatarParts.eyes {
                 avatarData["avatarEyes"] = eyes

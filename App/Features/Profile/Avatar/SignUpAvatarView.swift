@@ -1,19 +1,28 @@
 import SwiftUI
 
 struct SignUpAvatarView: View {
-    @ObservedObject var viewModel: SignUpViewModel // observed for changes
+    @ObservedObject var viewModel: SignUpViewModel
+    @State private var selectedAvatarType: AvatarType = .personal
     @State private var selectedBackground = "background_1"
-    @State private var selectedFace: String? = nil // if nill, its empty for that field...
+    @State private var selectedBody: String? = nil
+    @State private var selectedShirt: String? = nil
     @State private var selectedEyes: String? = nil
     @State private var selectedMouth: String? = nil
     @State private var selectedHair: String? = nil
-    @State private var selectedCategory = 0 // 0: Background, 1: Face, 2: Eyes, 3: Mouth, 4: Hair
+    @State private var selectedCategory = 0
     
     // Undo/Redo functionality
     @State private var history: [AvatarParts] = []
     @State private var currentHistoryIndex = -1
     
-    private let categories = ["Face", "Eyes", "Mouth", "Hair", "Background"]
+    private var categories: [String] {
+        switch selectedAvatarType {
+        case .personal:
+            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Background"]
+        case .fun:
+            return ["Face", "Eyes", "Mouth", "Hair", "Background"]
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -64,9 +73,10 @@ struct SignUpAvatarView: View {
                     Button {
                         saveToHistory()
                         viewModel.selectedAvatar = AvatarParts(
-                            // THIS LOGIC SAVES OUR SELECTIONS
+                            avatarType: selectedAvatarType,
                             background: selectedBackground,
-                            face: selectedFace,
+                            body: selectedBody,
+                            shirt: selectedShirt,
                             eyes: selectedEyes,
                             mouth: selectedMouth,
                             hair: selectedHair
@@ -96,10 +106,40 @@ struct SignUpAvatarView: View {
             
                 Spacer()
                 
+                // Avatar Type Selection Tabs
+                HStack(spacing: 0) {
+                    ForEach(AvatarType.allCases, id: \.self) { avatarType in
+                        Button {
+                            selectedAvatarType = avatarType
+                            // Reset selections when switching types
+                            selectedBody = nil
+                            selectedShirt = nil
+                            selectedEyes = nil
+                            selectedMouth = nil
+                            selectedHair = nil
+                            selectedCategory = 0
+                        } label: {
+                            Text(avatarType.displayName)
+                                .font(.system(size: screenWidth * 0.04, weight: .medium))
+                                .foregroundColor(selectedAvatarType == avatarType ? .white : .gray)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, screenHeight * 0.015)
+                                .background(
+                                    RoundedRectangle(cornerRadius: screenWidth * 0.02)
+                                        .fill(selectedAvatarType == avatarType ? Color.accentColor : Color(.systemGray6))
+                                )
+                        }
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, screenHeight * 0.02)
+                
                 // Large Avatar Preview
                 AvatarView(
+                    avatarType: selectedAvatarType,
                     background: selectedBackground,
-                    face: selectedFace,
+                    avatarBody: selectedBody,
+                    shirt: selectedShirt,
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair
@@ -155,16 +195,16 @@ struct SignUpAvatarView: View {
                                     // Preview of the option
                                     ZStack {
                                         if selectedCategory == 0 {
-                                            // Face preview
+                                            // Body preview
                                             Image(option)
                                                 .resizable()
                                                 .scaledToFit()
                                                 .frame(width: optionSize, height: optionSize)
                                         } else if selectedCategory == 1 {
-                                            // Eyes preview on face
+                                            // Shirt preview on body
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -175,10 +215,36 @@ struct SignUpAvatarView: View {
                                                     .frame(width: optionSize, height: optionSize)
                                             }
                                         } else if selectedCategory == 2 {
-                                            // Mouth preview on face
+                                            // Eyes preview on body and shirt
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                Image(option)
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: optionSize, height: optionSize)
+                                            }
+                                        } else if selectedCategory == 3 {
+                                            // Mouth preview on body, shirt, and eyes
+                                            ZStack {
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -194,11 +260,17 @@ struct SignUpAvatarView: View {
                                                     .scaledToFit()
                                                     .frame(width: optionSize, height: optionSize)
                                             }
-                                        } else if selectedCategory == 3 {
-                                            // Hair preview on full avatar
+                                        } else if selectedCategory == 4 {
+                                            // Hair preview on body, shirt, eyes, and mouth
                                             ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
+                                                if let body = selectedBody {
+                                                    Image(body)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: optionSize, height: optionSize)
+                                                }
+                                                if let shirt = selectedShirt {
+                                                    Image(shirt)
                                                         .resizable()
                                                         .scaledToFit()
                                                         .frame(width: optionSize, height: optionSize)
@@ -224,7 +296,7 @@ struct SignUpAvatarView: View {
                                             // Background preview
                                             Image(option)
                                                 .resizable()
-                                                .scaledToFit()
+                                                .scaledToFill()
                                                 .frame(width: optionSize, height: optionSize)
                                         }
                                     }
@@ -236,15 +308,6 @@ struct SignUpAvatarView: View {
                                         RoundedRectangle(cornerRadius: screenWidth * 0.03)
                                             .fill(isSelected(option) ? Color.blue.opacity(0.1) : Color.clear)
                                     )
-                                    
-                                    // Selection indicator
-                                    Circle()
-                                        .fill(isSelected(option) ? Color.blue : Color.clear)
-                                        .frame(width: screenWidth * 0.03, height: screenWidth * 0.03)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.blue, lineWidth: isSelected(option) ? 0 : 2)
-                                        )
                                 }
                             }
                         }
@@ -275,37 +338,76 @@ struct SignUpAvatarView: View {
     }
     
     private var currentOptions: [String] {
-        switch selectedCategory {
-        case 0: return AvatarOptions.faces
-        case 1: return AvatarOptions.eyes
-        case 2: return AvatarOptions.mouths
-        case 3: return AvatarOptions.hairs
-        case 4: return AvatarOptions.backgrounds
-        default: return []
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: return AvatarOptions.personalBodies
+            case 1: return AvatarOptions.personalShirts
+            case 2: return AvatarOptions.personalEyes
+            case 3: return AvatarOptions.personalMouths
+            case 4: return AvatarOptions.personalHairs
+            case 5: return AvatarOptions.personalBackgrounds
+            default: return []
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return AvatarOptions.funFaces
+            case 1: return AvatarOptions.funEyes
+            case 2: return AvatarOptions.funMouths
+            case 3: return AvatarOptions.funHairs
+            case 4: return AvatarOptions.funBackgrounds
+            default: return []
+            }
         }
     }
     
     private func updateSelection(_ option: String) {
         saveToHistory()
         
-        switch selectedCategory {
-        case 0: selectedFace = option
-        case 1: selectedEyes = option
-        case 2: selectedMouth = option
-        case 3: selectedHair = option
-        case 4: selectedBackground = option
-        default: break
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: selectedBody = option
+            case 1: selectedShirt = option
+            case 2: selectedEyes = option
+            case 3: selectedMouth = option
+            case 4: selectedHair = option
+            case 5: selectedBackground = option
+            default: break
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: selectedBody = option // Face maps to body for fun avatars
+            case 1: selectedEyes = option
+            case 2: selectedMouth = option
+            case 3: selectedHair = option
+            case 4: selectedBackground = option
+            default: break
+            }
         }
     }
     
     private func isSelected(_ option: String) -> Bool {
-        switch selectedCategory {
-        case 0: return selectedFace == option
-        case 1: return selectedEyes == option
-        case 2: return selectedMouth == option
-        case 3: return selectedHair == option
-        case 4: return selectedBackground == option
-        default: return false
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: return selectedBody == option
+            case 1: return selectedShirt == option
+            case 2: return selectedEyes == option
+            case 3: return selectedMouth == option
+            case 4: return selectedHair == option
+            case 5: return selectedBackground == option
+            default: return false
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return selectedBody == option // Face maps to body
+            case 1: return selectedEyes == option
+            case 2: return selectedMouth == option
+            case 3: return selectedHair == option
+            case 4: return selectedBackground == option
+            default: return false
+            }
         }
     }
     
@@ -321,8 +423,10 @@ struct SignUpAvatarView: View {
     
     private func initializeHistory() {
         let initialAvatar = AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair
@@ -333,8 +437,10 @@ struct SignUpAvatarView: View {
     
     private func saveToHistory() {
         let currentAvatar = AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair
@@ -368,8 +474,10 @@ struct SignUpAvatarView: View {
     
     private func applyHistoryState() {
         let state = history[currentHistoryIndex]
+        selectedAvatarType = state.avatarType
         selectedBackground = state.background
-        selectedFace = state.face
+        selectedBody = state.body
+        selectedShirt = state.shirt
         selectedEyes = state.eyes
         selectedMouth = state.mouth
         selectedHair = state.hair
