@@ -10,48 +10,6 @@ struct FriendsView: View {
     var body: some View {
         NavigationStack {
             List {
-                if showLeaderboard {
-                    Section {
-                        if vm.isLoadingLeaderboard {
-                            HStack {
-                                ProgressView()
-                                Text("Loading leaderboard…")
-                            }
-                        } else if let err = vm.leaderboardError {
-                            Text(err).foregroundStyle(.red)
-                        } else if vm.leaderboard.isEmpty {
-                            Text("No friend rankings yet for today.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            let maxPoints = vm.leaderboard.map(\.points).max() ?? 0
-                            
-                            ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
-                                LeaderboardBarRow(
-                                    rank: index + 1,
-                                    name: entry.displayName,
-                                    handle: entry.handle,
-                                    points: entry.points,
-                                    maxPoints: maxPoints,
-                                    // choose bar style: set to true for color, false for neutral
-                                    useColor: false
-                                )
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Friends Leaderboard")
-                            Spacer()
-                            Button {
-                                vm.loadLeaderboard()
-                            } label: {
-                                Label("Refresh", systemImage: "arrow.clockwise")
-                            }
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                }
                 if !vm.requests.isEmpty {
                     Section("Friend Requests") {
                         ForEach(vm.requests) { req in
@@ -139,6 +97,10 @@ struct FriendsView: View {
                     .presentationDetents([.fraction(0.3)])
                 }
             }
+            .sheet(isPresented: $showLeaderboard) {
+                LeaderboardSheet(vm: vm)
+            }
+            
         }
     }
     private struct LeaderboardBarRow: View {
@@ -218,6 +180,70 @@ struct FriendsView: View {
                 .frame(height: 24)
             }
             .animation(.easeOut(duration: 0.22), value: points)
+        }
+    }
+    private struct LeaderboardSheet: View {
+        @ObservedObject var vm: FriendsViewModel
+        @Environment(\.dismiss) private var dismiss
+        
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        let maxPoints = vm.leaderboard.map(\.points).max() ?? 0
+                        
+                        if vm.isLoadingLeaderboard {
+                            HStack {
+                                ProgressView()
+                                Text("Loading leaderboard…")
+                            }
+                        } else if let err = vm.leaderboardError {
+                            Text(err).foregroundStyle(.red)
+                        } else if vm.leaderboard.isEmpty {
+                            Text("No friend rankings yet.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
+                                LeaderboardBarRow(
+                                    rank: index + 1,
+                                    name: entry.displayName,
+                                    handle: entry.handle,
+                                    points: entry.points,
+                                    maxPoints: maxPoints,
+                                    useColor: true
+                                )
+                                .padding(.vertical, 2)
+                            }
+                        }
+                    } header: {
+                        HStack {
+                            Text("Friends Leaderboard")
+                            Spacer()
+                            Button {
+                                vm.loadLeaderboard()
+                            } label: {
+                                Label("Refresh", systemImage: "arrow.clockwise")
+                            }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+                .listSectionSpacing(.compact)
+                .navigationTitle("Leaderboard")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+                // refresh when sheet opens
+                .onAppear { vm.loadLeaderboard() }
+                // If friend list loads/changes while the sheet is open, refresh
+                .onChange(of: vm.friendIds) { vm.loadLeaderboard() }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color(.systemBackground))
         }
     }
 }
