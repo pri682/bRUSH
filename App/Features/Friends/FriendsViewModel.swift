@@ -216,7 +216,7 @@ class FriendsViewModel: ObservableObject {
         }
     func remove(friend: Friend) {
             guard let me = AuthService.shared.user?.id else { return }
-            Task {
+            Task { @MainActor in
                 do {
                     try await requestService.removeFriend(me: me, other: friend.uid)
                     // Locally drop it
@@ -225,6 +225,11 @@ class FriendsViewModel: ObservableObject {
                     } else {
                         friends.removeAll { $0.uid == friend.uid }
                     }
+                    friendIds.remove(friend.uid)
+                    if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        performAddSearch()
+                    }
+                    refreshFriends()
                 } catch {
                     print("Failed to remove friend: \(error)")
                 }

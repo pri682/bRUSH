@@ -84,6 +84,7 @@ struct FriendsView: View {
                         }
                         .padding(.vertical, 4)
                         .contentShape(Rectangle())
+                        .onTapGesture { vm.openProfile(for: friend) }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 pendingRemoval = friend
@@ -94,51 +95,52 @@ struct FriendsView: View {
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
-                .navigationTitle("Friends")
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            withAnimation {
-                                showLeaderboard.toggle()
-                            }
-                        } label: {
-                            Image(systemName: "trophy")
-                        }
-                        .accessibilityLabel("Toggle Leaderboard")
+            }
+            .listStyle(.insetGrouped)
+            .onAppear {
+                vm.loadMyHandle()
+                vm.refreshFriends()
+                vm.refreshIncoming()
+                vm.loadLeaderboard() }
+            .searchable(text: $vm.searchText, prompt: "Search friends")
+            .navigationTitle("Friends")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        withAnimation { showLeaderboard.toggle() }
+                    } label: {
+                        Image(systemName: "trophy")
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            vm.addQuery = ""
-                            vm.addResults = []
-                            vm.addError = nil
-                            vm.isSearchingAdd = false
-                            showAddSheet = true
-                        } label: {
-                            Label("Add Friend", systemImage: "person.badge.plus")
-                        }
-                    }
+                    .accessibilityLabel("Toggle Leaderboard")
                 }
-                .sheet(isPresented: $showAddSheet) {
-                    AddFriendView(vm: vm)
-                }
-                .confirmationDialog(
-                    pendingRemoval.map { "Remove \($0.name) as a friend?" } ?? "Remove friend?",
-                    isPresented: $showRemoveConfirm,
-                    titleVisibility: .visible
-                ) {
-                    Button("Remove", role: .destructive) {
-                        if let f = pendingRemoval {
-                            vm.remove(friend: f)                        }
-                        pendingRemoval = nil
-                    }
-                    Button("Cancel", role: .cancel) {
-                        pendingRemoval = nil
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        vm.addQuery = ""
+                        vm.addResults = []
+                        vm.addError = nil
+                        vm.isSearchingAdd = false
+                        showAddSheet = true
+                    } label: {
+                        Label("Add Friend", systemImage: "person.badge.plus")
                     }
                 }
             }
-            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
-            .searchable(text: $vm.searchText, prompt: "Search friends")
+            .sheet(isPresented: $showAddSheet) {
+                AddFriendView(vm: vm)
+            }
+            .confirmationDialog(
+                pendingRemoval.map { "Remove \($0.name) as a friend?" } ?? "Remove friend?",
+                isPresented: $showRemoveConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    if let f = pendingRemoval { vm.remove(friend: f) }
+                    pendingRemoval = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingRemoval = nil
+                }
+            }
         }
     }
 }
