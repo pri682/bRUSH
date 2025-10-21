@@ -3,7 +3,7 @@ import SwiftUI
 struct AddFriendView: View {
     @ObservedObject var vm: FriendsViewModel
     @Environment(\.dismiss) private var dismiss
-
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -13,12 +13,12 @@ struct AddFriendView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .submitLabel(.search)
-                        //.onSubmit { vm.performAddSearch() }
+                        .onSubmit { vm.performAddSearch() }
                 }
                 .padding(12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 .padding([.horizontal, .top])
-
+                
                 if vm.isSearchingAdd {
                     ProgressView("Searching…").padding(.top, 12)
                 } else if let err = vm.addError {
@@ -28,45 +28,58 @@ struct AddFriendView: View {
                         .foregroundStyle(.secondary)
                         .padding(.top, 12)
                 }
-
+                
                 List(vm.addResults) { user in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(user.displayName).font(.body.weight(.semibold))
                             Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
+                                .buttonStyle(.borderedProminent)
                         }
                         Spacer()
-                        if vm.sent.contains(where: { $0.handle == "@\(user.handle)" }) {
-                            Text("Pending")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Button {
-                                vm.sendFriendRequest(to: user)
-                            } label: {
-                                Label {
-                                    Text("Add")
-                                } icon: {
-                                    Image(systemName: "person.badge.plus")
-                                        .foregroundColor(.white)
-                                }
+                            // Row status: Friend / Pending / Add
+                            let isFriend = vm.friendIds.contains(user.uid)
+                            let isPending = (
+                                vm.sent.contains { $0.toUid == user.uid}
+                                || vm.sent.contains { $0.handle == "@\(user.handle)"}
+                            )
+                            
+                            if isFriend {
+                                Text("Friend")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
-                            .buttonStyle(.borderedProminent)
+                            else if isPending {
+                                Text("Pending")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            else {
+                                Button {
+                                    vm.sendFriendRequest(to: user)
+                                }
+                                label: {
+                                    Label { Text("Add") } icon: {
+                                        Image(systemName: "person.badge.plus").foregroundColor(.white)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
+                    .listStyle(.inset)
                 }
-                .listStyle(.inset)
-            }
-            .navigationTitle("Add Friend")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Search") { vm.performAddSearch() }.disabled(vm.addQuery.trimmingCharacters(in: .whitespaces).isEmpty)
+                .navigationTitle("Add Friend")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Search") { vm.performAddSearch() }.disabled(vm.addQuery.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
             }
         }
     }
-}
+

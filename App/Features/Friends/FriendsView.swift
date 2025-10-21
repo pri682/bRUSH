@@ -107,14 +107,13 @@ struct FriendsView: View {
                     } label: {
                         Label("Add Friend", systemImage: "person.badge.plus")
                     }
-                    .accessibilityLabel("Add Friend")
                 }
             }
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
         }
-    //    .onAppear { vm.loadMock(); vm.loadLeaderboard() }
+        .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
         .searchable(text: $vm.searchText, prompt: "Search friends")
     }
 }
