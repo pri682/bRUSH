@@ -30,23 +30,20 @@ struct FriendsView: View {
                 }
                 Section("Friends (\(vm.filteredFriends.count))") {
                     ForEach(vm.filteredFriends) { friend in
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(friend.name).font(.headline)
                             Text(friend.handle).foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            vm.selectedFriendUid = friend.uid
+                        .onTapGesture { vm.selectedFriendUid = friend.uid }
+                    }
+                    .onDelete { indexSet in
+                        let uids = indexSet.compactMap { idx in
+                            vm.filteredFriends[safe: idx]?.uid
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                pendingRemoval = friend
-                                showRemoveConfirm = true
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                        }
+                        vm.removeLocally(uids: uids)
+                        Task { await vm.removeRemote(uids: uids) }
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -79,9 +76,6 @@ struct FriendsView: View {
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
-            .sheet(isPresented: $showLeaderboard) {
-                LeaderboardSheet(vm: vm)
-            }
             .fullScreenCover(isPresented: Binding(
                 get: { vm.selectedFriendUid != nil },
                 set: { if !$0 { vm.selectedFriendUid = nil } }
@@ -95,7 +89,9 @@ struct FriendsView: View {
                         }
                 }
             }
-            
+            .sheet(isPresented: $showLeaderboard) {
+                LeaderboardSheet(vm: vm)
+            }
         }
     }
     private struct LeaderboardBarRow: View {
@@ -241,7 +237,7 @@ struct FriendsView: View {
             .presentationBackground(Color(.systemBackground))
         }
     }
-    
+}
     // tiny helper
     private func Stat(_ label: String, _ value: Int) -> some View {
         VStack {
@@ -250,5 +246,8 @@ struct FriendsView: View {
         }
         .frame(maxWidth: .infinity)
     }
-    
-}
+    private extension Array {
+        subscript(safe index: Index) -> Element? {
+            indices.contains(index) ? self[index] : nil
+        }
+    }
