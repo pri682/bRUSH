@@ -30,21 +30,20 @@ struct FriendsView: View {
                 }
                 Section("Friends (\(vm.filteredFriends.count))") {
                     ForEach(vm.filteredFriends) { friend in
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(friend.name).font(.headline)
                             Text(friend.handle).foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
                         .contentShape(Rectangle())
                         .onTapGesture { vm.openProfile(for: friend) }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                pendingRemoval = friend
-                                showRemoveConfirm = true
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
+                    }
+                    .onDelete { indexSet in
+                        let uids = indexSet.compactMap { idx in
+                            vm.filteredFriends[safe: idx]?.uid
                         }
+                        vm.removeLocally(uids: uids)
+                        Task { await vm.removeRemote(uids: uids) }
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -100,7 +99,6 @@ struct FriendsView: View {
             .sheet(isPresented: $showLeaderboard) {
                 LeaderboardSheet(vm: vm)
             }
-            
         }
     }
     private struct LeaderboardBarRow: View {
@@ -247,73 +245,78 @@ struct FriendsView: View {
         }
     }
 }
-private struct FriendProfileSheet: View {
-    let profile: UserProfile
-    var onConfirmRemove: (String) -> Void = { _ in }
-    
-    @Environment(\.dismiss) private var dismiss
-    @State private var confirmRemove = false
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Avatar stub (swap for avatar pieces later)
-            Circle()
-                .frame(width: 72, height: 72)
-                .overlay(Text(profile.displayName.prefix(1)).font(.title))
-                .accessibilityHidden(true)
-            
-            VStack(spacing: 2) {
-                Text(profile.displayName)
-                    .font(.title3).bold()
-                Text("@\(profile.displayName)")
-                    .foregroundStyle(.secondary)
-                    .font(.callout)
-            }
-            
-            // Quick stats row
-            HStack(spacing: 24) {
-                Stat("Gold", profile.goldMedalsAccumulated)
-                Stat("Silver", profile.silverMedalsAccumulated)
-                Stat("Bronze", profile.bronzeMedalsAccumulated)
-            }
-            
-            // Actions
-            HStack(spacing: 12) {
-                Button("Close") { dismiss() }
-                    .buttonStyle(.bordered)
-                
-                Button(role: .destructive) {
-                    confirmRemove = true
-                } label: {
-                    Label("Remove Friend", systemImage: "person.fill.xmark")
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding(.top, 4)
-        }
-        .padding()
-        .presentationDetents([.medium, .large])
-        .presentationBackground(Color(.systemBackground)) // opaque profile sheet
+    private struct FriendProfileSheet: View {
+        let profile: UserProfile
+        var onConfirmRemove: (String) -> Void = { _ in }
         
-        .confirmationDialog(
-            "Remove \(profile.displayName) as a friend?",
-            isPresented: $confirmRemove,
-            titleVisibility: .visible
-        ) {
-            Button("Remove", role: .destructive) {
-                onConfirmRemove(profile.uid)
-                dismiss()
+        @Environment(\.dismiss) private var dismiss
+        @State private var confirmRemove = false
+        
+        var body: some View {
+            VStack(spacing: 16) {
+                // Avatar stub (swap for avatar pieces later)
+                Circle()
+                    .frame(width: 72, height: 72)
+                    .overlay(Text(profile.displayName.prefix(1)).font(.title))
+                    .accessibilityHidden(true)
+                
+                VStack(spacing: 2) {
+                    Text(profile.displayName)
+                        .font(.title3).bold()
+                    Text("@\(profile.displayName)")
+                        .foregroundStyle(.secondary)
+                        .font(.callout)
+                }
+                
+                // Quick stats row
+                HStack(spacing: 24) {
+                    Stat("Gold", profile.goldMedalsAccumulated)
+                    Stat("Silver", profile.silverMedalsAccumulated)
+                    Stat("Bronze", profile.bronzeMedalsAccumulated)
+                }
+                
+                // Actions
+                HStack(spacing: 12) {
+                    Button("Close") { dismiss() }
+                        .buttonStyle(.bordered)
+                    
+                    Button(role: .destructive) {
+                        confirmRemove = true
+                    } label: {
+                        Label("Remove Friend", systemImage: "person.fill.xmark")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.top, 4)
             }
-            Button("Cancel", role: .cancel) {}
+            .padding()
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color(.systemBackground)) // opaque profile sheet
+            
+            .confirmationDialog(
+                "Remove \(profile.displayName) as a friend?",
+                isPresented: $confirmRemove,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    onConfirmRemove(profile.uid)
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            }
         }
     }
-}
-            // tiny helper
-            private func Stat(_ label: String, _ value: Int) -> some View {
-                VStack {
-                    Text("\(value)").bold()
-                    Text(label).font(.caption).foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-            }
+    // tiny helper
+    private func Stat(_ label: String, _ value: Int) -> some View {
+        VStack {
+            Text("\(value)").bold()
+            Text(label).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    private extension Array {
+        subscript(safe index: Index) -> Element? {
+            indices.contains(index) ? self[index] : nil
+        }
+    }
 
