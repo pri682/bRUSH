@@ -73,6 +73,36 @@ class FriendsViewModel: ObservableObject {
                                 $0.handle.lowercased().contains(searchText.lowercased()) }
     }
     
+    @MainActor
+    func removeLocally(uids: [String]) {
+        guard !uids.isEmpty else { return }
+        let uidSet = Set(uids)
+        // Update arrays synchronously
+        friends.removeAll { uidSet.contains($0.uid) }
+        friendIds.subtract(uidSet)
+        
+        // If Add Friend search is open, refresh badges
+        if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            performAddSearch()
+        }
+    }
+        func removeRemote(uids: [String]) async {
+            guard let me = AuthService.shared.user?.id, !uids.isEmpty else { return }
+            for other in uids {
+                do {
+                    try await requestService.removeFriend(me: me, other: other)
+                } catch {
+                    print("Failed to remove friend remotely: \(other), error: \(error)")
+                }
+            }
+            // light re-sync after animations settle
+            await MainActor.run {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.refreshFriends()
+                }
+            }
+        }
+    
     func loadMyHandle() {
         guard let me = meUid else { return }
         Task { @MainActor in
