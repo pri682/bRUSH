@@ -1,6 +1,8 @@
 import SwiftUI
 import PencilKit
 import Combine
+import FirebaseFirestore
+import FirebaseAuth
 
 struct DrawingView: View {
     var onSave: (Item) -> Void = { _ in }
@@ -423,15 +425,16 @@ struct DrawingView: View {
     
     private func submitDrawing() {
         hasSubmitted = true
+        saveDrawingAsImage()
         
         let image = createCompositeImage()
         
-        DrawingUploader.shared.uploadDrawing(image: image, prompt: prompt) { result in
+        DrawingUploader.shared.uploadDrawing(image: image) { result in
                 switch result {
                 case .success:
                     showSubmittedPopup = true
-                case .failure:
-                    break
+                case .failure(let error):
+                    print("❌ Upload failed: \(error.localizedDescription)")
                 }
             }
         
