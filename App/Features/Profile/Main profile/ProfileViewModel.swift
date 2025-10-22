@@ -61,7 +61,13 @@ class ProfileViewModel: ObservableObject {
         } catch {
             timeoutTask.cancel() // Cancel timeout on error
             await MainActor.run { 
-                self.errorMessage = error.localizedDescription
+                // Check if the error is "Profile not found" and sign out user
+                if error.localizedDescription.contains("Profile not found") {
+                    self.signOut()
+                    self.errorMessage = "Account not found. Please sign in again."
+                } else {
+                    self.errorMessage = error.localizedDescription
+                }
                 self.isLoadingProfile = false
             }
         }

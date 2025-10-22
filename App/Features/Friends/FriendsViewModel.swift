@@ -65,9 +65,11 @@ class FriendsViewModel: ObservableObject {
     }
     
     var filteredFriends: [Friend] {
-        guard !searchText.isEmpty else { return friends }
-        return friends.filter { $0.name.lowercased().contains(searchText.lowercased()) ||
-                                $0.handle.lowercased().contains(searchText.lowercased()) }
+        let filtered = searchText.isEmpty ? friends : friends.filter { 
+            $0.name.lowercased().contains(searchText.lowercased()) ||
+            $0.handle.lowercased().contains(searchText.lowercased()) 
+        }
+        return filtered.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
     
     @MainActor
@@ -307,4 +309,8 @@ class FriendsViewModel: ObservableObject {
                 }
             }
         }
+    
+    func openProfile(for friend: Friend) {
+        selectedFriendUid = friend.uid
+    }
     }
