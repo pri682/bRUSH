@@ -423,7 +423,17 @@ struct DrawingView: View {
     
     private func submitDrawing() {
         hasSubmitted = true
-        saveDrawingAsImage()
+        
+        let image = createCompositeImage()
+        
+        DrawingUploader.shared.uploadDrawing(image: image, prompt: prompt) { result in
+                switch result {
+                case .success:
+                    showSubmittedPopup = true
+                case .failure:
+                    break
+                }
+            }
         
         streakManager.markCompletedToday()
         NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
