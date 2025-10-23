@@ -76,17 +76,24 @@ struct FriendsView: View {
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
-            .fullScreenCover(isPresented: Binding(
-                get: { vm.selectedFriendUid != nil },
-                set: { if !$0 { vm.selectedFriendUid = nil } }
-            )) {
-                if let friendUid = vm.selectedFriendUid {
-                    FriendProfileView(friendUid: friendUid)
-                        .onDisappear {
-                            // Refresh friends list when returning from profile view
-                            // in case a friend was removed
-                            vm.refreshFriends()
+            .sheet(isPresented: $vm.showingProfile) {
+                if let p = vm.selectedProfile {
+                    FriendProfileSheet(
+                        profile: p,
+                        onConfirmRemove: { uid in
+                            if let f = vm.friends.first(where: { $0.uid == uid}) {
+                                vm.remove(friend: f)
+                            }
                         }
+                    )
+                } else {
+                    // Fallback while loading
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading profile…")
+                    }
+                    .padding()
+                    .presentationDetents([.fraction(0.3)])
                 }
             }
             .sheet(isPresented: $showLeaderboard) {
