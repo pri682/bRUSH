@@ -427,17 +427,6 @@ struct DrawingView: View {
         hasSubmitted = true
         saveDrawingAsImage()
         
-        let image = createCompositeImage()
-        
-        DrawingUploader.shared.uploadDrawing(image: image) { result in
-                switch result {
-                case .success:
-                    showSubmittedPopup = true
-                case .failure(let error):
-                    print("❌ Upload failed: \(error.localizedDescription)")
-                }
-            }
-        
         streakManager.markCompletedToday()
         NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
         
@@ -455,6 +444,7 @@ struct DrawingView: View {
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
         
+        // Local download
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
         let filename = UUID().uuidString + ".jpg"
         
@@ -476,6 +466,16 @@ struct DrawingView: View {
         } catch {
             print("Error saving image: \(error)")
         }
+        
+        // Cloud upload
+        DrawingUploader.shared.uploadDrawing(image: image) { result in
+                switch result {
+                case .success:
+                    showSubmittedPopup = true
+                case .failure(let error):
+                    print("❌ Upload failed: \(error.localizedDescription)")
+                }
+            }
     }
     
     private func createCompositeImage() -> UIImage {
