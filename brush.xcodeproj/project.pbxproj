@@ -136,7 +136,6 @@
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
 			);
 			productName = brush;
-			productReference = 57ECDBF92E9DD56C001364CA /* brush.app */;
 			productReference = 5DF035842EA1B6DE009A748A /* brush.app */;
 			productType = "com.apple.product-type.application";
 		};
