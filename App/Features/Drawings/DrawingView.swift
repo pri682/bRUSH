@@ -1,6 +1,8 @@
 import SwiftUI
 import PencilKit
 import Combine
+import FirebaseFirestore
+import FirebaseAuth
 
 struct DrawingView: View {
     var onSave: (Item) -> Void = { _ in }
@@ -442,6 +444,7 @@ struct DrawingView: View {
     private func saveDrawingAsImage() {
         let image = createCompositeImage()
         
+        // Local download
         guard let data = image.jpegData(compressionQuality: 0.8) else { return }
         let filename = UUID().uuidString + ".jpg"
         
@@ -463,6 +466,16 @@ struct DrawingView: View {
         } catch {
             print("Error saving image: \(error)")
         }
+        
+        // Cloud upload
+        DrawingUploader.shared.uploadDrawing(image: image) { result in
+                switch result {
+                case .success:
+                    showSubmittedPopup = true
+                case .failure(let error):
+                    print("❌ Upload failed: \(error.localizedDescription)")
+                }
+            }
     }
     
     private func createCompositeImage() -> UIImage {
