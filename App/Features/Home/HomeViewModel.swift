@@ -65,17 +65,23 @@ final class HomeViewModel: ObservableObject {
                    let date = data["date"] as? String,
                    date == todayString {
                     
+                    let userDocSnapshot = try await db.collection("users").document(uid).getDocument()
+                    let userData = userDocSnapshot.data()
+                    
+                    let firstName = userData?["firstName"] as? String ?? "User"
+                    let displayName = userData?["displayName"] as? String ?? "username"
+                    
                     let item = FeedItem(
                         id: docSnapshot.documentID,
                         userId: uid,
-                        displayName: "", // can later fetch from /users
-                        username: "",
+                        firstName: firstName,
+                        displayName: displayName,
                         imageURL: data["imageURL"] as? String ?? "",
                         medalGold: data["gold"] as? Int ?? 0,
                         medalSilver: data["silver"] as? Int ?? 0,
                         medalBronze: data["bronze"] as? Int ?? 0,
                         date: date,
-                        createdAt: (data["createdAt"] as? Timestamp)?.dateValue()
+                        createdAt: (data["createdAt"] as? Timestamp)?.dateValue(),
                     )
                     allFeedItems.append(item)
                 }
