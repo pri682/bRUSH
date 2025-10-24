@@ -86,19 +86,30 @@ struct DrawingPreviewView: View {
                                 Text(formattedDate)
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
                                     .glassEffect(.regular.interactive())
 
                                 Text(item.prompt)
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
+                                    .font(.system(size: 20, weight: .semibold))
+//                                    .foregroundStyle(
+//                                        LinearGradient(
+//                                            colors: [
+//                                                Color(red: 1.0, green: 0.35, blue: 0.2),
+//                                                Color(red: 1.0, green: 0.25, blue: 0.25),
+//                                                Color(red: 0.95, green: 0.4, blue: 0.15)
+//                                            ],
+//                                            startPoint: .bottomTrailing,
+//                                            endPoint: .topLeading
+//                                        )
+//                                    )
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical, 20)
                                     .padding(.horizontal, 25)
                                     .glassEffect(.regular.interactive())
                             }
+                            .padding(.trailing, 25)
+                            .padding(.leading, 25)
                             .offset(y: showBubbles ? -20 : 120)
                             .opacity(showBubbles ? 1 : 0)
                             .allowsHitTesting(false)
