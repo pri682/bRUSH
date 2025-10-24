@@ -1,11 +1,3 @@
-//
-//  Sketch.swift
-//  brush
-//
-//  Created by Meidad Troper on 10/10/25.
-//
-
-
 import SwiftUI
 
 struct Sketch: Identifiable, Equatable {
