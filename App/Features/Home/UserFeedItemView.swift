@@ -1,8 +1,8 @@
 import SwiftUI
-import UIKit
 
 struct UserFeedItemView: View {
     let item: FeedItem
+    let prompt: String
 
     @State private var goldCount: Int
     @State private var silverCount: Int
@@ -10,95 +10,113 @@ struct UserFeedItemView: View {
     @State private var goldSelected = false
     @State private var silverSelected = false
     @State private var bronzeSelected = false
+    @State private var showOverlays = true
+
+    @Binding var hasPostedToday: Bool
+    @Binding var hasAttemptedDrawing: Bool
+    @Binding var isPresentingCreate: Bool
 
     @State private var isSharing = false
-    @State private var sharedImage: UIImage?
+    @State private var rippleCounter: Int = 0
+    @State private var rippleOrigin: CGPoint = .zero
 
-    init(item: FeedItem) {
+    init(
+        item: FeedItem,
+        prompt: String,
+        hasPostedToday: Binding<Bool>,
+        hasAttemptedDrawing: Binding<Bool>,
+        isPresentingCreate: Binding<Bool>
+    ) {
         self.item = item
+        self.prompt = prompt
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
+        self._hasPostedToday = hasPostedToday
+        self._hasAttemptedDrawing = hasAttemptedDrawing
+        self._isPresentingCreate = isPresentingCreate
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // MARK: - Header
-            HStack(spacing: 12) {
-                Image(systemName: item.profileSystemImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-                    .foregroundColor(.secondary)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Text(item.username)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+        ZStack {
+            if let url = URL(string: item.imageURL) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxHeight: .infinity)
+                            .clipped()
+                            .modifier(RippleEffect(origin: rippleOrigin, trigger: rippleCounter, speed: 300))
+                    case .failure:
+                        Rectangle()
+                            .fill(Color(.secondarySystemBackground))
+                            .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                    @unknown default:
+                        EmptyView()
+                    }
                 }
-                Spacer()
+            } else {
+                Rectangle()
+                    .fill(Color(.secondarySystemBackground))
+                    .overlay(Image(systemName: "photo").foregroundColor(.gray))
             }
 
-            // MARK: - Artwork + Medal actions
-            ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemBackground))
-                    .frame(maxWidth: .infinity)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .overlay(
-                        AsyncImage(url: URL(string: item.imageURL)) { phase in
-                            switch phase {
-                            case .empty:
-                                ZStack {
-                                    Rectangle().fill(Color(UIColor.secondarySystemBackground))
-                                    ProgressView()
-                                }
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .onAppear {
-                                        // Convert to UIImage for sharing later
-                                        let renderer = ImageRenderer(content: image)
-                                        if let uiImage = renderer.uiImage {
-                                            sharedImage = uiImage
-                                        }
-                                    }
-                            case .failure:
-                                Image(systemName: "photo.on.rectangle.angled")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(.gray)
-                                    .padding(48)
-                            @unknown default:
-                                EmptyView()
+            // Ripple & overlay handling
+            Color.clear
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onEnded { value in
+                            guard hasPostedToday else { return }
+                            rippleOrigin = value.location
+                            rippleCounter += 1
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+                                showOverlays.toggle()
                             }
                         }
-                        .clipped()
-                    )
+                )
 
-                // Medal + Share buttons
-                HStack(spacing: 14) {
-                    medalButton(systemName: "medal.fill", color: .yellow, count: $goldCount, isSelected: $goldSelected)
-                    medalButton(systemName: "medal.fill", color: .gray, count: $silverCount, isSelected: $silverSelected)
-                    medalButton(systemName: "medal.fill", color: .orange, count: $bronzeCount, isSelected: $bronzeSelected)
-                    Spacer()
-                    shareButton()
-                        .disabled(sharedImage == nil)
-                        .opacity(sharedImage == nil ? 0.4 : 1.0)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
+            VStack {
+                Text(prompt)
+                    .font(.system(size: 16, weight: .semibold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .glassEffect(.regular.interactive())
+                    .opacity(hasPostedToday ? (showOverlays ? 1 : 0) : 0)
+                    .scaleEffect(showOverlays ? 1 : 0.95)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.8), value: showOverlays)
+                    .padding(.top, 10)
+                Spacer()
+            }
+            .padding(.horizontal)
+            .allowsHitTesting(false)
+
+            if hasPostedToday {
+                userOverlay
+                medalOverlay
+            } else {
+                noPostOverlay
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(radius: 3)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 20)
+        .padding(.top, 70)
         .sheet(isPresented: $isSharing) {
-            if let image = sharedImage {
+            if let url = URL(string: item.imageURL),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
                 let itemSource = ImageActivityItemSource(
-                    title: "Check out this drawing from \(item.displayName)!",
+                    title: "Check out this drawing from \(item.firstName)!",
                     image: image
                 )
                 ShareSheet(activityItems: [itemSource])
@@ -107,61 +125,110 @@ struct UserFeedItemView: View {
         }
     }
 
-    // MARK: - Medal button
-    private func medalButton(systemName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>) -> some View {
-        Button {
-            if isSelected.wrappedValue {
-                isSelected.wrappedValue = false
-                count.wrappedValue = max(0, count.wrappedValue - 1)
-            } else {
-                isSelected.wrappedValue = true
-                count.wrappedValue += 1
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: systemName)
-                    .foregroundColor(color)
-                Text("\(count.wrappedValue)")
+    // MARK: - Overlays
+
+    private var userOverlay: some View {
+        HStack(spacing: 12) {
+            Image(systemName: item.profileSystemImageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 40, height: 40)
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.firstName).font(.headline).fontWeight(.semibold)
+                Text("@\(item.displayName)")
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .opacity(0.9)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(UIColor.systemBackground).opacity(isSelected.wrappedValue ? 1.0 : 0.85))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected.wrappedValue ? Color.accentColor : .clear, lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
+        .padding(16)
+        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
+        .opacity(showOverlays ? 1 : 0)
+        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.7), value: showOverlays)
+        .allowsHitTesting(showOverlays)
     }
 
-    // MARK: - Share button (same styling as medals)
-    private func shareButton() -> some View {
-        Button {
-            isSharing = true
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "square.and.arrow.up")
-                    .foregroundColor(.blue)
-                Text("Share")
-                    .font(.subheadline)
-                    .foregroundColor(.primary)
+    private var medalOverlay: some View {
+        VStack(spacing: 16) {
+            medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected)
+            medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected)
+            medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected)
+            shareButton()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.bottom, 20)
+        .padding(.trailing, 20)
+        .opacity(showOverlays ? 1 : 0)
+        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
+        .allowsHitTesting(showOverlays)
+    }
+
+    private var noPostOverlay: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "eye.slash.fill")
+                .font(.system(size: 44, weight: .bold))
+                .foregroundStyle(.secondary)
+            Button {
+                isPresentingCreate = true
+            } label: {
+                Text("Create Today's Drawing").padding(.horizontal)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(UIColor.systemBackground).opacity(0.85))
-            )
+            .buttonStyle(.borderedProminent)
+            .disabled(hasAttemptedDrawing)
+
+            if hasAttemptedDrawing {
+                Text("You chose not to draw today.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
+        .zIndex(1)
+    }
+
+    // MARK: - Buttons
+
+    @ViewBuilder
+    private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>) -> some View {
+        Button {
+            isSelected.wrappedValue.toggle()
+            count.wrappedValue += isSelected.wrappedValue ? 1 : -1
+        } label: {
+            VStack(spacing: 4) {
+                Image(assetName).resizable().scaledToFit().frame(width: 32, height: 32)
+                Text("\(count.wrappedValue)")
+                    .foregroundColor(.white)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(8)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.accentColor, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected.wrappedValue ? Color.accentColor : .clear, lineWidth: 2)
             )
         }
+        .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .frame(minWidth: 48, minHeight: 48)
+    }
+
+    private func shareButton() -> some View {
+        Button { isSharing = true } label: {
+            VStack(spacing: 4) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 24, weight: .medium))
+                Text("Share")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(8)
+        }
         .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .frame(minWidth: 48, minHeight: 48)
     }
 }
