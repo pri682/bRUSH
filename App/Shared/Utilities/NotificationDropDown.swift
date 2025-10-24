@@ -7,18 +7,29 @@ struct NotificationsDropdown: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
-            HStack {
-                Text("Notifications")
-                    .font(.headline)
-                Spacer()
-                Button("Clear All") {
-                    clearAllNotifications()
+            ZStack {
+                UnevenRoundedRectangle(
+                        topLeadingRadius: 14,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 14,
+                    )
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(height: 50)
+                    .ignoresSafeArea(edges: .horizontal)
+                
+                HStack {
+                    Text("Notifications")
+                        .font(.headline)
+                    Spacer()
+                    Button("Clear All") {
+                        clearAllNotifications()
+                    }
+                    .font(.caption)
+                    .foregroundColor(.red)
                 }
-                .font(.caption)
-                .foregroundColor(.red)
+                .padding(.horizontal)
             }
-            .padding()
-            .background(Color(.systemGray6))
             
             Divider()
             
@@ -48,7 +59,6 @@ struct NotificationsDropdown: View {
                                 }
                                 Spacer()
                                 
-                                // ❌ Delete button
                                 Button(action: {
                                     removeNotification(at: index)
                                 }) {
@@ -67,10 +77,8 @@ struct NotificationsDropdown: View {
                 .frame(height: 200)
             }
         }
-        .frame(width: 320) // wider panel
-        .background(.ultraThinMaterial)
-        .cornerRadius(14)
-        .shadow(radius: 6)
+        .frame(width: 320)
+        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 14))
     }
     
     // MARK: - Delete helpers

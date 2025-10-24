@@ -41,7 +41,7 @@ struct SignInProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 38)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 2)
+                                    RoundedRectangle(cornerRadius: 12)
                                         .fill(Color.accentColor)
                                 )
                         }
