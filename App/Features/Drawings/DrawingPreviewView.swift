@@ -11,6 +11,8 @@ struct DrawingPreviewView: View {
     @GestureState private var dragOffset: CGSize = .zero
     @State private var accumulatedRotation: Double = 0
     
+    @State private var showBubbles = false
+    
     private var formattedDate: String {
         item.date.formatted(date: .long, time: .omitted)
     }
@@ -74,7 +76,12 @@ struct DrawingPreviewView: View {
                                             startAnimation()
                                         }
                                 )
-                            
+                                .onTapGesture {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        showBubbles.toggle()
+                                    }
+                                }
+
                             VStack(spacing: 12) {
                                 Text(formattedDate)
                                     .font(.caption)
@@ -92,11 +99,20 @@ struct DrawingPreviewView: View {
                                     .padding(.horizontal, 25)
                                     .glassEffect(.regular.interactive())
                             }
-                            .offset(y: -20)
+                            .offset(y: showBubbles ? -20 : 120)
+                            .opacity(showBubbles ? 1 : 0)
+                            .allowsHitTesting(false)
                         }
                         .padding()
                         .padding(.top, 30)
-                        .onAppear(perform: startAnimation)
+                        .onAppear {
+                            startAnimation()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    showBubbles = true
+                                }
+                            }
+                        }
                         
                         Spacer(minLength: 0)
                     }
@@ -142,3 +158,4 @@ struct DrawingPreviewView: View {
         }
     }
 }
+
