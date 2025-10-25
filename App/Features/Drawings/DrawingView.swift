@@ -332,8 +332,7 @@ struct DrawingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { isThemePickerPresented = false }
-                        .foregroundColor(.primary)
+                    Button(role: .confirm) { isThemePickerPresented = false }
                 }
             }
         }

@@ -21,6 +21,7 @@
 		1033BD892E866B0300111590 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD882E866B0300111590 /* FirebaseStorageCombine-Community */; };
 		1033BD8E2E866B9100111590 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8D2E866B9100111590 /* GoogleSignIn */; };
 		1033BD902E866B9100111590 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8F2E866B9100111590 /* GoogleSignInSwift */; };
+		5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */ = {isa = PBXBuildFile; productRef = 5DF4A0A92EA5D38A00BB4265 /* Vortex */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +76,7 @@
 				1033BD702E8669BB00111590 /* FirebaseAnalytics in Frameworks */,
 				1033BD8E2E866B9100111590 /* GoogleSignIn in Frameworks */,
 				1033BD722E8669BB00111590 /* FirebaseAnalyticsCore in Frameworks */,
+				5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */,
 				1033BD7F2E866B0300111590 /* FirebaseCore in Frameworks */,
 				1033BD832E866B0300111590 /* FirebaseFirestore in Frameworks */,
 				1033BD762E8669BB00111590 /* FirebaseAppCheck in Frameworks */,
@@ -134,6 +136,7 @@
 				1033BD882E866B0300111590 /* FirebaseStorageCombine-Community */,
 				1033BD8D2E866B9100111590 /* GoogleSignIn */,
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
+				5DF4A0A92EA5D38A00BB4265 /* Vortex */,
 			);
 			productName = brush;
 			productReference = 5DF035842EA1B6DE009A748A /* brush.app */;
@@ -166,6 +169,7 @@
 			packageReferences = (
 				1033BD6C2E8669BB00111590 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1033B8CF2E863B8800111590;
@@ -475,6 +479,14 @@
 				minimumVersion = 9.0.0;
 			};
 		};
+		5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/Vortex";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.4;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -547,6 +559,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		5DF4A0A92EA5D38A00BB4265 /* Vortex */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */;
+			productName = Vortex;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
