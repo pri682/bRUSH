@@ -12,6 +12,7 @@ struct UserFeedItemView: View {
     @State private var bronzeSelected = false
 
     @State private var isSharing = false
+    @State private var sharedImage: UIImage?
 
     init(item: FeedItem) {
         self.item = item
@@ -20,20 +21,9 @@ struct UserFeedItemView: View {
         _bronzeCount = State(initialValue: item.medalBronze)
     }
 
-    // Resolve the displayed image exactly like your working screen does
-    private var resolvedImage: UIImage? {
-        if let name = item.artImageName, let img = UIImage(named: name) {
-            return img
-        }
-        if let symbol = item.artSystemImageName, let img = UIImage(systemName: symbol) {
-            return img
-        }
-        return nil
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
+            // MARK: - Header
             HStack(spacing: 12) {
                 Image(systemName: item.profileSystemImageName)
                     .resizable()
@@ -53,46 +43,60 @@ struct UserFeedItemView: View {
                 Spacer()
             }
 
-            // Artwork + actions row
+            // MARK: - Artwork + Medal actions
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color(UIColor.secondarySystemBackground))
                     .frame(maxWidth: .infinity)
                     .aspectRatio(16/9, contentMode: .fit)
                     .overlay(
-                        Group {
-                            if let image = resolvedImage {
-                                Image(uiImage: image)
+                        AsyncImage(url: URL(string: item.imageURL)) { phase in
+                            switch phase {
+                            case .empty:
+                                ZStack {
+                                    Rectangle().fill(Color(UIColor.secondarySystemBackground))
+                                    ProgressView()
+                                }
+                            case .success(let image):
+                                image
                                     .resizable()
                                     .scaledToFill()
-                            } else {
-                                // fallback placeholder if no image found
+                                    .onAppear {
+                                        // Convert to UIImage for sharing later
+                                        let renderer = ImageRenderer(content: image)
+                                        if let uiImage = renderer.uiImage {
+                                            sharedImage = uiImage
+                                        }
+                                    }
+                            case .failure:
                                 Image(systemName: "photo.on.rectangle.angled")
                                     .resizable()
                                     .scaledToFit()
                                     .foregroundColor(.gray)
                                     .padding(48)
+                            @unknown default:
+                                EmptyView()
                             }
                         }
+                        .clipped()
                     )
-                    .clipped()
 
+                // Medal + Share buttons
                 HStack(spacing: 14) {
                     medalButton(systemName: "medal.fill", color: .yellow, count: $goldCount, isSelected: $goldSelected)
                     medalButton(systemName: "medal.fill", color: .gray, count: $silverCount, isSelected: $silverSelected)
                     medalButton(systemName: "medal.fill", color: .orange, count: $bronzeCount, isSelected: $bronzeSelected)
                     Spacer()
                     shareButton()
-                        .disabled(resolvedImage == nil)
-                        .opacity(resolvedImage == nil ? 0.4 : 1.0)
+                        .disabled(sharedImage == nil)
+                        .opacity(sharedImage == nil ? 0.4 : 1.0)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 10)
             }
         }
-        // Present your existing ShareSheet exactly like the working screen
         .sheet(isPresented: $isSharing) {
-            if let image = resolvedImage {
+            if let image = sharedImage {
                 let itemSource = ImageActivityItemSource(
                     title: "Check out this drawing from \(item.displayName)!",
                     image: image
