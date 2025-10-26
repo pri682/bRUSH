@@ -1,20 +1,30 @@
-import FirebaseFirestore
-import FirebaseAuth
+import Foundation
+import SwiftUI
 import Combine
 
-@MainActor
+struct FeedItem: Identifiable {
+    let id = UUID()
+    let displayName: String
+    let username: String
+    let profileSystemImageName: String
+    let artSystemImageName: String?
+    let artImageName: String?
+    let medalGold: Int
+    let medalSilver: Int
+    let medalBronze: Int
+    let upVotes: Int
+    let downVotes: Int
+    let comments: Int
+    let awards: Int
+}
+
 final class HomeViewModel: ObservableObject {
+    // Centralized app title in case branding changes again
     @Published var appTitle: String = "bRUSH"
-    @Published var feedItems: [FeedItem] = []
-    @Published var dailyPrompt: String = "Loading..."
-    @Published var isLoadingFeed: Bool = false
-    @Published var errorMessage: String?
 
-    private let db = Firestore.firestore()
+    // Onboarding storage
+    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
 
-<<<<<<< Updated upstream
-    // MARK: - Load Daily Prompt
-=======
     // Tagline options to keep the UI lively
     let taglines: [String] = [
         "Sketch. Design. Inspire.",
@@ -83,89 +93,18 @@ final class HomeViewModel: ObservableObject {
     ]
     
     @Published var dailyPrompt: String = "Loading prompt..."
->>>>>>> Stashed changes
     func loadDailyPrompt() async {
         do {
-            let snapshot = try await db.collection("prompts").document("daily").getDocument()
-            if let data = snapshot.data(), let prompt = data["prompt"] as? String {
-                dailyPrompt = prompt
-                print("✅ Loaded prompt: \(prompt)")
-            } else {
-                dailyPrompt = "No prompt found"
-            }
-        } catch {
-            dailyPrompt = "Error loading prompt"
-            print("❌ Error loading prompt:", error.localizedDescription)
-        }
-    }
-
-    // MARK: - Load Feed (Friends + Own)
-    func loadFeed() async {
-        guard let currentUID = Auth.auth().currentUser?.uid else {
-            print("❌ No logged in user found")
-            return
-        }
-
-        isLoadingFeed = true
-        defer { isLoadingFeed = false }
-
-        do {
-            // 1️⃣ Fetch all friend IDs for the current user
-            let friendsSnapshot = try await db.collection("friendships")
-                .document(currentUID)
-                .collection("friends")
-                .getDocuments()
-
-            var userAndFriends = friendsSnapshot.documents.map { $0.documentID }
-            userAndFriends.append(currentUID) // include self
-
-            print("✅ Found \(userAndFriends.count) total users (self + friends)")
-
-            // 2️⃣ Get today's date string (must match DrawingUploader)
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MM/dd/yy"
-            let todayString = formatter.string(from: Date())
-
-            var allFeedItems: [FeedItem] = []
-
-            // 3️⃣ Fetch dailyFeed doc for each user (no subcollection)
-            for uid in userAndFriends {
-                let docSnapshot = try await db.collection("dailyFeed").document(uid).getDocument()
-                
-                if let data = docSnapshot.data(),
-                   let date = data["date"] as? String,
-                   date == todayString {
-                    
-                    let item = FeedItem(
-                        id: docSnapshot.documentID,
-                        userId: uid,
-                        displayName: "", // can later fetch from /users
-                        username: "",
-                        imageURL: data["imageURL"] as? String ?? "",
-                        medalGold: data["gold"] as? Int ?? 0,
-                        medalSilver: data["silver"] as? Int ?? 0,
-                        medalBronze: data["bronze"] as? Int ?? 0,
-                        date: date,
-                        createdAt: (data["createdAt"] as? Timestamp)?.dateValue()
-                    )
-                    allFeedItems.append(item)
-                }
-            }
-
-            // 4️⃣ Sort newest first
-            allFeedItems.sort { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-
-            // 5️⃣ Update the published feedItems on main thread
+            let prompt = try await PromptService.shared.fetchPrompt()
             await MainActor.run {
-                self.feedItems = allFeedItems
-                print("✅ Loaded \(allFeedItems.count) drawings for today (\(todayString))")
+                self.dailyPrompt = prompt
             }
-
+            print("✅ Loaded prompt:", prompt)
         } catch {
-            print("❌ Error loading feed:", error.localizedDescription)
             await MainActor.run {
-                self.errorMessage = error.localizedDescription
+                self.dailyPrompt = "Failed to load prompt."
             }
+            print("❌ Error fetching prompt:", error.localizedDescription)
         }
     }
 }

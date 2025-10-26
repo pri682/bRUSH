@@ -17,35 +17,6 @@ struct UserFeedItemView: View {
     @Binding var isPresentingCreate: Bool
 
     @State private var isSharing = false
-<<<<<<< Updated upstream
-    @State private var sharedImage: UIImage?
-
-    init(item: FeedItem) {
-        self.item = item
-        _goldCount = State(initialValue: item.medalGold)
-        _silverCount = State(initialValue: item.medalSilver)
-        _bronzeCount = State(initialValue: item.medalBronze)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // MARK: - Header
-            HStack(spacing: 12) {
-                Image(systemName: item.profileSystemImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-                    .foregroundColor(.secondary)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Text(item.username)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-=======
     @State private var rippleCounter: Int = 0
     @State private var rippleOrigin: CGPoint = .zero
 
@@ -90,65 +61,10 @@ struct UserFeedItemView: View {
                     Rectangle()
                         .fill(Color(.secondarySystemBackground))
                         .overlay(Image(systemName: "photo").foregroundColor(.gray))
->>>>>>> Stashed changes
                 }
             }
             .modifier(RippleEffect(origin: rippleOrigin, trigger: rippleCounter, speed: 300))
 
-<<<<<<< Updated upstream
-            // MARK: - Artwork + Medal actions
-            ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemBackground))
-                    .frame(maxWidth: .infinity)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .overlay(
-                        AsyncImage(url: URL(string: item.imageURL)) { phase in
-                            switch phase {
-                            case .empty:
-                                ZStack {
-                                    Rectangle().fill(Color(UIColor.secondarySystemBackground))
-                                    ProgressView()
-                                }
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .onAppear {
-                                        // Convert to UIImage for sharing later
-                                        let renderer = ImageRenderer(content: image)
-                                        if let uiImage = renderer.uiImage {
-                                            sharedImage = uiImage
-                                        }
-                                    }
-                            case .failure:
-                                Image(systemName: "photo.on.rectangle.angled")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(.gray)
-                                    .padding(48)
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        .clipped()
-                    )
-
-                // Medal + Share buttons
-                HStack(spacing: 14) {
-                    medalButton(systemName: "medal.fill", color: .yellow, count: $goldCount, isSelected: $goldSelected)
-                    medalButton(systemName: "medal.fill", color: .gray, count: $silverCount, isSelected: $silverSelected)
-                    medalButton(systemName: "medal.fill", color: .orange, count: $bronzeCount, isSelected: $bronzeSelected)
-                    Spacer()
-                    shareButton()
-                        .disabled(sharedImage == nil)
-                        .opacity(sharedImage == nil ? 0.4 : 1.0)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
-            }
-        }
-=======
             Color.clear
                 .contentShape(Rectangle())
                 .gesture(
@@ -192,9 +108,8 @@ struct UserFeedItemView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 20)
         .padding(.top, 70)
->>>>>>> Stashed changes
         .sheet(isPresented: $isSharing) {
-            if let image = sharedImage {
+            if let image = resolvedImage {
                 let itemSource = ImageActivityItemSource(
                     title: "Check out this drawing from \(item.displayName)!",
                     image: image
