@@ -242,6 +242,10 @@ struct HomeView: View {
         }
         .task {
             await viewModel.loadDailyPrompt()
+            await viewModel.loadFeed()
+        }
+        .refreshable {
+            await viewModel.loadFeed()
         }
     }
 
