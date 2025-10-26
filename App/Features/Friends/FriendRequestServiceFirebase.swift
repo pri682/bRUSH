@@ -88,4 +88,14 @@ final class FriendRequestServiceFirebase {
         batch.deleteDocument(b)
         try await batch.commit()
     }
+    
+    // precise: did fromUid send a friend request to toUid
+    func hasPending(fromUid: String, toUid: String) async throws -> Bool {
+        if FirebaseApp.app() == nil { FirebaseApp.configure() }
+        let doc = try await db
+            .collection("friendRequests").document(toUid)
+            .collection("incoming").document(fromUid)
+            .getDocument()
+        return doc.exists
+    }
 }

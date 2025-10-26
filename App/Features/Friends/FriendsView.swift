@@ -49,7 +49,7 @@ struct FriendsView: View {
                 .listStyle(.insetGrouped)
                 .listSectionSpacing(.compact)
             }
-            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard() }
+            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard(); vm.resetSessionData() }
             .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
             .toolbar {

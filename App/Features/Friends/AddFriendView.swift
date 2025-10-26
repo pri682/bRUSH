@@ -47,10 +47,7 @@ struct AddFriendView: View {
                         Spacer()
                             // Row status: Friend / Pending / Add
                             let isFriend = vm.friendIds.contains(user.uid)
-                            let isPending = (
-                                vm.sent.contains { $0.toUid == user.uid}
-                                || vm.sent.contains { $0.handle == "@\(user.handle)"}
-                            )
+                            let isPending = vm.isRequestPending(uid: user.uid)
                             
                             if isFriend {
                                 Text("Friend")

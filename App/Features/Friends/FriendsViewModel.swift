@@ -22,6 +22,7 @@ class FriendsViewModel: ObservableObject {
     @Published var selectedProfile: UserProfile? = nil
     @Published var selectedFriendUid: String? = nil
     @Published var medalCountsByUid: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
+    @Published var pendingOutgoing: Set<String> = []
     
     private var cancellables = Set<AnyCancellable>()
     private let handleService = HandleServiceFirebase()
@@ -169,6 +170,20 @@ class FriendsViewModel: ObservableObject {
                     self.addResults = hits.map { hit in
                         FriendSearchResult(uid: hit.uid, handle: hit.handle, displayName: hit.displayName)
                     }
+                    pendingOutgoing = []
+                    guard let me = meUid else { return }
+
+                    for hit in self.addResults {
+                        Task { @MainActor in
+                            do {
+                                if try await requestService.hasPending(fromUid: me, toUid: hit.uid) {
+                                    pendingOutgoing.insert(hit.uid)
+                                }
+                            } catch {
+                                // ignore individual failures; row just won’t show “Pending”
+                            }
+                        }
+                    }
                 }
                 catch {
                     self.addResults = []
@@ -255,6 +270,7 @@ class FriendsViewModel: ObservableObject {
             sent.append(.init(toName: user.displayName, toUid: user.uid, handle: handleLabel))
             guard let me = meUid else { return }
             let senderHandle = myHandle
+            pendingOutgoing.insert(user.uid)
             Task { @MainActor in
                 do {
                     try await FriendRequestServiceFirebase().sendRequest(
@@ -265,6 +281,7 @@ class FriendsViewModel: ObservableObject {
                 }
                 catch {
                     sent.removeAll { $0.handle == handleLabel }
+                    pendingOutgoing.remove(user.uid)
                     addError = "Failed to send friend request."
                 }
             }
@@ -321,4 +338,15 @@ class FriendsViewModel: ObservableObject {
                 }
             }
         }
+    func isRequestPending(uid: String) -> Bool {
+        pendingOutgoing.contains(uid)
+    }
+    func resetSessionData() {
+        friends = []
+        requests = []
+        sent = []
+        pendingOutgoing = []
+        addResults = []
+        addQuery = ""
+    }
     }
