@@ -35,21 +35,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitignore,
-				Resources/animals.jpg,
-				Resources/brush_logo.png,
-				Resources/bubbles.jpg,
-				Resources/business.jpg,
-				Resources/den.jpg,
-				Resources/frames.jpg,
-				Resources/fruits.jpg,
-				Resources/girl.jpg,
-				Resources/intro.jpg,
-				"Resources/nemodians-burnup-chart-1.png",
-				Resources/rose.jpg,
-				Resources/smiles.jpg,
-				Resources/tea.jpg,
-				Resources/trees.jpg,
-				Resources/vesuvius.jpg,
 			);
 			target = 1033B8D72E863B8800111590 /* brush */;
 		};
