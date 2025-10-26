@@ -38,4 +38,21 @@ final class FriendsViewModelTests: XCTestCase {
         XCTAssertEqual(vm.friendIds, ["a"])
     }
     
+    // Ensures we don’t append duplicate "Pending" rows when a request was already sent.
+    @MainActor
+    func testSendFriendRequest_SkipsWhenAlreadySent() {
+        let vm = FriendsViewModel()
+
+        // Pretend we already sent to uX once
+        vm.sent = [SentFriendRequest(toName: "Zoe", toUid: "uX", handle: "@zoe")]
+
+        // Try to send again to the same uid
+        let target = FriendSearchResult(uid: "uX", handle: "zoe", displayName: "Zoe")
+        vm.sendFriendRequest(to: target)
+
+        // Because of the guard !sent.contains(where: { $0.toUid == user.uid })
+        // count should remain 1 (no duplicate appended)
+        XCTAssertEqual(vm.sent.count, 1)
+        XCTAssertEqual(vm.sent.first?.toUid, "uX")
+    }
 }
