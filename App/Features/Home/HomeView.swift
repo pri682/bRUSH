@@ -3,34 +3,127 @@ import SwiftUI
 struct HomeView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @State private var showOnboarding: Bool = false
-    
-    // Controls dropdown
     @State private var showingNotifications: Bool = false
-    
-    // View model for feed data and title
-    @StateObject private var viewModel: HomeViewModel = HomeViewModel()
+    @StateObject private var viewModel = HomeViewModel()
     @State private var isOnboardingPresented: Bool = false
     @State private var isPresentingCreate: Bool = false
-    
+
     @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
-    
-    @State private var drawingPrompt = "What does your brain look like on a happy day?"
+    @AppStorage("lastPostDateString") private var lastPostDateString: String = ""
+    @State private var hasAttemptedDrawing: Bool = false
+    @State private var didDismissCreate = false
+
     @EnvironmentObject var dataModel: DataModel
+    @State private var currentFeedIndex: Int = 0
 
     var body: some View {
-        ZStack {
-            // Plain background – no gradients
-            Color(.systemBackground)
+        ZStack(alignment: .top) {
+            AnimatedMeshGradientBackground()
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
-                // Top bar
+                GeometryReader { geometry in
+                    TabView(selection: $currentFeedIndex) {
+                        ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                            let item = viewModel.feedItems[index]
+
+                            UserFeedItemView(
+                                item: item,
+                                prompt: viewModel.dailyPrompt,
+                                hasPostedToday: $hasPostedToday,
+                                hasAttemptedDrawing: $hasAttemptedDrawing,
+                                isPresentingCreate: $isPresentingCreate
+                            )
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(radius: 3)
+                            .tag(index)
+                            .rotationEffect(.degrees(-90))
+                            .contentShape(Rectangle())
+                        }
+                    }
+                    .frame(width: geometry.size.height, height: geometry.size.width)
+                    .rotationEffect(.degrees(90), anchor: .topLeading)
+                    .offset(x: geometry.size.width)
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+
+                    if !viewModel.feedItems.isEmpty {
+                        let itemCount = viewModel.feedItems.count
+                        let feedItemTopPadding: CGFloat = 12 + 70
+                        let feedItemBottomPadding: CGFloat = 12
+                        let availableHeight = geometry.size.height - feedItemTopPadding - feedItemBottomPadding
+                        let spacing: CGFloat = 8
+                        let totalSpacing = CGFloat(max(0, itemCount - 1)) * spacing
+                        let capsuleHeight = max(1, (availableHeight - totalSpacing) / CGFloat(itemCount))
+
+                        HStack {
+                            Spacer()
+                                .allowsHitTesting(false)
+
+                            VStack {
+                                ScrollViewReader { proxy in
+                                    ScrollView(.vertical) {
+                                        VStack(spacing: spacing) {
+                                            ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                Button(action: {
+                                                    withAnimation(.spring()) {
+                                                        currentFeedIndex = index
+                                                    }
+                                                }) {
+                                                    Capsule()
+                                                        .fill(currentFeedIndex == index ? Color.orange : Color.yellow.opacity(0.6))
+                                                        .frame(width: 6, height: capsuleHeight)
+                                                        .shadow(color: Color.black.opacity(0.25), radius: 3, x: 0, y: 1)
+                                                        .shadow(color: Color.white.opacity(0.15), radius: 1, x: 0, y: -1)
+                                                }
+                                                .id(index)
+                                            }
+                                        }
+                                    }
+                                    .scrollIndicators(.hidden)
+                                    .onChange(of: currentFeedIndex) {
+                                        withAnimation {
+                                            proxy.scrollTo(currentFeedIndex, anchor: .center)
+                                        }
+                                    }
+                                    .onAppear {
+                                        proxy.scrollTo(currentFeedIndex, anchor: .center)
+                                    }
+                                }
+                            }
+                            .frame(maxHeight: .infinity)
+                        }
+                        .padding(.top, feedItemTopPadding)
+                        .padding(.bottom, feedItemBottomPadding)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .zIndex(1)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+
+            if showingNotifications {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            showingNotifications = false
+                        }
+                    }
+                    .zIndex(4)
+            }
+
+            VStack(spacing: 0) {
                 HStack(spacing: 12) {
-                    Text(viewModel.appTitle)
-                        .font(BrushFont.title(22))
-                    
+                    Image("brush_logo_1")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 26)
+
                     Spacer()
-                    
+
                     Button(action: { withAnimation { showingNotifications.toggle() } }) {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell.fill")
@@ -39,8 +132,7 @@ struct HomeView: View {
 
                             if !NotificationManager.shared.getNotificationHistory().isEmpty {
                                 ZStack {
-                                    Circle()
-                                        .fill(Color.white)
+                                    Circle().fill(Color.white)
                                     Circle()
                                         .fill(Color.red)
                                         .frame(width: 7, height: 7)
@@ -49,66 +141,75 @@ struct HomeView: View {
                                 .offset(x: -9, y: 9)
                             }
                         }
+                        .glassEffect(.regular.interactive())
                     }
-                    .glassEffect(.regular.interactive())
                 }
                 .padding(.horizontal)
+                .padding(.top, safeAreaInsetsTop())
                 .padding(.vertical, 12)
-                
-                Divider()
-                
-                // Feed – scrollable list of user art posts
-                ScrollView {
-                    LazyVStack(spacing: 24) {
-                        // Persistent CTA at the top (no gradient)
-                        FirstPostCTA {
-                            isPresentingCreate = true
-                        }
-                        .padding(.top, 8)
-
-                        if viewModel.feedItems.isEmpty {
-                            Text("Your feed will show your drawings here.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        // Feed items without actions bar below each post
-                        ForEach(viewModel.feedItems) { item in
-                            UserFeedItemView(item: item)
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 16)
-                }
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: Color.white.opacity(0.85), location: 0),
+                            .init(color: Color.white.opacity(0.0), location: 1)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .background(.ultraThinMaterial)
+                )
+                .shadow(color: .black.opacity(0.05), radius: 1, y: 1)
             }
-            
-            // Notification dropdown aligned under the bell
+            .frame(maxHeight: .infinity, alignment: .top)
+            .ignoresSafeArea(edges: .top)
+            .zIndex(3)
+
             if showingNotifications {
                 VStack {
                     NotificationsDropdown()
-                        .offset(x: -15, y: 80)
+                        .offset(x: 0, y: 80)
                         .transition(.move(edge: .top).combined(with: .opacity))
-                        .zIndex(1)
-                    Spacer()
+
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .frame(maxWidth: .infinity, alignment: .topTrailing)
+                .padding(.trailing)
+                .zIndex(5)
+            }
+
+            if viewModel.feedItems.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "scribble.variable")
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Text("Be the first one to draw today!")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Button {
+                        isPresentingCreate = true
+                    } label: {
+                        Text("Draw Now")
+                            .padding(.horizontal)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(hasAttemptedDrawing)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .zIndex(1)
             }
         }
-        // Tap outside closes dropdown
-        .onTapGesture {
-            if showingNotifications { withAnimation { showingNotifications = false } }
-        }
         .onAppear {
+            checkDailyPostStatus()
             isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
         }
-        .onChange(of: hasCompletedOnboarding) { oldValue, newValue in
-            isOnboardingPresented = !newValue || showOnboarding
+        .onChange(of: hasCompletedOnboarding) {
+            isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
         }
-        .onChange(of: showOnboarding) { oldValue, newValue in
-            isOnboardingPresented = !hasCompletedOnboarding || newValue
+        .onChange(of: showOnboarding) {
+            isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
         }
-        .onChange(of: isOnboardingPresented) { oldValue, newValue in
-            if !newValue {
+        .onChange(of: isOnboardingPresented) {
+            if !isOnboardingPresented {
                 hasCompletedOnboarding = true
                 showOnboarding = false
             }
@@ -116,13 +217,28 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $isOnboardingPresented) {
             WelcomeView()
         }
-        .fullScreenCover(isPresented: $isPresentingCreate) {
+        .fullScreenCover(isPresented: $isPresentingCreate, onDismiss: {
+             didDismissCreate = true
+        }) {
             NavigationStack {
                 DrawingView(onSave: { newItem in
                     dataModel.addItem(newItem)
                     hasPostedToday = true
-                }, prompt: drawingPrompt)
+
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "yyyy-MM-dd"
+                    formatter.timeZone = TimeZone(identifier: "America/Chicago")
+                    lastPostDateString = formatter.string(from: Date())
+                }, prompt: viewModel.dailyPrompt)
             }
+        }
+        .onChange(of: didDismissCreate) {
+             if didDismissCreate {
+                 if !hasPostedToday {
+                     hasAttemptedDrawing = true
+                 }
+                 didDismissCreate = false
+             }
         }
         .task {
             await viewModel.loadDailyPrompt()
@@ -132,54 +248,23 @@ struct HomeView: View {
             await viewModel.loadFeed()
         }
     }
-}
 
-private struct FirstPostCTA: View {
-    var onCreate: () -> Void
+    private func safeAreaInsetsTop() -> CGFloat {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first
+        return keyWindow?.safeAreaInsets.top ?? 0
+    }
 
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(UIColor.secondarySystemBackground))
+    private func checkDailyPostStatus() {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/Chicago")
+        let todayString = formatter.string(from: Date())
 
-            VStack(spacing: 16) {
-                Image(systemName: "scribble.variable")
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundStyle(.secondary)
-
-                Button(action: onCreate) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "plus")
-                        Text("Draw your first drawing")
-                    }
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-                    .background(Color(UIColor.systemGray5))
-                    .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(24)
+        if lastPostDateString != todayString {
+            hasPostedToday = false
+            hasAttemptedDrawing = false
         }
-        .aspectRatio(16.0/9.0, contentMode: .fit)
     }
 }
-
-private enum Formatter {
-    static let compact: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.maximumFractionDigits = 1
-        f.usesGroupingSeparator = true
-        f.locale = .current
-        return f
-    }()
-}
-
-#Preview {
-    NavigationStack { HomeView() }
-}
-
-

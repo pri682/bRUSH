@@ -122,6 +122,9 @@ struct DrawingsGridView: View {
                     .zIndex(1)
                 }
             }
+            .onAppear {
+                selectedItem = nil
+            }
             .alert("Delete Drawing?", isPresented: $showSingleDeleteAlert, presenting: itemToDelete) { item in
                 Button("Delete", role: .destructive) {
                     triggerShredder(for: [item.id])
