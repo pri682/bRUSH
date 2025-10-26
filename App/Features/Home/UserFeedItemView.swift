@@ -20,17 +20,6 @@ struct UserFeedItemView: View {
     @State private var rippleCounter: Int = 0
     @State private var rippleOrigin: CGPoint = .zero
 
-    private var resolvedImage: UIImage? {
-        if let name = item.artImageName, let img = UIImage(named: name) {
-            return img
-        }
-        if let symbol = item.artSystemImageName, let img = UIImage(systemName: symbol) {
-            return img
-        }
-        print("UserFeedItemView: Could not resolve image for item \(item.id)")
-        return nil
-    }
-
     init(
         item: FeedItem,
         prompt: String,
@@ -50,21 +39,37 @@ struct UserFeedItemView: View {
 
     var body: some View {
         ZStack {
-            Group {
-                if let resolved = resolvedImage {
-                    Image(uiImage: resolved)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(maxHeight: .infinity)
-                        .clipped()
-                } else {
-                    Rectangle()
-                        .fill(Color(.secondarySystemBackground))
-                        .overlay(Image(systemName: "photo").foregroundColor(.gray))
+            // ✅ Async image loading from Firestore URL
+            if let url = URL(string: item.imageURL) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxHeight: .infinity)
+                            .clipped()
+                            .modifier(RippleEffect(origin: rippleOrigin, trigger: rippleCounter, speed: 300))
+                    case .failure:
+                        Rectangle()
+                            .fill(Color(.secondarySystemBackground))
+                            .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                    @unknown default:
+                        EmptyView()
+                    }
                 }
+            } else {
+                Rectangle()
+                    .fill(Color(.secondarySystemBackground))
+                    .overlay(Image(systemName: "photo").foregroundColor(.gray))
             }
-            .modifier(RippleEffect(origin: rippleOrigin, trigger: rippleCounter, speed: 300))
 
+            // Ripple & overlay handling
             Color.clear
                 .contentShape(Rectangle())
                 .gesture(
@@ -73,7 +78,6 @@ struct UserFeedItemView: View {
                             guard hasPostedToday else { return }
                             rippleOrigin = value.location
                             rippleCounter += 1
-
                             withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
                                 showOverlays.toggle()
                             }
@@ -89,7 +93,7 @@ struct UserFeedItemView: View {
                     .glassEffect(.regular.interactive())
                     .opacity(hasPostedToday ? (showOverlays ? 1 : 0) : 0)
                     .scaleEffect(showOverlays ? 1 : 0.95)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.8), value: showOverlays) // Added delay
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.8), value: showOverlays)
                     .padding(.top, 10)
                 Spacer()
             }
@@ -109,7 +113,9 @@ struct UserFeedItemView: View {
         .padding(.horizontal, 20)
         .padding(.top, 70)
         .sheet(isPresented: $isSharing) {
-            if let image = resolvedImage {
+            if let url = URL(string: item.imageURL),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
                 let itemSource = ImageActivityItemSource(
                     title: "Check out this drawing from \(item.displayName)!",
                     image: image
@@ -119,6 +125,8 @@ struct UserFeedItemView: View {
             }
         }
     }
+
+    // MARK: - Overlays
 
     private var userOverlay: some View {
         HStack(spacing: 12) {
@@ -138,39 +146,22 @@ struct UserFeedItemView: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
         .opacity(showOverlays ? 1 : 0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.7), value: showOverlays) // Added delay
+        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.7), value: showOverlays)
         .allowsHitTesting(showOverlays)
     }
 
     private var medalOverlay: some View {
         VStack(spacing: 16) {
-            medalButton(
-                assetName: "gold_medal",
-                color: Color(red: 0.8, green: 0.65, blue: 0.0),
-                count: $goldCount,
-                isSelected: $goldSelected
-            )
-            medalButton(
-                assetName: "silver_medal",
-                color: Color.gray,
-                count: $silverCount,
-                isSelected: $silverSelected
-            )
-            medalButton(
-                assetName: "bronze_medal",
-                color: Color(red: 0.6, green: 0.35, blue: 0.0),
-                count: $bronzeCount,
-                isSelected: $bronzeSelected
-            )
+            medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected)
+            medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected)
+            medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected)
             shareButton()
-                .disabled(resolvedImage == nil)
-                .opacity(resolvedImage == nil ? 0.4 : 1.0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .padding(.bottom, 20)
         .padding(.trailing, 20)
         .opacity(showOverlays ? 1 : 0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays) // Added delay
+        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
         .allowsHitTesting(showOverlays)
     }
 
@@ -198,6 +189,8 @@ struct UserFeedItemView: View {
         .background(.ultraThinMaterial)
         .zIndex(1)
     }
+
+    // MARK: - Buttons
 
     @ViewBuilder
     private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>) -> some View {
