@@ -108,7 +108,7 @@ class SignUpViewModel: ObservableObject {
     
     // MARK: - Step 3 Avatar Selection
     
-    func submitStep3() async {
+    func submitStep3() async { // wait for step 3 - avatar completion
         await completeSignUp()
     }
     

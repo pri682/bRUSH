@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct SignUpAvatarView: View {
-    @ObservedObject var viewModel: SignUpViewModel
+    @ObservedObject var viewModel: SignUpViewModel // observed for changes
     @State private var selectedBackground = "background_1"
-    @State private var selectedFace: String? = nil
+    @State private var selectedFace: String? = nil // if nill, its empty for that field...
     @State private var selectedEyes: String? = nil
     @State private var selectedMouth: String? = nil
     @State private var selectedHair: String? = nil
@@ -17,9 +17,9 @@ struct SignUpAvatarView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let screenWidth = geometry.size.width
-            let screenHeight = geometry.size.height
-            let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+            let screenWidth = geometry.size.width // get screen width
+            let screenHeight = geometry.size.height // get screen height
+            let isIpad = UIDevice.current.userInterfaceIdiom == .pad // is it an iPad?
             
             // Dynamic sizing based on screen
             let avatarSize = min(screenWidth * 0.7, screenHeight * 0.4)
@@ -38,7 +38,7 @@ struct SignUpAvatarView: View {
                         } label: {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canUndo ? .blue : .gray)
+                                .foregroundColor(canUndo ? .blue : .gray) // if can undo blue, else grey
                         }
                         .disabled(!canUndo)
                         
@@ -47,7 +47,7 @@ struct SignUpAvatarView: View {
                         } label: {
                             Image(systemName: "arrow.uturn.forward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canRedo ? .blue : .gray)
+                                .foregroundColor(canRedo ? .blue : .gray) // if can undo blue, else grey
                         }
                         .disabled(!canRedo)
                     }
@@ -59,10 +59,12 @@ struct SignUpAvatarView: View {
                     
                     Spacer()
                     
+                    
                     // Done/Next Button with green background and check icon
                     Button {
                         saveToHistory()
                         viewModel.selectedAvatar = AvatarParts(
+                            // THIS LOGIC SAVES OUR SELECTIONS
                             background: selectedBackground,
                             face: selectedFace,
                             eyes: selectedEyes,
@@ -70,7 +72,10 @@ struct SignUpAvatarView: View {
                             hair: selectedHair
                         )
                         Task {
-                            await viewModel.submitStep3()
+                            await viewModel.submitStep3() // submit changes to firebase
+                            // Technically this actually sends the data back to signupViewModel, which
+                            // completes the signup an writes the FULL UPDATE to firebase
+                            // all in one write.
                         }
                     } label: {
                         HStack(spacing: screenWidth * 0.015) {
@@ -250,12 +255,13 @@ struct SignUpAvatarView: View {
             
                 Spacer()
                 
-                // Skip Button
-                Button("Skip for Now") {
-                    Task {
-                        await viewModel.skipPhotoStep()
-                    }
-                }
+                // REMOVED FOR NOW!! Skip Button
+//                Button("Skip for Now") {
+//                    Task {
+//                        await viewModel.skipPhotoStep()
+//                    }
+//                }
+                
                 .foregroundColor(.gray)
                 .font(.system(size: screenWidth * 0.04))
                 .padding(.bottom, screenHeight * 0.04)

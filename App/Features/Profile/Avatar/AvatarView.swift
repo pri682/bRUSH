@@ -2,14 +2,14 @@ import SwiftUI
 
 struct AvatarView: View {
     let background: String
-    let face: String?
-    let eyes: String?
-    let mouth: String?
+    let face: String? // optional face
+    let eyes: String? // optional eyes
+    let mouth: String? // etc... you get it lol
     let hair: String?
     
     var body: some View {
-        ZStack {
-            // Background layer (bottom) - scaled to fill to remove white sides
+        ZStack { // defines the order of the images, background is bottom, face on top, etc..
+            // Background layer (bottom) - scaled to fill.
             Image(background)
                 .resizable()
                 .scaledToFill()
@@ -48,10 +48,11 @@ struct AvatarView: View {
 
 // Extension to render AvatarView as a single UIImage
 extension AvatarView {
+    // render a 200 x 200 image of anything. calling avatar.renderimage will render the avatar as image:
     func renderAsImage(size: CGSize = CGSize(width: 200, height: 200)) -> UIImage? {
         let renderer = ImageRenderer(content: self.frame(width: size.width, height: size.height))
         renderer.scale = UIScreen.main.scale
-        return renderer.uiImage
+        return renderer.uiImage // returns the image
     }
 }
 

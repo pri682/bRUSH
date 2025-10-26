@@ -8,11 +8,12 @@
 import SwiftUI
 
 struct CardStackView: View {
-    let cards: [CardItem<AnyView>]
-    @State private var topCardIndex: Int = 0
+    let cards: [CardItem<AnyView>] // holds all the card items
+    @State private var topCardIndex: Int = 0 // Keeps track of which card is currently on top
     // 🔄 dragOffset tracks horizontal movement
-    @State private var dragOffset: CGSize = .zero
-    @State private var isAnimating = false
+    @State private var dragOffset: CGSize = .zero // CG is a struct that holds 2d values, this line tracks
+    // how far the card was dragged
+    @State private var isAnimating = false // safety to stop multiple cards from animating
     
     // 🔧 Card motion parameters
     private let swipeTravelDistance: CGFloat = 220 // horizontal distance the card moves when swiped
@@ -46,11 +47,11 @@ struct CardStackView: View {
                     .frame(maxWidth: .infinity)
                     
                     // MARK: - ENHANCED STACKING EFFECT
-                    .rotationEffect(.degrees(cardRotation), anchor: .center)
-                    .offset(x: cardOffset.width, y: cardOffset.height)
-                    .scaleEffect(cardScale)
-                    .opacity(cardOpacity)
-                    .zIndex(cardZIndex)
+                    .rotationEffect(.degrees(cardRotation), anchor: .center) // anchor rotation to center
+                    .offset(x: cardOffset.width, y: cardOffset.height) // move cards with user's drag
+                    .scaleEffect(cardScale) // scale non-top cards behind
+                    .opacity(cardOpacity) // ajust non-top card transparancy
+                    .zIndex(cardZIndex) // Control which card is visually “on top” using zIndex.
                     
                     // Add subtle shadow to side cards for better visibility
                     .shadow(
@@ -110,7 +111,7 @@ struct CardStackView: View {
         let isPrevCard = index == topCardIndex - 1 && topCardIndex > 0
         
         if isTopCard {
-            // Top card follows drag gesture
+            // Top card follows the drag gesture
             return dragOffset
         } else if isNextCard {
             // Next card peeks from the right
@@ -119,13 +120,13 @@ struct CardStackView: View {
                 height: stackYOffset
             )
         } else if isPrevCard {
-            // Previous card peeks from the left
+            // Previous card peeks from the left if it exists
             return CGSize(
                 width: -sideCardOffset + dragOffset.width * 0.3,
                 height: stackYOffset
             )
         } else {
-            // Hidden cards
+            // Cards further back are positioned lower down
             return CGSize(width: 0, height: stackYOffset * 2)
         }
     }
@@ -210,16 +211,16 @@ struct CardStackView: View {
         guard !isAnimating else { return }
         isAnimating = true
         
-        // 🔄 Travel distance is horizontal
+        // Travel distance is horizontal
         let travel = direction == .left ? -swipeTravelDistance : swipeTravelDistance
         
-        // 💨 Main swipe animation speed and smoothness
+        // Animate card moving offscreen with spring effect:
         withAnimation(.interpolatingSpring(stiffness: 160, damping: 14)) {
             // Apply horizontal travel (width: travel, height: 0)
             dragOffset = CGSize(width: travel, height: 0)
         }
         
-        // ⏱ Controls how long before switching to the next card (speed of card cycle)
+        // // Wait a short time before changing which card is on top:
         DispatchQueue.main.asyncAfter(deadline: .now() + animationSpeed) {
             withAnimation(.easeInOut(duration: 0.22)) {
                 dragOffset = .zero
@@ -237,12 +238,18 @@ struct CardStackView: View {
     }
 }
 
-// 🔄 Updated directions
+// Enums define a *finite set of possible values* that a variable can take.
+// Here, SwipeDirection can only ever be `.left` or `.right` — no other cases.
 enum SwipeDirection {
     case left, right
 }
 
+// Generic struct that wraps any type of View content as a “card”.
+// The `<Content: View>` syntax means it can hold *any* view type.
 struct CardItem<Content: View>: Identifiable {
+    // Each card has a unique ID used by SwiftUI for animation and diffing.
     let id = UUID()
+    
+    // The view that represents the actual card content.
     let content: Content
 }
