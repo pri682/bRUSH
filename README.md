@@ -143,14 +143,15 @@ For some reason, iPads had a bunch of issues. Mostly due to different aspect rat
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-139-add-better-error-messages)
 
 #### **Next Steps** 
-- Profile Photo selection + saving it on Firebase.
-- save profile data locally to limit firebase usage and reduce costs.
-- Better Profile UI + Ensuring it scales correctly to different screen sizes.
-- Possible: Add requirement for users to verify themselevs when signing up via 2FA
+- Add Better Avatars (Human Versions Possibly).
+- Add a general state of being signed in across the app.
+- Error Handling on profile page logic.
 
 ---
 
 ### 👤 Kelvin Mathew
+
+## Sprint 1:
 
 #### **KAN-47 — Canvas for Drawings**
 - Implemented UI and logic for for the canvas which can generate strokes based on touch input.
@@ -174,11 +175,82 @@ For some reason, iPads had a bunch of issues. Mostly due to different aspect rat
 🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/c8ddfebd88d5af3fdb1cf0d4381a38f29f14f101/?at=feature%2FKAN-65-as-a-user-i-want-to-be-able-to-ch)
 🔗 [Bitbucket Pull Request](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/7)
 
+## Sprint 2:
+
+#### **KAN-120 — Canvas Timer Outline**
+- Added an outline around the canvas that acts as a timer that changes the color while you draw.
+🔗 [Bitbucket](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?jql=assignee%20%3D%20712020%3A6a04c9fd-c2b0-46b1-ac24-7fab7e78ffda&selectedIssue=KAN-120)
+
+#### **KAN-121 — Dynamic Outline Color**
+- Added logic that changess the color of the outline timer to show urgency.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-121-dynamic-outline-color)
+
+#### **KAN-122 — Final Flash Animation**
+- Added logic that flahses the color at the very end of the timer as a final warning.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-122-final-flash-animation)
+
+#### **KAN-123 — Upload Drawings Upon Submission**
+- Implemented logic to upload the shared submissions
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-123-upload-drawings-upon-submission)
+
+#### **KAN-124 — Early Submit Confirmation**
+- Added a confirmation dialog when the user chooses to submit early.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-124-early-submit-confirmation)
+
+#### **KAN-125 — Submission Animation**
+- Added logic to show a success animation after submission.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-125-submission-animation)
+
+#### **KAN-126 — Fix Compositing Bug**
+- Resolve issues with combining drawing strokes and the background image.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/bugfix/KAN-126-fix-compositing-bug)
+
+#### **KAN-127 — Fetch and Display Prompt**
+- Retrieve the prompt from the feed and show it via the bulb icon during drawing.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-127-fetch-and-display-prompt)
+
+#### **KAN-128 — Prompt Bubble Container**
+- Added a bubble looking container for the prompt using liquid glass that closes when you click outside.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-128-prompt-bubble-container)
+
+#### **KAN-129 — Save Prompt and Date**
+- Added logic to store the prompt text and creation date locally with each drawing.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-129-save-prompt-and-date)
+
+#### **KAN-130 — Enhanced Share Picker**
+- Improve the share sheet to include “Save Image” and other social sharing options.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-130-enhanced-share-picker)
+
+### **KAN-131 — Show Prompt in Preview**
+- Added logic to save and show the old prompts in oldser drawings.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-131-show-prompt-in-preview)
+
+#### **KAN-132 — Sprint 1 Demo Fixess**
+- Fixed some issues that were found after the first demo. Removed unused/empty files, changed app name and display info, added variables, fixed styling, etc...
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/hotfix/KAN-132-sprint-1-demo-fixes)
+
+#### **KAN-134 — Enhanced Library Transitions**
+- Used matchedGeometryEffect to smoothly transition between the grid view to the preview view.
+(Note: Accidentally the commits for this task were made and linked to the https://cs3398-nemoidians-fall.atlassian.net/browse/KAN-125 branch.)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-134-enhanced-library-transitions)
+
+#### **KAN-135 — Modify Document Path for Simulator**
+- In the simulator’s app sandbox the images aren’t saved in a fixed directory, instead it's a relative path which changes upon rebuilding.
+(Note: Accidentally the commits for this task were made and linked to the https://cs3398-nemoidians-fall.atlassian.net/browse/KAN-125 branch.)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-135-modify-document-path-for-simulat)
+
+#### **KAN-140 — Single or Bulk Drawing Deletion**
+- Drawings in the grid should be able to be long pressed to see the delete option. Also an edit button in the corner to select multiple drawings to delete.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-140-single-or-bulk-drawing-deletion)
+
+#### **KAN-141 — Drawing Deletion Animation**
+- Added Deletion Animation to the Drawing Page.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-141-drawing-deletion-animation)
+
 #### **Next Steps** 
-- Improving the preview screen and the exporting logic for backgrounds with wide aspect ratios.
-- Adding a custom canvas outline styled timer when start drawing is clicked in the feed. Also add confirmation warning when submitting early.
-- Upload the drawing jpeg to the respective area in Firebase.
-- Pass the prompt of the day from the feed to the drawing so it can be viewed while drawing as well as when previewing past drawings (along with date).
+- Update Ripple Animation when clicking on a drawing.
+- Effects for metal awarding.
+- Update medal counts on firebase
 
 ---
 
