@@ -272,10 +272,40 @@ For some reason, iPads had a bunch of issues. Mostly due to different aspect rat
 - Implemented a dropdown panel that stores and displays all past notifications.
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/2437e02c6cc9a20d5537e9c8a60e27a40fbd7f72/?at=feature%2FKAN-45-as-a-user-i-want-a-bell-icon-on-t)
 
+## Sprint 2:
+
+#### **KAN-113 — Integrate Gemini API endpoint**
+- Added logic to integrate Gemini API to generate daily drawing prompts
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-113-integrate-gemini-api-endpoint)
+
+#### **KAN-114 — Fetch generated prompt**
+- Following KAN-113, Added logic to fetch the generated prompt.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-114-fetch-generated-prompt)
+
+#### **KAN-115 — Implement post upload feature**
+- Implement logic to upload the user's post feature.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-115-implement-post-upload-feature)
+
+#### **KAN-116 — Add share/download option**
+- Added options to share and or download options.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-116-add-share-download-option)
+
+#### **KAN-117 — Fetch and display friend posts**
+- Added main logic to fetch the friend's post and show them.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-117-fetch-and-display-friend-posts)
+
+#### **KAN-118 — Added Streak functionality**
+- Implemented backend data linking.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-118-implement-backend-data-linking)
+
+#### **KAN-119 — Training the LLM on certain prompts**
+- Trained the LLM on certain prompts by giving it examples.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-119-training-the-llm-on-certain-prom)
+
 #### **Next Steps**
-- Let users upload and share their drawings using Firebase Storage.
-- Show posts from friends using Firestore for filtered queries.
-- Do the prompt logic by using LLM's API's and train them.
+- Fixing notifications and streak.
+- Implement a refresh function on the feed.
+- Add necessary animations and UI changes.
 ---
 
 ### 👤 Priyanka Karki
