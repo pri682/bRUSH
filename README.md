@@ -81,6 +81,8 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 
 ### 👤 Meidad Troper
 
+## Sprint 1:
+
 #### **KAN-13 — Implement User Login**
 - Implemented all user login logic including authentication flow and session persistence.  
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-13-user-login)
@@ -100,6 +102,45 @@ Each entry includes the JIRA task ID, title, and links to related commits or pul
 #### **KAN-12 — Update User Profile Information**
 - Implemented logic for user to update their profiles, including name and username.  
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
+
+## Sprint 2:
+#### **KAN-106 — Allow Users to pick up a profile photo and set it as their own profile photo, customizing their account**
+- Added logic to allow users to create their own profile pic in the form of an avatar. That avatar is built of different images overlaid on each other.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-106-sign-up-photo-picker)
+
+#### **KAN-108 — Allow users to edit their profile photo through a button on their profile page**
+- Added logic that allows users to edit their information after they signed up, in case there was a mistake during the initial setup or they simply want to refresh their profile.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-108-edit-profile-pic)
+
+#### **KAN-109 — Add sketch animations to the log in page and make the sign in button less awkward**
+- Added A sleek animation to the signin page that shows fun skecthes the users can make during their 
+lifetime on the app.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-109-sketch-animations)
+
+#### **KAN-110 — Create the Profile UI in a way that is scaling correctly on all screen sizes**
+- Implemented logic for thr Profile UI (cards, photo, etc) to scale correctly on all screen sizes.
+For some reason, iPads had a bunch of issues. Mostly due to different aspect ratio.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-110-scaleable-UI)
+
+#### **KAN-111 — Profile page retrieves the right medal count from the cloud when signed in**
+- Added logic to revert hardcoded values and ensure card views in the profile page use real up-to-date cloud info. 
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-111-profileCards-real-info)
+
+#### **KAN-112 — Add a card that shows the streak, total drawings, and possibly other metric as we see fit**
+- User profile has a third card for the streak, total drawings, and member since fields. this adds color and cool stats.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-112-streak-card)
+
+#### **KAN-137 — Add Better Error Messages**
+- Added Error Messages for things such as too long of a username, non-matching passwords, invalid email, etc... to allow better user exprienece
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-137-gear-icon)
+
+#### **KAN-138 — Move the SignOut and delete profile options to the gear icon settings to hide them**
+- Moved the signout and delete account buttons into the gear menu for better layout and to ensure they aren't easily clickable by accident.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-138-move-action-buttons)
+
+#### **KAN-139 — Add Better Error Messages**
+- Added Error Messages for things such as too long of a username, non-matching passwords, invalid email, etc... to allow better user exprienece.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-139-add-better-error-messages)
 
 #### **Next Steps** 
 - Profile Photo selection + saving it on Firebase.
