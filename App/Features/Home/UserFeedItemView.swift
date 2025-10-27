@@ -117,7 +117,7 @@ struct UserFeedItemView: View {
                let data = try? Data(contentsOf: url),
                let image = UIImage(data: data) {
                 let itemSource = ImageActivityItemSource(
-                    title: "Check out this drawing from \(item.displayName)!",
+                    title: "Check out this drawing from \(item.firstName)!",
                     image: image
                 )
                 ShareSheet(activityItems: [itemSource])
@@ -136,8 +136,8 @@ struct UserFeedItemView: View {
                 .frame(width: 40, height: 40)
                 .clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.displayName).font(.headline).fontWeight(.semibold)
-                Text(item.username).font(.subheadline).opacity(0.9)
+                Text(item.firstName).font(.headline).fontWeight(.semibold)
+                Text(item.displayName).font(.subheadline).opacity(0.9)
             }
         }
         .padding(16)

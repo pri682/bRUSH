@@ -1,10 +1,3 @@
-//
-//  DrawingUpload.swift
-//  brush
-//
-//  Created by Vaidic Soni on 10/21/25.
-//
-
 import Foundation
 import FirebaseStorage
 import FirebaseFirestore
