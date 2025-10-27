@@ -334,11 +334,39 @@ Managed state updates and interaction animations.
 Verified full integration within feed layout.
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-71-as-a-user-i-want-to-be-able-to-ta)
 
-#### **Next Steps (Sprint 2)**
-Design and plan the structure for the backend logic.
-Integrate the feed, profile, and interaction features with a reliable database to store and manage user data.
-Implement real-time updates for likes and medals to ensure dynamic user feedback.
-Optimize feed performance and conduct accessibility testing for a smoother user experience.
+###**(Sprint 2)**
+#### **KAN-93 — Define how each post and its prompt should be structured in the full-screen “reels” layout**
+Designed and implemented the foundational structure for displaying each post in a full-screen vertical layout, inspired by “reel”-style interactions.
+Added layout logic ensuring proper alignment of post.
+🔗 [Bitbucket](https://bitbucket.org/%7B66186e94-f0d3-491d-b1f8-de5a12208ffa%7D/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/pull-requests/63/diff)
+
+
+#### **KAN-94 — Implement full-screen post layout with paging scroll**
+Developed the main full-screen post view with seamless vertical paging scroll between posts.
+Integrated smooth transition behavior for better UX consistency with Ripple effect
+[Bitbucket](https://bitbucket.org/%7B66186e94-f0d3-491d-b1f8-de5a12208ffa%7D/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/pull-requests/66)
+
+#### **KAN-96 — Implement uniform post layout and alignment across the feed**
+Standardized layout and alignment for all feed posts to maintain consistent styling and spacing across devices.
+
+[Bitbucket](https://bitbucket.org/%7B66186e94-f0d3-491d-b1f8-de5a12208ffa%7D/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/pull-requests/65)
+
+#### **KAN-97 — Implement fixed prompt container at top of feed**
+Added a fixed prompt container pinned to the top of the feed to display current drawing prompts.
+
+[Bitbucket](https://bitbucket.org/%7B66186e94-f0d3-491d-b1f8-de5a12208ffa%7D/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/pull-requests/62)
+
+#### **KAN-133 — Add a sticky post box at the top of the feed**
+Created a sticky post input box that allows users to easily add new posts without scrolling.
+[Bitbucket](https://bitbucket.org/%7B66186e94-f0d3-491d-b1f8-de5a12208ffa%7D/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/pull-requests/64)
+
+#### **Next Steps (Sprint 3)**
+Add swipe gesture support for navigating between full-screen posts.
+Implement lazy loading and caching for smoother scrolling performance.
+Enhance accessibility features, including dynamic text scaling and color contrast improvements.
+Introduce basic feed analytics (view count, engagement tracking) - extra.
+Fix share button logic to ensure consistent link generation and correct post sharing across devices.
+Bug fixes: address minor visual inconsistencies in prompt alignment and post transitions.
 ---
 
 ### 👤 Jesse Flynn
