@@ -39,7 +39,6 @@ struct UserFeedItemView: View {
 
     var body: some View {
         ZStack {
-            // ✅ Async image loading from Firestore URL
             if let url = URL(string: item.imageURL) {
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -137,7 +136,9 @@ struct UserFeedItemView: View {
                 .clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.firstName).font(.headline).fontWeight(.semibold)
-                Text(item.displayName).font(.subheadline).opacity(0.9)
+                Text("@\(item.displayName)")
+                    .font(.subheadline)
+                    .opacity(0.9)
             }
         }
         .padding(16)
