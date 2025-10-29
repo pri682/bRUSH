@@ -343,6 +343,8 @@ Optimize feed performance and conduct accessibility testing for a smoother user 
 
 ### 👤 Jesse Flynn
 
+## Sprint 1:
+
 #### **KAN-18 - Friends Tab (View/Search/Request + Add Friend)**
 - Implemented friend screen UI
 - Added friend requests section with accept/decline functionality (mock)
@@ -363,18 +365,44 @@ merged it into sprint1-dev, it also included the KAN-18 commits. These commits w
 leaderboard-related changes, but the history shows both sets because of the branch base. This was not an attempt to duplicate or fake work - just a branch 
 merge mistake that I wanted to add here for clarity.*
 
+## Sprint 2:
+
+#### **KAN-100 — Add friend by @handle (Firebase)**
+- Implemented friend search and add functionality using Firestore queries on `handle_lowercase`.
+- Integrated HandleServiceFirebase and FriendRequestServiceFirebase for sending, accepting, and declining requests.
+- Added bidirectional friendship creation under `/friendships/{uid}/friends/{friendUid}` upon acceptance.
+- Connected UI (`AddFriendView`, `FriendsViewModel`) to reflect pending and accepted states.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-100-add-friend-by-handle-firebase)
+
+#### **KAN-102 — Incoming friend requests (Firebase)**
+- Built Firestore logic to load incoming requests under `/friendRequests/{toUid}/incoming/{fromUid}`.
+- Implemented accept/decline to create or remove friendship edges and update the Friends UI immediately.
+- Added incoming requests section with action buttons.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-102-incoming-friend-requests-firebas)
+
+#### **KAN-104 — Friends-only leaderboard integration**
+- Implemented `LeaderboardService` to aggregate medals from each friend’s user document.
+- Updated LeaderboardEntry to store gold, silver, bronze, and computed total points (100/25/10 weights).
+- Built horizontal bar chart UI where bar width reflects points relative to the top friend.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-104-friends-only-leaderboard-integration)
+
+#### **KAN-107 — Unit tests and fixes for friends**
+- Added unit tests for FriendsViewModel covering add/remove logic, search filtering, and duplicate request guards.
+- Fixed swipe-to-delete crash (List diff mismatch) by removing locally first, then deleting remotely.
+- Tightened pending request logic to check both fromUid and toUid (per-current-user pending).  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-107-unit-tests-and-fixes-for-friends)
+
+#### **KAN-147 — View a friend’s profile and delete friendship**
+- Added tap gesture to open FriendProfileView sheet showing name, handle, and medals.
+- Implemented friend removal from profile with confirmation and automatic sheet dismissal.
+- Ensured bidirectional Firestore cleanup and refreshed Friends list on delete.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-147-view-a-friends-profile-and-delete-friendship)
+
 #### **Next Steps** 
-- Friends Backend Integration (Firebase)
-	- Connect Add Friend flow to real Firebase users using handles
-	- Implement friend request creation, acceptance, and persistence with Firestore
-	- Update FriendsViewModel to use live user data instead of mock arrays
-- Leaderboard Backend Integration
-	- Implement Firebase logic to query friends’ submissions and calculate medal totals
-	- Replace stub service with real Firestore queries using filters for friend IDs
-	- Ensure leaderboard updates on refresh and matches real medal counts
-- Testing and Polish
-	- Add unit tests for FriendsViewModel search and leaderboard sorting logic
-	- Clean up any UI bugs or state resets between tabs
+- Enforce unique handle creation at signup to prevent duplicate display names.
+- Exclude current user from search results to avoid self-add.
+- Add leaderboard refresh and sorting unit tests.
+- Strengthen Firestore rules to block self-requests entirely.
 
 #### **Burnup chart for Sprint-1**
 ![Feed Preview](App/Resources/nemodians-burnup-chart-1.png)
