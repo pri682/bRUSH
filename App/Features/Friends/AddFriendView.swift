@@ -3,63 +3,102 @@ import SwiftUI
 struct AddFriendView: View {
     @ObservedObject var vm: FriendsViewModel
     @Environment(\.dismiss) private var dismiss
-
+    
     var body: some View {
         NavigationStack {
             VStack {
-                HStack {
+                HStack (spacing: 8){
                     Text("@").foregroundStyle(.secondary)
                     TextField("username", text: $vm.addQuery)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .submitLabel(.search)
-                        //.onSubmit { vm.performAddSearch() }
+                        .onSubmit { vm.performAddSearch() }
                 }
                 .padding(12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
+                                                    to: nil, from: nil, for: nil)
+                }
                 .padding([.horizontal, .top])
-
+                
                 if vm.isSearchingAdd {
-                    ProgressView("Searching…").padding(.top, 12)
+                    Spacer()
+                    ProgressView("Searching…")
+                    Spacer()
                 } else if let err = vm.addError {
-                    Text(err).foregroundStyle(.red).padding(.horizontal)
-                } else if vm.addResults.isEmpty && !vm.addQuery.isEmpty {
-                    Text("No users found for “\(vm.addQuery)”")
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 12)
-                }
-
-                List(vm.addResults) { user in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(user.displayName).font(.body.weight(.semibold))
-                            Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if vm.sent.contains(where: { $0.handle == "@\(user.handle)" }) {
-                            Text("Pending")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Button {
-                                vm.sendFriendRequest(to: user)
-                            } label: {
-                                Label("Add", systemImage: "person.badge.plus")
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("Search Failed", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(err)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.horizontal)
+                    Spacer()
+                } else if !vm.addQuery.isEmpty && vm.addResults.isEmpty {
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("No Users Found", systemImage: "person.fill.questionmark")
+                    } description: {
+                        Text("No users match \"\(vm.addQuery)\".")
+                    }
+                    Spacer()
+                } else if vm.addQuery.isEmpty && vm.addResults.isEmpty {
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("Find Friends", systemImage: "magnifyingglass")
+                    } description: {
+                        Text("Search for friends by their username.")
+                    }
+                    Spacer()
+                } else {
+                    List(vm.addResults) { user in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.fullName).font(.body.weight(.semibold))
+                                Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
+                                    .buttonStyle(.borderedProminent)
+                            }
+                            Spacer()
+                            let isFriend = vm.friendIds.contains(user.uid)
+                            let isPending = vm.isRequestPending(uid: user.uid)
+                            
+                            if isFriend {
+                                Text("Friend")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            else if isPending {
+                                Text("Pending")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            else {
+                                Button {
+                                    vm.sendFriendRequest(to: user)
+                                }
+                                label: {
+                                    Label { Text("Add") } icon: {
+                                        Image(systemName: "person.badge.plus").foregroundColor(.white)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .listStyle(.inset)
                 }
-                .listStyle(.inset)
             }
             .navigationTitle("Add Friend")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Search") { vm.performAddSearch() }.disabled(vm.addQuery.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button(role: .confirm) { dismiss() }
                 }
             }
         }

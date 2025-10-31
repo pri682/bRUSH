@@ -18,7 +18,7 @@
 ## Description  
 
 **Who are we?**  
-Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/Dr-DefiChain?tab=overview&from=2024-12-01&to=2024-12-31) we created bRUSH! The new social media app.  
+Hi! My name is [Meidad Troper](https://github.com/Meidad-T) and together with team members [Vaidic Soni](https://github.com/vaidicsoni), [Kelvin Mathew](https://github.com/KelvinMathew2004), [Priyanka Karki](https://github.com/pri682), and [Jesse Flynn](https://github.com/jeaflynn) we created bRUSH! The new social media app.  
 
 **What are we creating?**  
 In short, this is a mobile social media app that aims at connecting everyone to their creative side as well as connect people closer. The app is aimed at anyone ages 12 to 22 though we believe it will be enjoyable even among families, sharing drawings with your parents.  
@@ -52,78 +52,367 @@ bRUSH! Aims to connect people, unlock creative thinking, and bring more color to
 
 
 
-## Technologies Used
-- React Native
-- Android Studio (for Android Development)
-- XCode (for iOS deployment)
+## Technologies
+- Swift UI
+- XCode
 - Firebase Authentication
 - Firebase Cloud Storage
-- Firebase  Firestore (cloud NoSQL database for app data)
 - Gemini API (Google AI)
-- Expo (if you use it for development and testing)
-- More as we see fit...
+- Apple Native APIs (Pencil Kit, photos UI, etc...)
 
 ## Features
 
-Currently in progress as of September 23, 2025:
-- Login: Secure sign in and profile creation (Using Google Firebase User Authentication)
-- bRUSH: Draw your very own take on a fun unique prompt and save the bRUSH locally or on the cloud (using Google Firebase)
-- Customize: customize your own profile by editing your information, and showcasing your favorite bRUSHes of your own!
+Currently in progress as of October 6, 2025 (Next steps for sprint 2):
+- Pick a personal profile page photo
+- store drawings locally
+- friend requests and leaderboard
+- feed view
+- medal awarding
+- Liquid glass implemntation
+- sign up user verification (verification codes)
+- Notifications panel
 
-<!--
-## Screenshots
-![Example screenshot](./img/screenshot.png)
-<!-- If you have screenshots you'd like to share, include them here. -->
+## 🧩 Contributions
+
+This section lists individual contributions for this sprint.  
+Each entry includes the JIRA task ID, title, and links to related commits or pull requests.
+
+---
+
+### 👤 Meidad Troper
+
+## Sprint 1:
+
+#### **KAN-13 — Implement User Login**
+- Implemented all user login logic including authentication flow and session persistence.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-13-user-login)
+
+#### **KAN-53 — Implement User Sign Out**
+- Added user sign-out functionality, restoring the app to its deafult, empty state.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-53-log-out)
+
+#### **KAN-14 — Allow User Profile Deletion**
+- Implemented the ability for users to permanently delete their profiles and associated data.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-14-Delete-Profile)
+
+#### **KAN-61 — Enable User Sign-Up for New Profiles**
+- Developed the user registration process and linked it to the backend user store.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-61-sign-up-form)
+
+#### **KAN-12 — Update User Profile Information**
+- Implemented logic for user to update their profiles, including name and username.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/feature%2FKAN-12-edit-profile-options)
+
+## Sprint 2:
+#### **KAN-106 — Allow Users to pick up a profile photo and set it as their own profile photo, customizing their account**
+- Added logic to allow users to create their own profile pic in the form of an avatar. That avatar is built of different images overlaid on each other.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-106-sign-up-photo-picker)
+
+#### **KAN-108 — Allow users to edit their profile photo through a button on their profile page**
+- Added logic that allows users to edit their information after they signed up, in case there was a mistake during the initial setup or they simply want to refresh their profile.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-108-edit-profile-pic)
+
+#### **KAN-109 — Add sketch animations to the log in page and make the sign in button less awkward**
+- Added A sleek animation to the signin page that shows fun skecthes the users can make during their 
+lifetime on the app.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-109-sketch-animations)
+
+#### **KAN-110 — Create the Profile UI in a way that is scaling correctly on all screen sizes**
+- Implemented logic for thr Profile UI (cards, photo, etc) to scale correctly on all screen sizes.
+For some reason, iPads had a bunch of issues. Mostly due to different aspect ratio.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-110-scaleable-UI)
+
+#### **KAN-111 — Profile page retrieves the right medal count from the cloud when signed in**
+- Added logic to revert hardcoded values and ensure card views in the profile page use real up-to-date cloud info. 
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-111-profileCards-real-info)
+
+#### **KAN-112 — Add a card that shows the streak, total drawings, and possibly other metric as we see fit**
+- User profile has a third card for the streak, total drawings, and member since fields. this adds color and cool stats.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-112-streak-card)
+
+#### **KAN-137 — Add Better Error Messages**
+- Added Error Messages for things such as too long of a username, non-matching passwords, invalid email, etc... to allow better user exprienece
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-137-gear-icon)
+
+#### **KAN-138 — Move the SignOut and delete profile options to the gear icon settings to hide them**
+- Moved the signout and delete account buttons into the gear menu for better layout and to ensure they aren't easily clickable by accident.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-138-move-action-buttons)
+
+#### **KAN-139 — Add Better Error Messages**
+- Added Error Messages for things such as too long of a username, non-matching passwords, invalid email, etc... to allow better user exprienece.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-139-add-better-error-messages)
+
+#### **Next Steps** 
+- Add Better Avatars (Human Versions Possibly).
+- Add a general state of being signed in across the app.
+- Error Handling on profile page logic.
+
+---
+
+### 👤 Kelvin Mathew
+
+## Sprint 1:
+
+#### **KAN-47 — Canvas for Drawings**
+- Implemented UI and logic for for the canvas which can generate strokes based on touch input.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/c0df58b05d29f08666e93cb2700f13fd3aae3691/?at=feature%2FKAN-47-canvas)
+
+#### **KAN-48 — Custom PencilKit API**
+- Implemented UI and logic for the customized Swift toolpicker that updates the drawing view.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/b44f03882c33a1f2e24d68458ca5adaaa8f21dc1/?at=feature%2FKAN-48-as-a-user-i-want-to-choose-brush-)
+
+#### **KAN-49 — Add Undo/Redo for iPhone**
+- Implemented UI and logic for being able to undo and redo on iPhone due to the toolpicker not showing one unlike iPad.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/3dac70e2a6db1c3ccf7be8bfe3b4a3265327abaa/?at=feature%2FKAN-49-as-a-user-i-want-to-undo-redo-act)
+
+#### **KAN-50 — Add Share Sheet and Save Drawing Locally**
+- Implemented UI and logic for creating the composite drawing, saving it in the local memory and being able to share it.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/9658e3941ec9aa0e00aed71f977c344efc23cb37/?at=feature%2FKAN-50-as-a-user-i-want-to-export-the-ca)
+🔗 [Bitbucket Pull Request](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/2)
+
+#### **KAN-65 — Enable Users to Change Canvas Backgrounds**
+- Implemented UI and logic for being able to change the color of the canvas or pick from preset assets. Updated the export feature based on this.
+🔗 [Bitbucket Branch](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/c8ddfebd88d5af3fdb1cf0d4381a38f29f14f101/?at=feature%2FKAN-65-as-a-user-i-want-to-be-able-to-ch)
+🔗 [Bitbucket Pull Request](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/7)
+
+## Sprint 2:
+
+#### **KAN-120 — Canvas Timer Outline**
+- Added an outline around the canvas that acts as a timer that changes the color while you draw.
+🔗 [Bitbucket](https://cs3398-nemoidians-fall.atlassian.net/jira/software/projects/KAN/boards/1?jql=assignee%20%3D%20712020%3A6a04c9fd-c2b0-46b1-ac24-7fab7e78ffda&selectedIssue=KAN-120)
+
+#### **KAN-121 — Dynamic Outline Color**
+- Added logic that changess the color of the outline timer to show urgency.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-121-dynamic-outline-color)
+
+#### **KAN-122 — Final Flash Animation**
+- Added logic that flahses the color at the very end of the timer as a final warning.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-122-final-flash-animation)
+
+#### **KAN-123 — Upload Drawings Upon Submission**
+- Implemented logic to upload the shared submissions
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-123-upload-drawings-upon-submission)
+
+#### **KAN-124 — Early Submit Confirmation**
+- Added a confirmation dialog when the user chooses to submit early.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-124-early-submit-confirmation)
+
+#### **KAN-125 — Submission Animation**
+- Added logic to show a success animation after submission.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-125-submission-animation)
+
+#### **KAN-126 — Fix Compositing Bug**
+- Resolve issues with combining drawing strokes and the background image.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/bugfix/KAN-126-fix-compositing-bug)
+
+#### **KAN-127 — Fetch and Display Prompt**
+- Retrieve the prompt from the feed and show it via the bulb icon during drawing.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-127-fetch-and-display-prompt)
+
+#### **KAN-128 — Prompt Bubble Container**
+- Added a bubble looking container for the prompt using liquid glass that closes when you click outside.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-128-prompt-bubble-container)
+
+#### **KAN-129 — Save Prompt and Date**
+- Added logic to store the prompt text and creation date locally with each drawing.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-129-save-prompt-and-date)
+
+#### **KAN-130 — Enhanced Share Picker**
+- Improve the share sheet to include “Save Image” and other social sharing options.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-130-enhanced-share-picker)
+
+### **KAN-131 — Show Prompt in Preview**
+- Added logic to save and show the old prompts in oldser drawings.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-131-show-prompt-in-preview)
+
+#### **KAN-132 — Sprint 1 Demo Fixess**
+- Fixed some issues that were found after the first demo. Removed unused/empty files, changed app name and display info, added variables, fixed styling, etc...
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/hotfix/KAN-132-sprint-1-demo-fixes)
+
+#### **KAN-134 — Enhanced Library Transitions**
+- Used matchedGeometryEffect to smoothly transition between the grid view to the preview view.
+(Note: Accidentally the commits for this task were made and linked to the https://cs3398-nemoidians-fall.atlassian.net/browse/KAN-125 branch.)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-134-enhanced-library-transitions)
+
+#### **KAN-135 — Modify Document Path for Simulator**
+- In the simulator’s app sandbox the images aren’t saved in a fixed directory, instead it's a relative path which changes upon rebuilding.
+(Note: Accidentally the commits for this task were made and linked to the https://cs3398-nemoidians-fall.atlassian.net/browse/KAN-125 branch.)
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-135-modify-document-path-for-simulat)
+
+#### **KAN-140 — Single or Bulk Drawing Deletion**
+- Drawings in the grid should be able to be long pressed to see the delete option. Also an edit button in the corner to select multiple drawings to delete.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-140-single-or-bulk-drawing-deletion)
+
+#### **KAN-141 — Drawing Deletion Animation**
+- Added Deletion Animation to the Drawing Page.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-141-drawing-deletion-animation)
+
+#### **Next Steps** 
+- Update Ripple Animation when clicking on a drawing.
+- Effects for metal awarding.
+- Update medal counts on firebase
+
+---
+
+### 👤 Vaidic Soni
+
+#### **KAN-52 — Daily Reminder Functionality**
+- Users now get periodic reminders every 2 hours to complete their daily drawing if they haven't done so.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/432d7255bac1e8b46ca891dae935610f734f8296/?at=feature%2FKAN-52-NotificationReminder)
+
+#### **KAN-21 — Fixing notification Scheduling**
+- Fixed notifications and made changes to make them better and increase their frequency.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/KAN-21_Fixing_Notifications/)
+
+#### **KAN-23 — Added Streak functionality**
+- Designed logic to track daily drawing streaks to motivate users.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/KAN-23-Streak_Feature/)
+
+#### **KAN-45 — Added Notification Bell and History**
+- Implemented a dropdown panel that stores and displays all past notifications.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/2437e02c6cc9a20d5537e9c8a60e27a40fbd7f72/?at=feature%2FKAN-45-as-a-user-i-want-a-bell-icon-on-t)
+
+## Sprint 2:
+
+#### **KAN-113 — Integrate Gemini API endpoint**
+- Added logic to integrate Gemini API to generate daily drawing prompts
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-113-integrate-gemini-api-endpoint)
+
+#### **KAN-114 — Fetch generated prompt**
+- Following KAN-113, Added logic to fetch the generated prompt.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-114-fetch-generated-prompt)
+
+#### **KAN-115 — Implement post upload feature**
+- Implement logic to upload the user's post feature.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-115-implement-post-upload-feature)
+
+#### **KAN-116 — Add share/download option**
+- Added options to share and or download options.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-116-add-share-download-option)
+
+#### **KAN-117 — Fetch and display friend posts**
+- Added main logic to fetch the friend's post and show them.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-117-fetch-and-display-friend-posts)
+
+#### **KAN-118 — Added Streak functionality**
+- Implemented backend data linking.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-118-implement-backend-data-linking)
+
+#### **KAN-119 — Training the LLM on certain prompts**
+- Trained the LLM on certain prompts by giving it examples.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-119-training-the-llm-on-certain-prom)
+
+#### **Next Steps**
+- Fixing notifications and streak.
+- Implement a refresh function on the feed.
+- Add necessary animations and UI changes.
+---
+
+### 👤 Priyanka Karki
+
+#### **KAN-51 – Welcome Screen with Logo and Design Elements.**
+Integrated the new logo into the welcome screen.
+Added a “Get Started” button and aligned layout elements.
+Ensured consistency and responsiveness across devices.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/2be9dcd5d70ad75b5ee7c49470d0fdc44b713405)
+
+#### **KAN-63 – Home Feed Page.**
+Built the main feed to display friends’ drawings.
+Added navigation tabs for Home, Explore, Create, and Profile.
+Structured layout for future backend integration.
+🔗 [Bitbucket] (https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/feature/KAN-63-as-a-user-i-want-my-home-page-to-)
+
+#### **KAN-64 – Profile Navigation.**
+Enabled navigation from feed posts to creator profiles.
+Added private profile visibility logic.
+Tested smooth page transitions.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/commits/19128ac3199010535bd6b2015dcdedc7a956b65b)
+
+#### **KAN-71 – Post Interactions (Likes, Medals, Shares).**
+Added interactive like, medal, and share buttons to feed posts.
+Managed state updates and interaction animations.
+Verified full integration within feed layout.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-71-as-a-user-i-want-to-be-able-to-ta)
+
+#### **Next Steps (Sprint 2)**
+Design and plan the structure for the backend logic.
+Integrate the feed, profile, and interaction features with a reliable database to store and manage user data.
+Implement real-time updates for likes and medals to ensure dynamic user feedback.
+Optimize feed performance and conduct accessibility testing for a smoother user experience.
+---
+
+### 👤 Jesse Flynn
+
+## Sprint 1:
+
+#### **KAN-18 - Friends Tab (View/Search/Request + Add Friend)**
+- Implemented friend screen UI
+- Added friend requests section with accept/decline functionality (mock)
+- Added friends section with searchable list
+
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-18-as-a-user-i-want-to-have-a-friends-tab-to-view-and-compete-with-my-friends)
+
+#### **KAN-19 - Friends Leaderboard (frontend)**
+- Added LeaderboardEntry model and LeaderboardService protocol
+- Extended Friends VM with state, sorting, and refresh logic
+- Added Leaderboard section in Friends page with ranking, points, refresh, and error/empty states
+- Added trophy icon to toggle leaderboard visibility
+
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-19-as-a-user-i-want-a-leaderboard-to-compete-with-friends)
+
+*Note: KAN-18 (Friends tab) was accidentally merged into main instead of the sprint1-dev branch. As a result, when I created the KAN-19 branch and 
+merged it into sprint1-dev, it also included the KAN-18 commits. These commits were already reviewed and merged to main earlier. KAN-19 contains only the 
+leaderboard-related changes, but the history shows both sets because of the branch base. This was not an attempt to duplicate or fake work - just a branch 
+merge mistake that I wanted to add here for clarity.*
+
+## Sprint 2:
+
+#### **KAN-100 — Add friend by @handle (Firebase)**
+- Implemented friend search and add functionality using Firestore queries on `handle_lowercase`.
+- Integrated HandleServiceFirebase and FriendRequestServiceFirebase for sending, accepting, and declining requests.
+- Added bidirectional friendship creation under `/friendships/{uid}/friends/{friendUid}` upon acceptance.
+- Connected UI (`AddFriendView`, `FriendsViewModel`) to reflect pending and accepted states.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-100-add-friend-by-handle-firebase)
+
+#### **KAN-102 — Incoming friend requests (Firebase)**
+- Built Firestore logic to load incoming requests under `/friendRequests/{toUid}/incoming/{fromUid}`.
+- Implemented accept/decline to create or remove friendship edges and update the Friends UI immediately.
+- Added incoming requests section with action buttons.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-102-incoming-friend-requests-firebas)
+
+#### **KAN-104 — Friends-only leaderboard integration**
+- Implemented `LeaderboardService` to aggregate medals from each friend’s user document.
+- Updated LeaderboardEntry to store gold, silver, bronze, and computed total points (100/25/10 weights).
+- Built horizontal bar chart UI where bar width reflects points relative to the top friend.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-104-friends-only-leaderboard-integration)
+
+#### **KAN-107 — Unit tests and fixes for friends**
+- Added unit tests for FriendsViewModel covering add/remove logic, search filtering, and duplicate request guards.
+- Fixed swipe-to-delete crash (List diff mismatch) by removing locally first, then deleting remotely.
+- Tightened pending request logic to check both fromUid and toUid (per-current-user pending).  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-107-unit-tests-and-fixes-for-friends)
+
+#### **KAN-147 — View a friend’s profile and delete friendship**
+- Added tap gesture to open FriendProfileView sheet showing name, handle, and medals.
+- Implemented friend removal from profile with confirmation and automatic sheet dismissal.
+- Ensured bidirectional Firestore cleanup and refreshed Friends list on delete.  
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-147-view-a-friends-profile-and-delete-friendship)
+
+#### **Next Steps** 
+- Enforce unique handle creation at signup to prevent duplicate display names.
+- Exclude current user from search results to avoid self-add.
+- Add leaderboard refresh and sorting unit tests.
+- Strengthen Firestore rules to block self-requests entirely.
+
+#### **Burnup chart for Sprint-1**
+![Feed Preview](App/Resources/nemodians-burnup-chart-1.png)
 
 
-## Setup
+<!-- ## Setup
 
 ### Requirements
-- Node.js (LTS version recommended)
-- npm or yarn
-- Expo CLI (for React Native development)
-- Android Studio (for Android emulation) or Xcode (for iOS emulation, Mac only)
-- A Firebase project (for Authentication, Firestore, and Cloud Storage)
 
 ### Installation
-
-1. Clone the repository:
-	```sh
-	git clone <your-repo-url>
-	cd brush/client
-	```
-
-2. Install dependencies:
-	```sh
-	npm install
-	```
-	or
-	```sh
-	yarn install
-	```
-
-3. Install Expo CLI globally (if not already installed):
-	```sh
-	npm install -g expo-cli
-	```
-
-4. Set up Firebase:
-	- Create a Firebase project at [Firebase Console](https://console.firebase.google.com/).
-	- Enable Authentication, Firestore, and Cloud Storage.
-	- Download your `google-services.json` (Android) and/or `GoogleService-Info.plist` (iOS) and place them in the appropriate directories.
-	- Update your Firebase config in the project as needed.
-
-5. Start the development server:
-	```sh
-	npx expo start
-	```
-	or
-	```sh
-	expo start
-	```
-
-6. Run the app:
-	- Use an emulator (Android Studio/Xcode) or scan the QR code with the Expo Go app on your device.
 
 
 ## Usage
@@ -131,13 +420,13 @@ How does one go about using it?
 Provide various use cases and code examples here.
 
 `write-your-code-here`
-
+ -->
 
 ## Project Status
 Project is: _in progress_ 
 
 
-## Room for Improvement
+<!-- ## Room for Improvement
 Include areas you believe need improvement / could be improved. Also add TODOs for future development.
 
 Room for improvement:
@@ -164,4 +453,4 @@ Created by [@flynerdpl](https://www.flynerd.pl/) - feel free to contact me!
 <!-- ## License -->
 <!-- This project is open source and available under the [... License](). -->
 
-<!-- You don't have to include all sections - just the one's relevant to your project -->
+<!-- You don't have to include all sections - just the one's relevant to your project --> 

@@ -21,15 +21,30 @@
 		1033BD892E866B0300111590 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD882E866B0300111590 /* FirebaseStorageCombine-Community */; };
 		1033BD8E2E866B9100111590 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8D2E866B9100111590 /* GoogleSignIn */; };
 		1033BD902E866B9100111590 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8F2E866B9100111590 /* GoogleSignInSwift */; };
+		5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */ = {isa = PBXBuildFile; productRef = 5DF4A0A92EA5D38A00BB4265 /* Vortex */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1033C2F82E88FF3A00111590 /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5DF035842EA1B6DE009A748A /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5DF0361D2EA1FA40009A748A /* brush-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "brush-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		57863E1A2EA60391009BCBB1 /* Exceptions for "App" folder in "brush" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				.gitignore,
+			);
+			target = 1033B8D72E863B8800111590 /* brush */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1033B8DA2E863B8800111590 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				57863E1A2EA60391009BCBB1 /* Exceptions for "App" folder in "brush" target */,
+			);
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -45,6 +60,7 @@
 				1033BD702E8669BB00111590 /* FirebaseAnalytics in Frameworks */,
 				1033BD8E2E866B9100111590 /* GoogleSignIn in Frameworks */,
 				1033BD722E8669BB00111590 /* FirebaseAnalyticsCore in Frameworks */,
+				5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */,
 				1033BD7F2E866B0300111590 /* FirebaseCore in Frameworks */,
 				1033BD832E866B0300111590 /* FirebaseFirestore in Frameworks */,
 				1033BD762E8669BB00111590 /* FirebaseAppCheck in Frameworks */,
@@ -63,8 +79,9 @@
 		1033B8CF2E863B8800111590 = {
 			isa = PBXGroup;
 			children = (
+				5DF0361D2EA1FA40009A748A /* brush-Info.plist */,
 				1033B8DA2E863B8800111590 /* App */,
-				1033C2F82E88FF3A00111590 /* brush.app */,
+				5DF035842EA1B6DE009A748A /* brush.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -77,7 +94,7 @@
 			buildPhases = (
 				1033B8D42E863B8800111590 /* Sources */,
 				1033B8D52E863B8800111590 /* Frameworks */,
-				1033B8D62E863B8800111590 /* Resources */,
+				57863E192EA60391009BCBB1 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -102,9 +119,10 @@
 				1033BD882E866B0300111590 /* FirebaseStorageCombine-Community */,
 				1033BD8D2E866B9100111590 /* GoogleSignIn */,
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
+				5DF4A0A92EA5D38A00BB4265 /* Vortex */,
 			);
 			productName = brush;
-			productReference = 1033C2F82E88FF3A00111590 /* brush.app */;
+			productReference = 5DF035842EA1B6DE009A748A /* brush.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -134,6 +152,7 @@
 			packageReferences = (
 				1033BD6C2E8669BB00111590 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1033B8CF2E863B8800111590;
@@ -146,7 +165,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1033B8D62E863B8800111590 /* Resources */ = {
+		57863E192EA60391009BCBB1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -283,14 +302,29 @@
 		1033B8E42E863B8900111590 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = bRUSH;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 879HFN9R93;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "brush-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = bRUSH;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -299,14 +333,18 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/App/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = brushapp.brush;
+				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -325,14 +363,29 @@
 		1033B8E52E863B8900111590 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = bRUSH;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 879HFN9R93;
 				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "brush-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = bRUSH;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -341,14 +394,18 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/App/functions/node_modules/@unrs/resolver-binding-darwin-arm64",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = brushapp.brush;
+				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -360,6 +417,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
+				VALIDATE_PRODUCT = YES;
 				XROS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
@@ -402,6 +460,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 9.0.0;
+			};
+		};
+		5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/Vortex";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -476,6 +542,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		5DF4A0A92EA5D38A00BB4265 /* Vortex */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */;
+			productName = Vortex;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

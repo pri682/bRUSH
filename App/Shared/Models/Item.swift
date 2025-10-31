@@ -1,22 +1,31 @@
 import SwiftUI
-import PencilKit
 
 struct Item: Identifiable, Codable, Equatable {
     let id: UUID
-    var imageURL: URL?      // URL for the background image (now optional)
-    var drawingURL: URL?   // URL for the saved PKDrawing file
-    var preview: UIImage?  // In-memory preview image for the grid
-
-    // The 'preview' property is for in-memory use only and should not be saved to JSON.
+    let imageFileName: String
+    let prompt: String
+    let date: Date
+    var image: UIImage? = nil
+    
     enum CodingKeys: String, CodingKey {
-        case id, imageURL, drawingURL
+        case id, imageFileName, prompt, date
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        imageFileName = try container.decode(String.self, forKey: .imageFileName)
+        prompt = try container.decode(String.self, forKey: .prompt)
+        date = try container.decode(Date.self, forKey: .date)
+        self.image = nil
     }
 
-    init(id: UUID = UUID(), imageURL: URL?, drawingURL: URL?, preview: UIImage? = nil) {
+    init(id: UUID = UUID(), imageFileName: String, prompt: String, date: Date, image: UIImage? = nil) {
         self.id = id
-        self.imageURL = imageURL
-        self.drawingURL = drawingURL
-        self.preview = preview
+        self.imageFileName = imageFileName
+        self.prompt = prompt
+        self.date = date
+        self.image = image
     }
 
     static func ==(lhs: Item, rhs: Item) -> Bool { lhs.id == rhs.id }
