@@ -47,7 +47,8 @@ struct AvatarOptions {
     static let personalShirts = ["shirt_1", "shirt_2", "shirt_3", "shirt_4", "shirt_5", "shirt_6", "shirt_7", "shirt_8", "shirt_9", "shirt_10", "shirt_11", "shirt_12", "shirt_13", "shirt_14", "shirt_15", "shirt_16"]
     static let personalEyes = ["eyes_1", "eyes_2", "eyes_3", "eyes_4", "eyes_5", "eyes_6", "eyes_7"]
     static let personalMouths = ["mouth_1", "mouth_2", "mouth_3", "mouth_4", "mouth_5", "mouth_6", "mouth_7"]
-    static let personalHairs = ["hair_1", "hair_2"]
+    static let personalHairs = (1...56).map { "hair_\($0)" } // hair one to 56, as an array
+
     
     // Fun avatar options (alien) - using actual fun_ prefixed files
     static let funBackgrounds = ["background_1", "background_2", "background_3", "background_4" , "background_5" , "background_6", "background_7", "background_8"]
