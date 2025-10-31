@@ -53,7 +53,7 @@ struct UserFeedItemView: View {
                             .aspectRatio(contentMode: .fill)
                             .frame(maxHeight: .infinity)
                             .clipped()
-                            .modifier(RippleEffect(origin: rippleOrigin, trigger: rippleCounter, speed: 300))
+                            .modifier(RippleEffect(at: rippleOrigin, trigger: rippleCounter))
                     case .failure:
                         Rectangle()
                             .fill(Color(.secondarySystemBackground))
@@ -71,17 +71,14 @@ struct UserFeedItemView: View {
             // Ripple & overlay handling
             Color.clear
                 .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onEnded { value in
-                            guard hasPostedToday else { return }
-                            rippleOrigin = value.location
-                            rippleCounter += 1
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
-                                showOverlays.toggle()
-                            }
-                        }
-                )
+                .onTapGesture { location in
+                    guard hasPostedToday else { return }
+                    rippleOrigin = location
+                    rippleCounter += 1
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+                        showOverlays.toggle()
+                    }
+                }
 
             VStack {
                 Text(prompt)
@@ -92,7 +89,7 @@ struct UserFeedItemView: View {
                     .glassEffect(.regular.interactive())
                     .opacity(hasPostedToday ? (showOverlays ? 1 : 0) : 0)
                     .scaleEffect(showOverlays ? 1 : 0.95)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.8), value: showOverlays)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(1.00), value: showOverlays)
                     .padding(.top, 10)
                 Spacer()
             }
@@ -147,23 +144,35 @@ struct UserFeedItemView: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 20)
         .opacity(showOverlays ? 1 : 0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.7), value: showOverlays)
+        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.9), value: showOverlays)
         .allowsHitTesting(showOverlays)
     }
 
     private var medalOverlay: some View {
         VStack(spacing: 16) {
             medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected)
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
+                .allowsHitTesting(showOverlays)
+
             medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected)
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
+                .allowsHitTesting(showOverlays)
+            
             medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected)
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
+                .allowsHitTesting(showOverlays)
+            
             shareButton()
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
+                .allowsHitTesting(showOverlays)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .padding(.bottom, 20)
         .padding(.trailing, 20)
-        .opacity(showOverlays ? 1 : 0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
-        .allowsHitTesting(showOverlays)
     }
 
     private var noPostOverlay: some View {
