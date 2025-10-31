@@ -76,18 +76,15 @@ struct SignedInProfileView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
                             .clipped()
-//                            .brightness(0.0005)
-//                            .saturation(1)
-                            .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
+                            .stretchy()
                         } else {
                             Image("boko")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(maxWidth: .infinity)
                                 .frame(height: headerHeight + 40)
-//                                .brightness(-0.01)
-//                                .saturation(1)
-                                .clipShape(RoundedCorners(radius: 20, corners: [.bottomLeft, .bottomRight]))
+                                .clipped()
+                                .stretchy()
                         }
                         
                         // Gear button in bottom right
@@ -218,6 +215,26 @@ struct SignedInProfileView: View {
                     EditProfileView(userProfile: $viewModel.profile, profileViewModel: viewModel)
                 }
             }
+        }
+    }
+}
+
+extension View {
+    /// Applies a stretchy header effect to a view, typically an Image,
+    /// at the top of a ScrollView.
+    func stretchy() -> some View {
+        visualEffect { effect, geometry in
+            let currentHeight = geometry.size.height
+            let scrollOffset = geometry.frame(in: .scrollView).minY
+            let positiveOffset = max(0, scrollOffset)
+            
+            let newHeight = currentHeight + positiveOffset
+            let scaleFactor = newHeight / currentHeight
+            
+            return effect.scaleEffect(
+                x: scaleFactor, y: scaleFactor,
+                anchor: .bottom
+            )
         }
     }
 }
