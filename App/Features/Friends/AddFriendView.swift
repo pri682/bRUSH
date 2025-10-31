@@ -28,24 +28,43 @@ struct AddFriendView: View {
                 .padding([.horizontal, .top])
                 
                 if vm.isSearchingAdd {
-                    ProgressView("Searching…").padding(.top, 12)
+                    Spacer()
+                    ProgressView("Searching…")
+                    Spacer()
                 } else if let err = vm.addError {
-                    Text(err).foregroundStyle(.red).padding(.horizontal)
-                } else if vm.addResults.isEmpty && !vm.addQuery.isEmpty {
-                    Text("No users found for “\(vm.addQuery)”")
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 12)
-                }
-                
-                List(vm.addResults) { user in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(user.displayName).font(.body.weight(.semibold))
-                            Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
-                                .buttonStyle(.borderedProminent)
-                        }
-                        Spacer()
-                            // Row status: Friend / Pending / Add
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("Search Failed", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(err)
+                    }
+                    .padding(.horizontal)
+                    Spacer()
+                } else if !vm.addQuery.isEmpty && vm.addResults.isEmpty {
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("No Users Found", systemImage: "person.fill.questionmark")
+                    } description: {
+                        Text("No users match \"\(vm.addQuery)\".")
+                    }
+                    Spacer()
+                } else if vm.addQuery.isEmpty && vm.addResults.isEmpty {
+                    Spacer()
+                    ContentUnavailableView {
+                        Label("Find Friends", systemImage: "magnifyingglass")
+                    } description: {
+                        Text("Search for friends by their username.")
+                    }
+                    Spacer()
+                } else {
+                    List(vm.addResults) { user in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.fullName).font(.body.weight(.semibold))
+                                Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
+                                    .buttonStyle(.borderedProminent)
+                            }
+                            Spacer()
                             let isFriend = vm.friendIds.contains(user.uid)
                             let isPending = vm.isRequestPending(uid: user.uid)
                             
@@ -75,16 +94,13 @@ struct AddFriendView: View {
                     }
                     .listStyle(.inset)
                 }
-                .navigationTitle("Add Friend")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close") { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Search") { vm.performAddSearch() }.disabled(vm.addQuery.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
+            }
+            .navigationTitle("Add Friend")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) { dismiss() }
                 }
             }
         }
     }
-
+}

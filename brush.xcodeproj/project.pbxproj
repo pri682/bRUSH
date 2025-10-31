@@ -25,7 +25,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		57ECDBF92E9DD56C001364CA /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DF035842EA1B6DE009A748A /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DF0361D2EA1FA40009A748A /* brush-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "brush-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -82,7 +81,6 @@
 			children = (
 				5DF0361D2EA1FA40009A748A /* brush-Info.plist */,
 				1033B8DA2E863B8800111590 /* App */,
-				57ECDBF92E9DD56C001364CA /* brush.app */,
 				5DF035842EA1B6DE009A748A /* brush.app */,
 			);
 			sourceTree = "<group>";

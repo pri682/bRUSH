@@ -5,7 +5,7 @@ import FirebaseCore
 struct HandleHit {
     let uid: String
     let handle: String
-    let displayName: String
+    let fullName: String
 }
 
 final class HandleServiceFirebase {
@@ -43,9 +43,15 @@ final class HandleServiceFirebase {
         for doc in (snap1.documents + snap2.documents) {
             let uid = doc.documentID
             guard !seen.contains(uid) else { continue }
-            let dn = (doc.data()["displayName"] as? String) ?? ""
-                hits.append(HandleHit(uid: uid, handle: dn, displayName: dn))
-                seen.insert(uid)
+            let data = doc.data()
+            let dn = (data["displayName"] as? String) ?? ""
+            let fn = (data["firstName"] as? String) ?? ""
+            let ln = (data["lastName"] as? String) ?? ""
+            let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
+            
+            hits.append(HandleHit(uid: uid, handle: dn, fullName: fullName.isEmpty ? dn : fullName))
+            seen.insert(uid)
+            
             if hits.count >= limit { break }
         }
         print("[HandleServiceFirebase] prefix='\(prefix)' -> \(hits.count) hit(s)")

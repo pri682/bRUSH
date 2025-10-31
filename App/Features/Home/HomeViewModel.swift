@@ -7,7 +7,7 @@ final class HomeViewModel: ObservableObject {
     @Published var appTitle: String = "bRUSH"
     @Published var feedItems: [FeedItem] = []
     @Published var dailyPrompt: String = "Loading..."
-    @Published var isLoadingFeed: Bool = false
+    @Published var isLoadingFeed: Bool = true
     @Published var errorMessage: String?
 
     private let db = Firestore.firestore()

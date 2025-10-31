@@ -71,7 +71,7 @@ struct HomeView: View {
                                                     }
                                                 }) {
                                                     Capsule()
-                                                        .fill(currentFeedIndex == index ? Color.orange : Color.yellow.opacity(0.6))
+                                                        .fill(currentFeedIndex == index ? Color.red : Color.orange)
                                                         .frame(width: 6, height: capsuleHeight)
                                                         .shadow(color: Color.black.opacity(0.25), radius: 3, x: 0, y: 1)
                                                         .shadow(color: Color.white.opacity(0.15), radius: 1, x: 0, y: -1)
@@ -80,6 +80,7 @@ struct HomeView: View {
                                             }
                                         }
                                     }
+                                    .offset(x: 2)
                                     .scrollIndicators(.hidden)
                                     .onChange(of: currentFeedIndex) {
                                         withAnimation {
@@ -176,7 +177,17 @@ struct HomeView: View {
                 .zIndex(5)
             }
 
-            if viewModel.feedItems.isEmpty {
+            if viewModel.isLoadingFeed {
+                VStack {
+                    ProgressView()
+                        .padding()
+                    Text("Loading Feed...")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.ultraThinMaterial)
+                .zIndex(1)
+            } else if viewModel.feedItems.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "scribble.variable")
                         .font(.system(size: 44, weight: .bold))
@@ -194,7 +205,7 @@ struct HomeView: View {
                     .disabled(hasAttemptedDrawing)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground))
+                .background(AnimatedMeshGradientBackground().ignoresSafeArea())
                 .zIndex(1)
             }
         }

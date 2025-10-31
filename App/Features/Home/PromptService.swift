@@ -1,10 +1,3 @@
-//
-//  PromptService.swift
-//  brush
-//
-//  Created by Vaidic Soni on 10/18/25.
-//
-
 import Foundation
 
 final class PromptService {

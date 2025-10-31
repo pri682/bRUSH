@@ -10,7 +10,7 @@ struct FriendsView: View {
     var body: some View {
         NavigationStack {
             List {
-                if !vm.requests.isEmpty {
+                if !vm.requests.isEmpty && vm.searchText.isEmpty {
                     Section("Friend Requests") {
                         ForEach(vm.requests) { req in
                             HStack(spacing: 12) {
@@ -46,10 +46,10 @@ struct FriendsView: View {
                         Task { await vm.removeRemote(uids: uids) }
                     }
                 }
-                .listStyle(.insetGrouped)
-                .listSectionSpacing(.compact)
             }
-            .onAppear { vm.loadMyHandle(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard(); vm.resetSessionData() }
+            .listStyle(.insetGrouped)
+            .navigationBarTitleDisplayMode(.large)
+            .onAppear { vm.loadMyProfileData(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard(); vm.resetSessionData() }
             .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
             .toolbar {
@@ -101,9 +101,10 @@ struct FriendsView: View {
             }
         }
     }
+    
     private struct LeaderboardBarRow: View {
         let rank: Int
-        let name: String
+        let fullName: String
         let handle: String
         let points: Int
         let maxPoints: Int
@@ -139,7 +140,7 @@ struct FriendsView: View {
                         .frame(width: 22, alignment: .trailing)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(name).font(.subheadline).bold()
+                        Text(fullName).font(.subheadline).bold()
                         Text(handle).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
@@ -204,7 +205,7 @@ struct FriendsView: View {
                             ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
                                 LeaderboardBarRow(
                                     rank: index + 1,
-                                    name: entry.displayName,
+                                    fullName: entry.fullName,
                                     handle: entry.handle,
                                     points: entry.points,
                                     maxPoints: maxPoints,
@@ -232,7 +233,7 @@ struct FriendsView: View {
                 .navigationTitle("Leaderboard")
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { dismiss() }
+                        Button(role: .cancel) { dismiss() }
                     }
                 }
                 // refresh when sheet opens
@@ -261,7 +262,7 @@ struct FriendsView: View {
                     .accessibilityHidden(true)
                 
                 VStack(spacing: 2) {
-                    Text(profile.displayName)
+                    Text([profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " "))
                         .font(.title3).bold()
                     Text("@\(profile.displayName)")
                         .foregroundStyle(.secondary)
@@ -290,7 +291,7 @@ struct FriendsView: View {
                 .padding(.top, 4)
             }
             .padding()
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.height(300)])
             .presentationBackground(Color(.systemBackground)) // opaque profile sheet
             
             .confirmationDialog(

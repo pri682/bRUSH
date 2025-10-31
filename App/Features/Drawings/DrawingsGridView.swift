@@ -89,7 +89,7 @@ struct DrawingsGridView: View {
                         }
                         ToolbarItemGroup(placement: .navigationBarTrailing) {
                             if isEditing && !selection.isEmpty {
-                                Button("Delete") {
+                                Button(role: .destructive) {
                                     showMultiDeleteAlert = true
                                 }
                                 .tint(.red)

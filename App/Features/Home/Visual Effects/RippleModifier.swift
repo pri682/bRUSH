@@ -2,8 +2,11 @@ import SwiftUI
 
 struct RippleModifier: ViewModifier {
     var origin: CGPoint
+
     var elapsedTime: TimeInterval
+
     var duration: TimeInterval
+
     var amplitude: Double
     var frequency: Double
     var decay: Double
@@ -13,18 +16,28 @@ struct RippleModifier: ViewModifier {
         let shader = ShaderLibrary.Ripple(
             .float2(origin),
             .float(elapsedTime),
+
+            // Parameters
             .float(amplitude),
             .float(frequency),
             .float(decay),
             .float(speed)
         )
 
+        let maxSampleOffset = maxSampleOffset
+        let elapsedTime = elapsedTime
+        let duration = duration
+
         content.visualEffect { view, _ in
             view.layerEffect(
                 shader,
-                maxSampleOffset: CGSize(width: amplitude, height: amplitude),
-                isEnabled: elapsedTime > 0 && elapsedTime < duration
+                maxSampleOffset: maxSampleOffset,
+                isEnabled: 0 < elapsedTime && elapsedTime < duration
             )
         }
+    }
+
+    var maxSampleOffset: CGSize {
+        CGSize(width: amplitude, height: amplitude)
     }
 }

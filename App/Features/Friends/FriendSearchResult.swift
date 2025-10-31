@@ -4,5 +4,5 @@ struct FriendSearchResult: Identifiable, Hashable {
     let id = UUID()
     let uid: String
     let handle: String
-    let displayName: String
+    let fullName: String
 }
