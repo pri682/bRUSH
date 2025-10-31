@@ -71,7 +71,7 @@ struct SignUpInputView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color.accentColor)
-            .cornerRadius(6) // Less rounded corners
+            .cornerRadius(12) // Less rounded corners
             .disabled(!viewModel.isStep1Valid || viewModel.isLoading)
             .padding(.top, 16)
         }

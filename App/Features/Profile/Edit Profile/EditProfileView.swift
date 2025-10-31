@@ -204,7 +204,7 @@ struct EditProfileView: View {
             .navigationTitle("Edit Profile")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { 
+                    Button(role: .cancel) {
                         // Revert avatar changes to original state
                         if let original = originalAvatarParts, var profile = userProfile {
                             profile.avatarBackground = original.background
@@ -225,7 +225,7 @@ struct EditProfileView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(role: .confirm) {
                         Task {
                             var success = true
                             

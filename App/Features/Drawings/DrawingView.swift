@@ -164,7 +164,7 @@ struct DrawingView: View {
                 } message: {
                     Text("If you cancel, you won't get another chance to draw today. Are you sure?")
                 }
-                .disabled(showSubmittedPopup)
+                .disabled(hasSubmitted)
                 .toolbar(.hidden, for: .tabBar)
                 .navigationBarBackButtonHidden(true)
 
@@ -332,7 +332,7 @@ struct DrawingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) { isThemePickerPresented = false }
+                    Button("Done") { isThemePickerPresented = false }
                 }
             }
         }
@@ -423,54 +423,60 @@ struct DrawingView: View {
     }
     
     private func submitDrawing() {
+        guard !hasSubmitted else { return }
         hasSubmitted = true
-        saveDrawingAsImage()
-        
+        timer.upstream.connect().cancel()
+
+        saveDrawingLocallyAndUpload()
+
         streakManager.markCompletedToday()
         NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
-        
+
         withAnimation(.spring()) {
             showSubmittedPopup = true
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                dismiss()
-            }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.1) { // Adjusted delay slightly
+            dismiss()
         }
     }
 
-    private func saveDrawingAsImage() {
+    private func saveDrawingLocallyAndUpload() {
         let image = createCompositeImage()
-        
-        // Local download
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+
+        guard let data = image.jpegData(compressionQuality: 0.8) else {
+            hasSubmitted = false
+            return
+        }
         let filename = UUID().uuidString + ".jpg"
-        
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+
+        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            hasSubmitted = false
+            return
+        }
         let fileURL = documentsDirectory.appendingPathComponent(filename)
-        
+
         do {
             try data.write(to: fileURL, options: .atomic)
-            
+
             let newItem = Item(
                 imageFileName: filename,
                 prompt: self.prompt,
                 date: Date(),
                 image: image
             )
-            
+
             onSave(newItem)
-            
+
         } catch {
-            print("Error saving image: \(error)")
+            hasSubmitted = false
+            return
         }
-        
-        // Cloud upload
+
         DrawingUploader.shared.uploadDrawing(image: image) { result in
                 switch result {
                 case .success:
-                    showSubmittedPopup = true
+                    break
                 case .failure(let error):
                     print("❌ Upload failed: \(error.localizedDescription)")
                 }
@@ -576,4 +582,3 @@ extension UIColor {
         return UIColor(red: newRed, green: newGreen, blue: newBlue, alpha: 1.0)
     }
 }
-
