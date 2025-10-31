@@ -17,6 +17,8 @@ class FriendsViewModel: ObservableObject {
     @Published var isLoadingLeaderboard = false
     @Published var leaderboardError: String?
     @Published var currentUserHandle: String?
+    @Published var currentUserFirstName: String?
+    @Published var currentUserLastName: String?
     @Published var friendIds: Set<String> = []
     @Published var showingProfile: Bool = false
     @Published var selectedProfile: UserProfile? = nil
@@ -29,6 +31,9 @@ class FriendsViewModel: ObservableObject {
     private let requestService = FriendRequestServiceFirebase()
     private var meUid: String? { AuthService.shared.user?.id }
     private var myHandle: String { currentUserHandle ?? AuthService.shared.user?.displayName ?? "unknown" }
+    private var myFullName: String {
+        [currentUserFirstName, currentUserLastName].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+    }
     private let userService = UserService.shared
     
     private func hydrateFriendsFromIds() {
@@ -40,12 +45,13 @@ class FriendsViewModel: ObservableObject {
             Task { @MainActor in
                 do {
                     let doc = try await db.collection("users").document(uid).getDocument()
-                    if let dn = doc.data()?["displayName"] as? String, !dn.isEmpty {
-                        self.friends.append(Friend(uid: uid, name: dn, handle: "@\(dn)"))
-                    } else {
-                        // fallback if profile missing
-                        self.friends.append(Friend(uid: uid, name: uid, handle: "@unknown"))
-                    }
+                    let data = doc.data()
+                    let dn = (data?["displayName"] as? String) ?? "unknown"
+                    let fn = (data?["firstName"] as? String) ?? ""
+                    let ln = (data?["lastName"] as? String) ?? ""
+                    let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
+                    
+                    self.friends.append(Friend(uid: uid, name: fullName.isEmpty ? dn : fullName, handle: "@\(dn)"))
                 } catch {
                     // ignore; leave friend out or append placeholder
                 }
@@ -104,14 +110,16 @@ class FriendsViewModel: ObservableObject {
             }
         }
     
-    func loadMyHandle() {
+    func loadMyProfileData() {
         guard let me = meUid else { return }
         Task { @MainActor in
             do {
                 let doc = try await Firestore.firestore()
                     .collection("users").document(me).getDocument()
-                if let dn = doc.data()?["displayName"] as? String {
-                    self.currentUserHandle = dn
+                if let data = doc.data() {
+                    self.currentUserHandle = data["displayName"] as? String
+                    self.currentUserFirstName = data["firstName"] as? String
+                    self.currentUserLastName = data["lastName"] as? String
                 }
             } catch {
                 // non-fatal; UI can still function with optimistic pending state
@@ -144,64 +152,124 @@ class FriendsViewModel: ObservableObject {
             }
         }
     }
-        func performAddSearch() {
-            // require sign in to search users
-            guard AuthService.shared.user != nil else {
+    
+    // This is the private search task
+    private func searchTask(for query: String) async {
+        // require sign in to search users
+        guard AuthService.shared.user != nil else {
+            await MainActor.run {
                 self.addResults = []
                 self.addError = "Sign in to search for friends."
-                return
-            }
-            
-            let raw = addQuery
-                .replacingOccurrences(of: "@", with: "")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            guard raw.count >= 2 else {
-                addResults = []
-                addError = nil
-                return }
-            
-            isSearchingAdd = true
-            addError = nil
-            
-            Task { @MainActor in
-                do {
-                    let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
-                    self.addResults = hits.map { hit in
-                        FriendSearchResult(uid: hit.uid, handle: hit.handle, displayName: hit.displayName)
-                    }
-                    pendingOutgoing = []
-                    guard let me = meUid else { return }
-
-                    for hit in self.addResults {
-                        Task { @MainActor in
-                            do {
-                                if try await requestService.hasPending(fromUid: me, toUid: hit.uid) {
-                                    pendingOutgoing.insert(hit.uid)
-                                }
-                            } catch {
-                                // ignore individual failures; row just won’t show “Pending”
-                            }
-                        }
-                    }
-                }
-                catch {
-                    self.addResults = []
-                    self.addError = "Search failed. Please try again."
-                }
                 self.isSearchingAdd = false
             }
+            return
         }
-        init() {
-            $addQuery
-                .removeDuplicates()
-                .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
-                .sink { [weak self] _ in
-                    self?.performAddSearch()
+        
+        let raw = query
+            .replacingOccurrences(of: "@", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard raw.count >= 1 else {
+            await MainActor.run {
+                addResults = []
+                addError = nil
+                isSearchingAdd = false
+            }
+            return
+        }
+        
+        // isSearchingAdd is already true from the sink.
+        await MainActor.run {
+            addError = nil
+        }
+        
+        do {
+            let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
+            
+            await MainActor.run {
+                self.addResults = hits.map { hit in
+                    FriendSearchResult(uid: hit.uid, handle: hit.handle, fullName: hit.fullName)
                 }
-                .store(in: &cancellables)
+                pendingOutgoing = []
+            }
+            
+            guard let me = meUid else {
+                await MainActor.run { self.isSearchingAdd = false }
+                return
+            }
+
+            // Check for pending requests for the results
+            for hit in self.addResults {
+                Task { @MainActor in
+                    do {
+                        if try await requestService.hasPending(fromUid: me, toUid: hit.uid) {
+                            pendingOutgoing.insert(hit.uid)
+                        }
+                    } catch {
+                        // ignore individual failures; row just won’t show “Pending”
+                    }
+                }
+            }
+            
+        } catch {
+            await MainActor.run {
+                self.addResults = []
+                self.addError = "Search failed. Please try again."
+            }
         }
-        func loadLeaderboard(for date: Date = Date()) {
+        
+        // Set searching to false at the very end
+        await MainActor.run {
+            isSearchingAdd = false
+        }
+    }
+    
+    // This public function is for buttons (like onSubmit or manual refresh)
+    func performAddSearch() {
+        // Just run the task with the current query
+        Task {
+            await searchTask(for: addQuery)
+        }
+    }
+    
+    init() {
+        $addQuery
+            .removeDuplicates()
+            .map { [weak self] query -> String in
+                // This map operator runs *before* the debounce.
+                // We set the searching state immediately.
+                let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+                Task { @MainActor in
+                    // Show searching spinner if query is not empty
+                    self?.isSearchingAdd = !trimmed.isEmpty
+                    // Clear error and old results immediately
+                    self?.addError = nil
+                    if trimmed.isEmpty {
+                        self?.addResults = []
+                    }
+                }
+                return trimmed
+            }
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] trimmedQuery in
+                // This sink runs *after* the debounce.
+                if trimmedQuery.isEmpty {
+                    Task { @MainActor in
+                        self?.addResults = []
+                        self?.addError = nil
+                        self?.isSearchingAdd = false // Turn off spinner
+                    }
+                } else {
+                    // Run the actual search
+                    Task {
+                        await self?.searchTask(for: trimmedQuery)
+                    }
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    func loadLeaderboard(for date: Date = Date()) {
             guard !friendIds.isEmpty else {
                 self.leaderboard = []
                 self.medalCountsByUid = [:]
@@ -230,7 +298,10 @@ class FriendsViewModel: ObservableObject {
                                         let data = doc.data()
 
                                         let displayName = (data["displayName"] as? String) ?? "Unknown"
-                                        // if handle is stored
+                                        let fn = (data["firstName"] as? String) ?? ""
+                                        let ln = (data["lastName"] as? String) ?? ""
+                                        let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
+                                        
                                         let handle = "@\(displayName)"
 
                                         let gold = (data["goldMedalsAccumulated"] as? Int) ?? 0
@@ -242,7 +313,7 @@ class FriendsViewModel: ObservableObject {
                                         allEntries.append(
                                             LeaderboardEntry(
                                                 uid: uid,
-                                                displayName: displayName,
+                                                fullName: fullName.isEmpty ? displayName : fullName,
                                                 handle: handle,
                                                 gold: gold,
                                                 silver: silver,
@@ -254,7 +325,7 @@ class FriendsViewModel: ObservableObject {
                                 // Sort: points desc, then earlier submittedAt first
                                 allEntries.sort {
                                     if $0.points != $1.points { return $0.points > $1.points }
-                                    return $0.submittedAt < $1.submittedAt
+                                    return $0.submittedAt < $0.submittedAt
                                 }
                                 self.leaderboard = allEntries
                                 self.medalCountsByUid = medalMap
@@ -267,16 +338,18 @@ class FriendsViewModel: ObservableObject {
         func sendFriendRequest(to user: FriendSearchResult) {
             let handleLabel = "@\(user.handle)"
             guard !sent.contains(where: { $0.toUid == user.uid }) else { return }
-            sent.append(.init(toName: user.displayName, toUid: user.uid, handle: handleLabel))
+            sent.append(.init(toName: user.fullName, toUid: user.uid, handle: handleLabel))
             guard let me = meUid else { return }
             let senderHandle = myHandle
+            let senderDisplay = myFullName
+            
             pendingOutgoing.insert(user.uid)
             Task { @MainActor in
                 do {
                     try await FriendRequestServiceFirebase().sendRequest(
                         fromUid: me,
                         fromHandle: senderHandle,
-                        fromDisplay: senderHandle,
+                        fromDisplay: senderDisplay.isEmpty ? senderHandle : senderDisplay,
                         toUid: user.uid)
                 }
                 catch {

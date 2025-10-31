@@ -3,7 +3,7 @@ import Foundation
 struct LeaderboardEntry: Identifiable, Hashable {
     let id: String
     let uid: String
-    let displayName: String
+    let fullName: String
     let handle: String
     let gold: Int
     let silver: Int
@@ -15,7 +15,7 @@ struct LeaderboardEntry: Identifiable, Hashable {
     
     init(
         uid: String,
-        displayName: String,
+        fullName: String,
         handle: String,
         gold: Int,
         silver: Int,
@@ -24,7 +24,7 @@ struct LeaderboardEntry: Identifiable, Hashable {
     ) {
         self.uid = uid
         self.id = uid
-        self.displayName = displayName
+        self.fullName = fullName
         self.handle = handle
         self.gold = gold
         self.silver = silver
