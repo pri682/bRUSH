@@ -72,13 +72,17 @@ class DrawingUploader {
 
         let feedRef = Firestore.firestore().collection("dailyFeed").document(userID)
 
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM/dd/yy"
+        let todayString = formatter.string(from: Date())
+
         let feedData: [String: Any] = [
             "imageURL": imageURL,
             "userRef": Firestore.firestore().document("users/\(userID)"),
             "gold": 0,
             "silver": 0,
             "bronze": 0,
-            "date": DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none),
+            "date": todayString,
             "createdAt": FieldValue.serverTimestamp()
         ]
 
