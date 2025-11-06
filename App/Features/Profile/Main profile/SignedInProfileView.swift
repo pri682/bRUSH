@@ -58,6 +58,16 @@ struct SignedInProfileView: View {
             let largeMedalSize = contentWidth * 0.16
             let cardStackHorizontalPadding = screenWidth * 0.10
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+
+            // MARK: - Dynamic Color Calculation
+            // 💡 Call the external calculator to get the color and shadow
+            let (avatarTextColor, avatarTextShadowColor): (Color, Color) = {
+                if let background = viewModel.profile?.avatarBackground {
+                    return ProfileElementsColorCalculation.calculateContrastingTextColor(for: background)
+                }
+                // Default colors: White text with black shadow
+                return (.white, .black)
+            }()
             
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
@@ -98,6 +108,7 @@ struct SignedInProfileView: View {
                                     } label: {
                                         Image(systemName: "gearshape.fill")
                                             .font(.system(size: 24, weight: .medium))
+                                            // ❗ Gear icon remains hardcoded white as requested
                                             .foregroundColor(.white.opacity(0.85))
                                             .shadow(color: .black, radius: 0, x: 1, y: 1)
                                     }
@@ -110,12 +121,15 @@ struct SignedInProfileView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(viewModel.profile?.firstName ?? "Loading...")
                                 .font(.system(size: screenWidth * 0.08, weight: .bold))
-                                .foregroundColor(.white)
-                                .shadow(color: .black, radius: 0, x: 0.9, y: 0.9)
+                                // 💡 Use dynamic contrasting color
+                                .foregroundColor(avatarTextColor)
+                                // 💡 Use dynamic shadow color
+                                .shadow(color: avatarTextShadowColor, radius: 0, x: 0.9, y: 0.9)
                             
                             Text("@\(viewModel.profile?.displayName ?? "")")
                                 .font(.system(size: screenWidth * 0.03, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.85))
+                                // 💡 Use dynamic contrasting color
+                                .foregroundColor(avatarTextColor.opacity(0.85))
                         }
                         .padding(.leading, standardPadding * 0.55)
                         .padding(.bottom, screenHeight * 0.04)
