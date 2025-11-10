@@ -249,6 +249,7 @@ struct SignUpAvatarView: View {
                             }
                         }
                     }
+                    .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
                 }
                 .frame(maxHeight: screenHeight * 0.4)
@@ -266,7 +267,6 @@ struct SignUpAvatarView: View {
                 .font(.system(size: screenWidth * 0.04))
                 .padding(.bottom, screenHeight * 0.04)
             }
-            .background(Color.white)
             .navigationBarHidden(true)
             .onAppear {
                 initializeHistory()

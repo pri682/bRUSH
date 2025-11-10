@@ -17,6 +17,7 @@ struct DeleteProfileButton: View {
                     await viewModel.deleteProfile()
                 }
             }
+            .keyboardShortcut(.defaultAction)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to delete your profile? This action cannot be undone.")
