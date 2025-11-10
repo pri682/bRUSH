@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DrawingPreviewView: View {
+    
     let namespace: Namespace.ID
     let item: Item
     @Binding var selectedItem: Item?
@@ -12,6 +13,11 @@ struct DrawingPreviewView: View {
     @State private var accumulatedRotation: Double = 0
     
     @State private var showBubbles = false
+    
+    @State private var avgColor: Color = Color(.systemGroupedBackground)
+    @State private var secColor: Color = Color(.systemGroupedBackground)
+    @State private var terColor: Color = Color(.systemGroupedBackground)
+    @State private var adaptiveTextColor: Color = .primary
     
     private var formattedDate: String {
         item.date.formatted(date: .long, time: .omitted)
@@ -35,78 +41,85 @@ struct DrawingPreviewView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [avgColor, secColor, terColor],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                .animation(.easeInOut, value: avgColor)
                 
                 if let image = resolvedImage {
                     VStack(spacing: 0) {
                         Spacer(minLength: 0)
                         
                         ZStack(alignment: .bottom) {
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(.clear)
-                                .aspectRatio(9/16, contentMode: .fit)
-                                .overlay(
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .aspectRatio(9/16, contentMode: .fit)
-                                        .clipped()
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: 24))
-                                .matchedGeometryEffect(id: item.id, in: namespace)
-                                .shadow(radius: 10, y: 5)
-                                .rotation3DEffect(
-                                    .degrees(rotationAngle + dragOffset.width),
-                                    axis: (x: 0, y: 1, z: 0),
-                                    perspective: 0.35
-                                )
-                                .gesture(
-                                    DragGesture()
-                                        .updating($dragOffset) { value, state, _ in
-                                            state = value.translation
-                                        }
-                                        .onChanged { _ in
-                                            isAnimating = false
-                                        }
-                                        .onEnded { value in
-                                            rotationAngle += value.translation.width
-                                            accumulatedRotation = rotationAngle
-                                            isAnimating = true
-                                            startAnimation()
-                                        }
-                                )
-                                .onTapGesture {
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                        showBubbles.toggle()
-                                    }
-                                }
+                            
+                            ZStack {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
 
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .blur(radius: 4)
+                                    .mask(
+                                        LinearGradient(
+                                            colors: [.clear, .clear, .black],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .opacity(showBubbles ? 1 : 0)
+                            }
+                            .aspectRatio(9/16, contentMode: .fit)
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                            .matchedGeometryEffect(id: item.id, in: namespace)
+                            .shadow(radius: 10, y: 5)
+                            .rotation3DEffect(
+                                .degrees(rotationAngle + dragOffset.width),
+                                axis: (x: 0, y: 1, z: 0),
+                                perspective: 0.35
+                            )
+                            .gesture(
+                                DragGesture()
+                                    .updating($dragOffset) { value, state, _ in
+                                        state = value.translation
+                                    }
+                                    .onChanged { _ in
+                                        isAnimating = false
+                                    }
+                                    .onEnded { value in
+                                        rotationAngle += value.translation.width
+                                        accumulatedRotation = rotationAngle
+                                        isAnimating = true
+                                        startAnimation()
+                                    }
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    showBubbles.toggle()
+                                }
+                            }
+                            
+                            
                             VStack(spacing: 12) {
                                 Text(formattedDate)
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 16)
-                                    .glassEffect(.regular.interactive())
-
+                                    .glassEffect(.clear.interactive())
+                                    .foregroundStyle(adaptiveTextColor)
+                                
                                 Text(item.prompt)
                                     .font(.system(size: 20, weight: .semibold))
-//                                    .foregroundStyle(
-//                                        LinearGradient(
-//                                            colors: [
-//                                                Color(red: 1.0, green: 0.35, blue: 0.2),
-//                                                Color(red: 1.0, green: 0.25, blue: 0.25),
-//                                                Color(red: 0.95, green: 0.4, blue: 0.15)
-//                                            ],
-//                                            startPoint: .bottomTrailing,
-//                                            endPoint: .topLeading
-//                                        )
-//                                    )
                                     .multilineTextAlignment(.center)
                                     .padding(.vertical, 20)
                                     .padding(.horizontal, 25)
-                                    .glassEffect(.regular.interactive())
+                                    .glassEffect(.clear.interactive())
+                                    .foregroundStyle(adaptiveTextColor)
                             }
                             .padding(.trailing, 25)
                             .padding(.leading, 25)
@@ -114,7 +127,7 @@ struct DrawingPreviewView: View {
                             .opacity(showBubbles ? 1 : 0)
                             .allowsHitTesting(false)
                         }
-                        .padding()
+                        .padding(24)
                         .padding(.top, 30)
                         .onAppear {
                             startAnimation()
@@ -122,6 +135,10 @@ struct DrawingPreviewView: View {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                                     showBubbles = true
                                 }
+                            }
+                            
+                            Task {
+                                await extractColors(from: image)
                             }
                         }
                         
@@ -168,5 +185,14 @@ struct DrawingPreviewView: View {
             rotationAngle = targetAngle
         }
     }
+    
+    private func extractColors(from image: UIImage) async {
+        let colors = await image.getGradientColors()
+        await MainActor.run {
+            self.avgColor = Color(colors.0)
+            self.secColor = Color(colors.1)
+            self.terColor = Color(colors.2)
+            self.adaptiveTextColor = Color(colors.0.isDark ? .white : .black)
+        }
+    }
 }
-
