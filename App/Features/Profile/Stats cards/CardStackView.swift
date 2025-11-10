@@ -34,7 +34,6 @@ struct CardStackView: View {
                 let isTopCard = index == topCardIndex
                 let isNextCard = index == (topCardIndex + 1) % cards.count
                 let isPrevCard = index == (topCardIndex - 1 + cards.count) % cards.count
-                let isVisibleCard = isTopCard || isNextCard || isPrevCard
                 
                 // Calculate card position relative to current top card
                 let cardOffset = calculateCardOffset(for: index, dragOffset: dragOffset)
@@ -59,11 +58,6 @@ struct CardStackView: View {
                         radius: isTopCard ? 0 : 8,
                         x: isTopCard ? 0 : 2,
                         y: isTopCard ? 0 : 4
-                    )
-                    
-                    // Add subtle background tint to side cards
-                    .background(
-                        isTopCard ? Color.clear : Color.white.opacity(0.1)
                     )
                     
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: dragOffset)
