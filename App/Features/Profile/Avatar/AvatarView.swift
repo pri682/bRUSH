@@ -2,44 +2,29 @@ import SwiftUI
 
 struct AvatarView: View {
     let background: String
-    let face: String? // optional face
-    let eyes: String? // optional eyes
-    let mouth: String? // etc... you get it lol
+    let face: String?
+    let eyes: String?
+    let mouth: String?
     let hair: String?
     
     var body: some View {
-        ZStack { // defines the order of the images, background is bottom, face on top, etc..
-            // Background layer (bottom) - scaled to fill.
+        ZStack {
             Image(background)
                 .resizable()
                 .scaledToFill()
             
-            // Face layer (if exists)
-            if let face = face {
-                Image(face)
-                    .resizable()
-                    .scaledToFit()
-            }
-            
-            // Eyes layer (if exists)
-            if let eyes = eyes {
-                Image(eyes)
-                    .resizable()
-                    .scaledToFit()
-            }
-            
-            // Mouth layer (if exists)
-            if let mouth = mouth {
-                Image(mouth)
-                    .resizable()
-                    .scaledToFit()
-            }
-            
-            // Hair layer (top, if exists)
-            if let hair = hair {
-                Image(hair)
-                    .resizable()
-                    .scaledToFit()
+            VStack {
+                if UIDevice.current.userInterfaceIdiom == .phone {
+                    Color.clear
+                        .frame(height: 80)
+                }
+                
+                ZStack {
+                    if let face = face { Image(face).resizable().scaledToFit() }
+                    if let eyes = eyes { Image(eyes).resizable().scaledToFit() }
+                    if let mouth = mouth { Image(mouth).resizable().scaledToFit() }
+                    if let hair = hair { Image(hair).resizable().scaledToFit() }
+                }
             }
         }
         .clipped()

@@ -121,6 +121,7 @@ struct AwardsStackCardView: View {
                 )
                 .cornerRadius(radius, corners: [.bottomLeft, .bottomRight])
             }
+            .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: radius))
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         }

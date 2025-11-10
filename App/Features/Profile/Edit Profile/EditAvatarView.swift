@@ -247,13 +247,13 @@ struct EditAvatarView: View {
                             }
                         }
                     }
+                    .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
                 }
                 .frame(maxHeight: screenHeight * 0.35)
                 
                 Spacer()
             }
-            .background(Color.white)
             .onAppear {
                 initializeHistory()
             }

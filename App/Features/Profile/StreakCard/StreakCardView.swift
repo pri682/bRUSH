@@ -127,6 +127,7 @@ struct StreakCardView: View {
                 )
                 .cornerRadius(radius, corners: [.bottomLeft, .bottomRight])
             }
+            .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: radius))
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         }
@@ -151,35 +152,10 @@ struct StreakRowView: View {
     
     // MARK: - Number Formatting Functions
     
-    private func formatNumber(_ count: Any) -> (display: String, subtitle: String?) {
-        if let intCount = count as? Int {
-            if intCount == -1 {
-                return ("--", nil)
-            }
-            
-            if intCount >= 1_000_000 {
-                let millions = Double(intCount) / 1_000_000
-                let display = millions.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(millions))M" : String(format: "%.1fM", millions)
-                return (display, "\(intCount)")
-            } else if intCount >= 1_000 {
-                let thousands = Double(intCount) / 1_000
-                let display = thousands.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(thousands))K" : String(format: "%.1fK", thousands)
-                return (display, "\(intCount)")
-            } else {
-                return ("\(intCount)", nil)
-            }
-        } else if let stringCount = count as? String {
-            // For string counts (like year "2025"), just return as-is
-            return (stringCount, nil)
-        } else {
-            return ("--", nil)
-        }
-    }
-    
     private func calculateFontSize(for count: Any, baseSize: CGFloat, scaling: CGFloat) -> CGFloat {
         let numberString: String
         if let intCount = count as? Int {
-            numberString = "\(intCount)"
+            numberString = intCount.formatted(.number.notation(.compactName))
         } else if let stringCount = count as? String {
             numberString = stringCount
         } else {
@@ -208,26 +184,33 @@ struct StreakRowView: View {
             HStack(alignment: .top) {
                 // Count + Title
                 VStack(alignment: .leading, spacing: 2 * fontScalingFactor) {
-                    let formattedNumber = formatNumber(count)
                     let baseFontSize = (65 * fontScalingFactor * scaling) * 1.1
                     let dynamicFontSize = calculateFontSize(for: count, baseSize: baseFontSize, scaling: scaling)
                     
-                    Text(formattedNumber.display)
-                        .font(.system(size: dynamicFontSize, weight: .bold))
-                        .foregroundColor(countColor)
-                    
-                    // Show subtitle if we have an abbreviated number
-                    if let numberSubtitle = formattedNumber.subtitle {
-                        Text(numberSubtitle)
-                            .font(.system(size: 14 * fontScalingFactor * scaling))
-                            .foregroundColor(.black.opacity(0.5))
+                    if let intCount = count as? Int {
+                        Text(intCount, format: .number.notation(.compactName))
+                            .font(.system(size: dynamicFontSize, weight: .bold))
+                            .foregroundColor(countColor)
+                        
+                        if intCount >= 1_000 {
+                            Text("\(intCount)")
+                                .font(.system(size: 14 * fontScalingFactor * scaling))
+                                .foregroundColor(.black.opacity(0.5))
+                        }
+                    } else if let stringCount = count as? String {
+                        Text(stringCount)
+                            .font(.system(size: dynamicFontSize, weight: .bold))
+                            .foregroundColor(countColor)
+                    } else {
+                        Text("--")
+                            .font(.system(size: dynamicFontSize, weight: .bold))
+                            .foregroundColor(countColor)
                     }
                     
                     Text(title)
                         .font(.system(size: 16 * fontScalingFactor * scaling))
                         .foregroundColor(.black.opacity(0.65))
                     
-                    // Optional subtitle for member since
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(.system(size: 14 * fontScalingFactor * scaling))

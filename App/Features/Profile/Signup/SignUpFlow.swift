@@ -37,7 +37,7 @@ struct SignUpFlow: View {
                         Button("Continue") {
                             dismiss()
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.glassProminent)
                         .padding(.bottom, 32)
                     }
                     .padding()
