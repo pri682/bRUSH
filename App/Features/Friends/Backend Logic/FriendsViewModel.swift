@@ -287,6 +287,7 @@ class FriendsViewModel: ObservableObject {
                                         let gold = (data["goldMedalsAccumulated"] as? Int) ?? 0
                                         let silver = (data["silverMedalsAccumulated"] as? Int) ?? 0
                                         let bronze = (data["bronzeMedalsAccumulated"] as? Int) ?? 0
+                                        let profileImageURL = (data["profileImageURL"] as? String) ?? nil
 
                                         medalMap[uid] = (gold, silver, bronze)
 
@@ -298,7 +299,8 @@ class FriendsViewModel: ObservableObject {
                                                 gold: gold,
                                                 silver: silver,
                                                 bronze: bronze,
-                                                submittedAt: Date()
+                                                submittedAt: Date(),
+                                                profileImageURL: profileImageURL
                                         ))
                                     }
                                 }
@@ -308,6 +310,14 @@ class FriendsViewModel: ObservableObject {
                                 }
                                 self.leaderboard = allEntries
                                 self.medalCountsByUid = medalMap
+
+                                // Debug: log top entries for verification
+                                #if DEBUG
+                                print("[FriendsViewModel] leaderboard loaded (count:\(allEntries.count))")
+                                for (i, e) in allEntries.prefix(10).enumerated() {
+                                    print("\(i+1): uid=\(e.uid) name='\(e.fullName)' points=\(e.points)")
+                                }
+                                #endif
                 } catch {
                     leaderboardError = "Failed to load leaderboard."
                 }
