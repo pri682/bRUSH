@@ -21,8 +21,22 @@
 		1033BD892E866B0300111590 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD882E866B0300111590 /* FirebaseStorageCombine-Community */; };
 		1033BD8E2E866B9100111590 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8D2E866B9100111590 /* GoogleSignIn */; };
 		1033BD902E866B9100111590 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1033BD8F2E866B9100111590 /* GoogleSignInSwift */; };
+		5D5D466F2EC036C400F58CF8 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 5D5D466E2EC036C400F58CF8 /* Lottie */; };
 		5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */ = {isa = PBXBuildFile; productRef = 5DF4A0A92EA5D38A00BB4265 /* Vortex */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5D79D63D2EC030AC00152B15 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		5DF035842EA1B6DE009A748A /* brush.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = brush.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -62,6 +76,7 @@
 				1033BD722E8669BB00111590 /* FirebaseAnalyticsCore in Frameworks */,
 				5DF4A0AA2EA5D38A00BB4265 /* Vortex in Frameworks */,
 				1033BD7F2E866B0300111590 /* FirebaseCore in Frameworks */,
+				5D5D466F2EC036C400F58CF8 /* Lottie in Frameworks */,
 				1033BD832E866B0300111590 /* FirebaseFirestore in Frameworks */,
 				1033BD762E8669BB00111590 /* FirebaseAppCheck in Frameworks */,
 				1033BD852E866B0300111590 /* FirebaseFunctions in Frameworks */,
@@ -95,6 +110,7 @@
 				1033B8D42E863B8800111590 /* Sources */,
 				1033B8D52E863B8800111590 /* Frameworks */,
 				57863E192EA60391009BCBB1 /* Resources */,
+				5D79D63D2EC030AC00152B15 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -120,6 +136,7 @@
 				1033BD8D2E866B9100111590 /* GoogleSignIn */,
 				1033BD8F2E866B9100111590 /* GoogleSignInSwift */,
 				5DF4A0A92EA5D38A00BB4265 /* Vortex */,
+				5D5D466E2EC036C400F58CF8 /* Lottie */,
 			);
 			productName = brush;
 			productReference = 5DF035842EA1B6DE009A748A /* brush.app */;
@@ -153,6 +170,7 @@
 				1033BD6C2E8669BB00111590 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */,
+				5D5D466D2EC036C400F58CF8 /* XCRemoteSwiftPackageReference "lottie-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1033B8CF2E863B8800111590;
@@ -325,6 +343,7 @@
 				INFOPLIST_FILE = "brush-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = bRUSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This allows you to save your drawings to your photo library.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -344,7 +363,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swebrushapp.bRUSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -386,6 +405,7 @@
 				INFOPLIST_FILE = "brush-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = bRUSH;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This allows you to save your drawings to your photo library.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -405,7 +425,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.brushapp.bRUSH;
+				PRODUCT_BUNDLE_IDENTIFIER = com.swebrushapp.bRUSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -460,6 +480,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 9.0.0;
+			};
+		};
+		5D5D466D2EC036C400F58CF8 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
 			};
 		};
 		5DF4A0A82EA5D38A00BB4265 /* XCRemoteSwiftPackageReference "Vortex" */ = {
@@ -542,6 +570,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1033BD8C2E866B9100111590 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		5D5D466E2EC036C400F58CF8 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5D5D466D2EC036C400F58CF8 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
 		};
 		5DF4A0A92EA5D38A00BB4265 /* Vortex */ = {
 			isa = XCSwiftPackageProductDependency;
