@@ -29,7 +29,7 @@ class FriendsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
-    private var meUid: String? { AuthService.shared.user?.id }
+    var meUid: String? { AuthService.shared.user?.id }
     private var myHandle: String { currentUserHandle ?? AuthService.shared.user?.displayName ?? "unknown" }
     private var myFullName: String {
         [currentUserFirstName, currentUserLastName].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
@@ -270,17 +270,20 @@ class FriendsViewModel: ObservableObject {
     }
     
     func loadLeaderboard(for date: Date = Date()) {
-            guard !friendIds.isEmpty else {
-                self.leaderboard = []
-                self.medalCountsByUid = [:]
-                return
-            }
             isLoadingLeaderboard = true
             leaderboardError = nil
             Task { @MainActor in
                 do {
                     let db = Firestore.firestore()
-                    let ids = Array(friendIds)
+                    var ids = Array(friendIds)
+                    if let me = meUid {
+                        ids.append(me)
+                    }
+                    guard !ids.isEmpty else {
+                        leaderboard = []
+                        isLoadingLeaderboard = false
+                        return
+                    }
                     let chunkSize = 10
                     var allEntries: [LeaderboardEntry] = []
                     var medalMap: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
@@ -325,7 +328,7 @@ class FriendsViewModel: ObservableObject {
                                 // Sort: points desc, then earlier submittedAt first
                                 allEntries.sort {
                                     if $0.points != $1.points { return $0.points > $1.points }
-                                    return $0.submittedAt < $0.submittedAt
+                                    return $0.submittedAt < $1.submittedAt
                                 }
                                 self.leaderboard = allEntries
                                 self.medalCountsByUid = medalMap
