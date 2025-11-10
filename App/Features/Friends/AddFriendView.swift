@@ -4,26 +4,30 @@ struct AddFriendView: View {
     @ObservedObject var vm: FriendsViewModel
     @Environment(\.dismiss) private var dismiss
     
+    @FocusState private var isSearchFocused: Bool
+    
     var body: some View {
         NavigationStack {
             VStack {
                 HStack (spacing: 8){
-                    Text("@").foregroundStyle(.secondary)
+                    Text("@")
+                        .foregroundStyle(.secondary)
+                        .baselineOffset(1.5)
                     TextField("username", text: $vm.addQuery)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .submitLabel(.search)
                         .onSubmit { vm.performAddSearch() }
+                        .focused($isSearchFocused)
                 }
                 .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    Capsule()
                         .fill(.ultraThinMaterial)
                 )
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    UIApplication.shared.sendAction(#selector(UIResponder.becomeFirstResponder),
-                                                    to: nil, from: nil, for: nil)
+                    isSearchFocused = true
                 }
                 .padding([.horizontal, .top])
                 
@@ -62,7 +66,7 @@ struct AddFriendView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(user.fullName).font(.body.weight(.semibold))
                                 Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
-                                    .buttonStyle(.borderedProminent)
+                                    .buttonStyle(.glassProminent)
                             }
                             Spacer()
                             let isFriend = vm.friendIds.contains(user.uid)
@@ -84,10 +88,12 @@ struct AddFriendView: View {
                                 }
                                 label: {
                                     Label { Text("Add") } icon: {
-                                        Image(systemName: "person.badge.plus").foregroundColor(.white)
+                                        Image(systemName: "person.badge.plus")
+                                            .foregroundColor(.white)
+                                            .font(.caption)
                                     }
                                 }
-                                .buttonStyle(.borderedProminent)
+                                .buttonStyle(.glassProminent)
                             }
                         }
                         .padding(.vertical, 4)
@@ -100,6 +106,9 @@ struct AddFriendView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) { dismiss() }
                 }
+            }
+            .onAppear {
+                isSearchFocused = true
             }
         }
     }

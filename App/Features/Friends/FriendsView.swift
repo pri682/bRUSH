@@ -20,9 +20,9 @@ struct FriendsView: View {
                                 }
                                 Spacer()
                                 Button("Accept") { vm.accept(req) }
-                                    .buttonStyle(.borderedProminent)
+                                    .buttonStyle(.glassProminent)
                                 Button("Decline") { vm.decline(req) }
-                                    .buttonStyle(.bordered)
+                                    .buttonStyle(.glass)
                             }
                             .padding(.vertical, 4)
                         }
