@@ -65,6 +65,7 @@ struct EditAvatarView: View {
             let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
             let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
             let horizontalPadding = screenWidth * 0.05
+            let optionSize = screenWidth * 0.18
 
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
@@ -149,124 +150,13 @@ struct EditAvatarView: View {
                             Button {
                                 updateSelection(option)
                             } label: {
-                                VStack(spacing: screenHeight * 0.015) {
-                                    // Preview of the option
-                                    ZStack {
-                                        if selectedCategory == 0 {
-                                            // Body preview
-                                            Image(option)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: optionSize, height: optionSize)
-                                        } else if selectedCategory == 1 {
-                                            // Shirt preview on body
-                                            ZStack {
-                                                if let body = selectedBody {
-                                                    Image(body)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else if selectedCategory == 2 {
-                                            // Eyes preview on body and shirt
-                                            ZStack {
-                                                if let body = selectedBody {
-                                                    Image(body)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let shirt = selectedShirt {
-                                                    Image(shirt)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else if selectedCategory == 3 {
-                                            // Mouth preview on body, shirt, and eyes
-                                            ZStack {
-                                                if let body = selectedBody {
-                                                    Image(body)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let shirt = selectedShirt {
-                                                    Image(shirt)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let eyes = selectedEyes {
-                                                    Image(eyes)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else if selectedCategory == 4 {
-                                            // Hair preview on body, shirt, eyes, and mouth
-                                            ZStack {
-                                                if let body = selectedBody {
-                                                    Image(body)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let shirt = selectedShirt {
-                                                    Image(shirt)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let eyes = selectedEyes {
-                                                    Image(eyes)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let mouth = selectedMouth {
-                                                    Image(mouth)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else {
-                                            // Background preview
-                                            Image(option)
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: optionSize, height: optionSize)
-                                        }
-                                    }
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
-                                    )
-                                    .background(
-                                        RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
-                                    )
-                                }
+                                // Use the improved preview that handles personal / fun mappings
+                                improvedOptionPreview(
+                                    option: option,
+                                    optionSize: optionSize,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight
+                                )
                             }
                         }
                     }
@@ -319,36 +209,114 @@ struct EditAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
+    /// Improved option preview that:
+    /// - Renders backgrounds only for the Background category (no avatar preview).
+    /// - Composes layers correctly depending on avatar type.
+    /// - Clips preview into a rounded rectangle and applies selection overlay.
     @ViewBuilder
-    private func optionsGrid(screenWidth: CGFloat, screenHeight: CGFloat, columns: [GridItem], horizontalPadding: CGFloat) -> some View {
-        LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
-            ForEach(currentOptions, id: \.self) { option in
-                Button {
-                    updateSelection(option)
-                } label: {
-                    optionPreview(option, screenWidth: screenWidth, screenHeight: screenHeight)
+    private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
+        let cornerRadius = screenWidth * 0.03
+        // defensive guard for index
+        let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
+        ZStack {
+            // If this is the background category -> show only the background image,
+            // scaledToFill and clipped so it doesn't overflow the small box.
+            if categoryName.lowercased().contains("background") {
+                Image(option)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: optionSize, height: optionSize)
+                    .clipped()
+            } else {
+                // For non-background categories we need to compose existing layers (base/body/face, shirt if personal, eyes, mouth, hair)
+                ZStack {
+                    // Base layer (body / face)
+                    if let body = selectedBody {
+                        Image(body)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: optionSize, height: optionSize)
+                    } else {
+                        // If there's no selected body, optionally show a neutral placeholder (or nothing).
+                        // We'll not show anything to keep the preview focused on the option.
+                        Color.clear.frame(width: optionSize, height: optionSize)
+                    }
+
+                    // If personal: show shirt underneath eyes/mouth/hair
+                    if selectedAvatarType == .personal {
+                        if let shirt = selectedShirt {
+                            Image(shirt)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: optionSize, height: optionSize)
+                        }
+                    }
+
+                    // Eyes layer (if this preview is for eyes it will be the 'option')
+                    if categoryName.lowercased().contains("eyes") {
+                        Image(option)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: optionSize, height: optionSize)
+                    } else {
+                        // existing selected eyes (if any)
+                        if let eyes = selectedEyes {
+                            Image(eyes)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: optionSize, height: optionSize)
+                        }
+                    }
+
+                    // Mouth layer
+                    if categoryName.lowercased().contains("mouth") {
+                        Image(option)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: optionSize, height: optionSize)
+                    } else {
+                        if let mouth = selectedMouth {
+                            Image(mouth)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: optionSize, height: optionSize)
+                        }
+                    }
+
+                    // Hair layer
+                    if categoryName.lowercased().contains("hair") {
+                        Image(option)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: optionSize, height: optionSize)
+                    } else {
+                        if let hair = selectedHair {
+                            Image(hair)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: optionSize, height: optionSize)
+                        }
+                    }
+
+                    // Body/Face preview when the category is Body/Face
+                    if categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face") {
+                        Image(option)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: optionSize, height: optionSize)
+                    }
                 }
             }
         }
-        .padding(.horizontal, horizontalPadding)
-    }
-
-    @ViewBuilder
-    private func optionPreview(_ option: String, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
-        let optionSize = screenWidth * 0.18
-        ZStack {
-            Image(option)
-                .resizable()
-                .scaledToFit()
-                .frame(width: optionSize, height: optionSize)
-        }
-        .overlay(
-            RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
-        )
+        .frame(width: optionSize, height: optionSize)
         .background(
-            RoundedRectangle(cornerRadius: screenWidth * 0.03)
+            RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
         )
     }
 
