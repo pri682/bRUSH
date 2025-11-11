@@ -382,4 +382,66 @@ private struct LeaderboardListRow: View {
         }
     }
 }
+// MARK: - Profile Image View (Async loading)
+private struct ProfileImageView: View {
+    let url: String?
+    let name: String
+    let size: CGFloat
+    let showBorder: Bool
+    let borderColor: Color?
+
+    var initials: String {
+        name.split(separator: " ")
+            .prefix(2)
+            .compactMap { $0.first }
+            .map { String($0) }
+            .joined()
+    }
+
+    var body: some View {
+        ZStack {
+            // Background circle
+            Circle()
+                .fill(Color.white)
+
+            // Attempt to load image, fallback to initials
+            if let url = url, !url.isEmpty, let imageURL = URL(string: url) {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(width: size, height: size)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        Text(initials)
+                            .font(.system(size: size * 0.4, weight: .bold))
+                            .foregroundStyle(.primary)
+                    @unknown default:
+                        Text(initials)
+                            .font(.system(size: size * 0.4, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
+                }
+            } else {
+                Text(initials)
+                    .font(.system(size: size * 0.4, weight: .bold))
+                    .foregroundStyle(.primary)
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(
+                    borderColor ?? Color.accentColor,
+                    lineWidth: showBorder ? 3 : 0
+                )
+        )
+    }
+}
+
+
     
