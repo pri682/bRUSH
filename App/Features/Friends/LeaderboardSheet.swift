@@ -312,4 +312,74 @@ private struct PodiumView: View {
         }
     }
 }
+// MARK: - List Row View (Rank 4+)
+private struct LeaderboardListRow: View {
+    let rank: Int
+    let entry: LeaderboardEntry
+    let isCurrentUser: Bool
+    var showDivider: Bool = true
+
+    // soft gold used for highlights and icons
+    private let softGold = Color(red: 245/255, green: 182/255, blue: 51/255)
+    private let highlightBg = Color(red: 255/255, green: 247/255, blue: 224/255) // #FFF7E0
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // left rank circle (white inside pill)
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 36, height: 36)
+                    .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+                Text("\(rank)")
+                    .font(.subheadline).bold()
+            }
+
+            // Profile image
+            ProfileImageView(
+                url: entry.profileImageURL,
+                name: entry.fullName,
+                size: 44,
+                showBorder: true,
+                borderColor: Color.white
+            )
+
+            // Name & handle
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isCurrentUser ? "You" : entry.fullName)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Text(entry.handle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            // Points with bolt (muted gold)
+            HStack(spacing: 6) {
+                Image(systemName: "bolt.fill")
+                    .font(.caption)
+                    .foregroundColor(softGold)
+                Text("\(entry.points) pts")
+                    .font(.subheadline).bold()
+                    .foregroundColor(Color(.secondaryLabel))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(isCurrentUser ? highlightBg : Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.03), radius: 2, x: 0, y: 1)
+        .overlay(alignment: .bottom) {
+            if showDivider {
+                Rectangle()
+                    .fill(Color(.systemGray5))
+                    .frame(height: 1)
+                    .padding(.leading, 64)
+            }
+        }
+    }
+}
     
