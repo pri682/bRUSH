@@ -98,4 +98,218 @@ struct LeaderboardSheet: View {
         }
     }
 }
+// MARK: - Previews
+struct LeaderboardSheet_Previews: PreviewProvider {
+    static var sampleEntries: [LeaderboardEntry] {
+        [
+            LeaderboardEntry(uid: "u1", fullName: "Bryan Wolf", handle: "@bryan", gold: 0, silver: 0, bronze: 43, profileImageURL: "https://i.pravatar.cc/150?img=12"),
+            LeaderboardEntry(uid: "u2", fullName: "Meghan Jess", handle: "@meghan", gold: 0, silver: 0, bronze: 40, profileImageURL: "https://i.pravatar.cc/150?img=15"),
+            LeaderboardEntry(uid: "u3", fullName: "Alex Turner", handle: "@alex", gold: 0, silver: 0, bronze: 38, profileImageURL: "https://i.pravatar.cc/150?img=18"),
+            LeaderboardEntry(uid: "u4", fullName: "Marsha Fisher", handle: "@marsha", gold: 0, silver: 0, bronze: 36, profileImageURL: "https://i.pravatar.cc/150?img=20"),
+            LeaderboardEntry(uid: "u5", fullName: "Juanita Cormier", handle: "@juanita", gold: 0, silver: 0, bronze: 35, profileImageURL: "https://i.pravatar.cc/150?img=21"),
+            LeaderboardEntry(uid: "me", fullName: "You", handle: "@me", gold: 0, silver: 0, bronze: 34, profileImageURL: "https://i.pravatar.cc/150?img=32"),
+            LeaderboardEntry(uid: "u7", fullName: "Tamara Schmidt", handle: "@tamara", gold: 0, silver: 0, bronze: 33, profileImageURL: "https://i.pravatar.cc/150?img=33")
+        ]
+    }
+
+    static var previews: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                PodiumView(entries: Array(sampleEntries.prefix(3)), meUid: "me")
+
+                VStack(spacing: 12) {
+                    ForEach(Array(sampleEntries.enumerated()), id: \.element.id) { offset, element in
+                        if offset >= 3 {
+                            LeaderboardListRow(rank: offset + 1, entry: element, isCurrentUser: element.uid == "me")
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+        .previewLayout(.sizeThatFits)
+    }
+}
+
+// MARK: - Podium View (Top 3)
+private struct PodiumView: View {
+    let entries: [LeaderboardEntry]
+    let meUid: String?
+
+    private let gold = Color(red: 245/255, green: 182/255, blue: 51/255) // #F5B633
+    private let placeholderBg = Color(red: 255/255, green: 245/255, blue: 217/255) // #FFF5D9
+    private let darkGray = Color(red: 51/255, green: 51/255, blue: 51/255) // #333333
+
+    private func safeEntry(_ index: Int) -> LeaderboardEntry? {
+        guard entries.indices.contains(index) else { return nil }
+        return entries[index]
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Avatar section with badges aligned horizontally
+            HStack(alignment: .center, spacing: 12) {
+                // 2nd Place (Left)
+                ZStack(alignment: .bottom) {
+                    if let entry = safeEntry(1) {
+                        ProfileImageView(
+                            url: entry.profileImageURL,
+                            name: entry.fullName,
+                            size: 72,
+                            showBorder: true,
+                            borderColor: gold
+                        )
+                    } else {
+                        PlaceholderAvatarView(size: 72, borderColor: gold, bgColor: placeholderBg)
+                    }
+                    
+                    // Rank badge
+                    Circle()
+                        .fill(gold)
+                        .frame(width: 28, height: 28)
+                        .overlay(
+                            Text("2")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                        .offset(y: 14)
+                }
+                .frame(height: 86)
+                
+                // 1st Place (Center) - PROMINENT & ELEVATED
+                VStack(spacing: 0) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(gold)
+                        .offset(y: -8)
+                    
+                    ZStack(alignment: .bottom) {
+                        if let entry = safeEntry(0) {
+                            ProfileImageView(
+                                url: entry.profileImageURL,
+                                name: entry.fullName,
+                                size: 100,
+                                showBorder: true,
+                                borderColor: gold
+                            )
+                        } else {
+                            PlaceholderAvatarView(size: 100, borderColor: gold, bgColor: placeholderBg)
+                        }
+                        
+                        Circle()
+                            .fill(gold)
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Text("1")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                            .offset(y: 16)
+                    }
+                    .frame(height: 116)
+                }
+                .padding(.top, -16)
+                
+                // 3rd Place (Right)
+                ZStack(alignment: .bottom) {
+                    if let entry = safeEntry(2) {
+                        ProfileImageView(
+                            url: entry.profileImageURL,
+                            name: entry.fullName,
+                            size: 72,
+                            showBorder: true,
+                            borderColor: gold
+                        )
+                    } else {
+                        PlaceholderAvatarView(size: 72, borderColor: gold, bgColor: placeholderBg)
+                    }
+                    
+                    Circle()
+                        .fill(gold)
+                        .frame(width: 28, height: 28)
+                        .overlay(
+                            Text("3")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                        .offset(y: 14)
+                }
+                .frame(height: 86)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 16)
+            
+            // Names and Points Baseline (all three aligned horizontally)
+            HStack(alignment: .top, spacing: 12) {
+                // 2nd Place
+                VStack(spacing: 2) {
+                    if entries.indices.contains(1) {
+                        Text(entries[1].fullName)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(darkGray)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(gold)
+                            Text("\(entries[1].points) pts")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(darkGray)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                
+                // 1st Place (larger)
+                VStack(spacing: 2) {
+                    if !entries.isEmpty {
+                        Text(entries[0].fullName)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(darkGray)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(gold)
+                            Text("\(entries[0].points) pts")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(darkGray)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                
+                // 3rd Place
+                VStack(spacing: 2) {
+                    if entries.indices.contains(2) {
+                        Text(entries[2].fullName)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(darkGray)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(gold)
+                            Text("\(entries[2].points) pts")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(darkGray)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
+        }
+    }
+}
     
