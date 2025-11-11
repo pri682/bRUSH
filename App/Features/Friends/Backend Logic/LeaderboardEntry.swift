@@ -9,7 +9,6 @@ struct LeaderboardEntry: Identifiable, Hashable {
     let silver: Int
     let bronze: Int
     let submittedAt: Date   // tie breaker
-    let profileImageURL: String?  // URL to user's profile picture
     
     // increased multipliers to feel more rewarding
     var points: Int { gold * 100 + silver * 25 + bronze * 10}
@@ -21,8 +20,7 @@ struct LeaderboardEntry: Identifiable, Hashable {
         gold: Int,
         silver: Int,
         bronze: Int,
-        submittedAt: Date = Date(),
-        profileImageURL: String? = nil
+        submittedAt: Date = Date()
     ) {
         self.uid = uid
         self.id = uid
@@ -32,6 +30,5 @@ struct LeaderboardEntry: Identifiable, Hashable {
         self.silver = silver
         self.bronze = bronze
         self.submittedAt = submittedAt
-        self.profileImageURL = profileImageURL
     }
 }
