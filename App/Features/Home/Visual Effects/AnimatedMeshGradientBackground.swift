@@ -1,47 +1,62 @@
 import SwiftUI
 
 struct AnimatedMeshGradientBackground: View {
-    let width: Int = 3
-    let height: Int = 3
+    let width: Int = 4
+    let height: Int = 4
 
     var body: some View {
         TimelineView(.animation) { context in
-            let time = context.date.timeIntervalSince1970
-            // Subtle oscillation offsets for animation
-            let offsetX1 = Float(sin(time * 0.8) * 0.08)
-            let offsetY1 = Float(cos(time * 0.6) * 0.08)
-            let offsetX2 = Float(sin(time * 0.5) * 0.05)
-            let offsetY2 = Float(cos(time * 0.7) * 0.05)
-            
+            let t = context.date.timeIntervalSince1970
+            let t1 = t * 0.25
+            let t2 = t * 0.33
+
+            let a1x = Float(sin(t1) * 0.25)
+            let a1y = Float(cos(t2) * 0.25)
+            let a2x = Float(cos(t1 * 0.8) * 0.25)
+            let a2y = Float(sin(t2 * 0.9) * 0.25)
+            let a3x = Float(sin(t2 * 1.1) * 0.25)
+            let a3y = Float(cos(t1 * 0.7) * 0.25)
+            let a4x = Float(cos(t2 * 1.2) * 0.25)
+            let a4y = Float(sin(t2 * 0.6) * 0.25)
+
             MeshGradient(
                 width: width,
                 height: height,
                 points: [
-                    [0.0, 0.0],
-                    [0.5 + offsetX1, 0.0 + offsetY1],
-                    [1.0, 0.0],
-                    [0.0, 0.5 + offsetY2],
-                    [0.5 + offsetX2, 0.5 + offsetY2],
-                    [1.0, 0.5],
-                    [0.0, 1.0],
-                    [0.5 + offsetX1, 1.0 + offsetY1],
-                    [1.0, 1.0]
+                    [0.0, 0.0], [0.33, 0.0], [0.66, 0.0], [1.0, 0.0],
+                    [0.0, 0.33],
+                    [0.33 + a1x, 0.33 + a1y],
+                    [0.66 + a2x, 0.33 + a2y],
+                    [1.0, 0.33],
+                    [0.0, 0.66],
+                    [0.33 + a3x, 0.66 + a3y],
+                    [0.66 + a4x, 0.66 + a4y],
+                    [1.0, 0.66],
+                    [0.0, 1.0], [0.33, 1.0], [0.66, 1.0], [1.0, 1.0]
                 ],
                 colors: [
-                    Color(red: 1.0, green: 0.7, blue: 0.55).opacity(0.6), // soft peach
-                    Color(red: 1.0, green: 0.6, blue: 0.5).opacity(0.5),  // muted coral
-                    Color(red: 1.0, green: 0.5, blue: 0.45).opacity(0.45), // gentle red
-                    Color(red: 1.0, green: 0.65, blue: 0.55).opacity(0.5), // warm tone
-                    Color(red: 1.0, green: 0.6, blue: 0.5).opacity(0.45),
-                    Color(red: 1.0, green: 0.55, blue: 0.45).opacity(0.4),
-                    Color.white.opacity(0.0), Color.white.opacity(0.0), Color.white.opacity(0.0) // fade to white at bottom
+                    Color(red: 1.0, green: 0.55, blue: 0.4),
+                    Color(red: 1.0, green: 0.7, blue: 0.5),
+                    Color(red: 0.9, green: 0.5, blue: 0.8),
+                    Color(red: 0.7, green: 0.7, blue: 1.0),
+                    Color(red: 0.55, green: 0.8, blue: 1.0),
+                    Color(red: 1.0, green: 0.55, blue: 0.4),
+                    Color(red: 1.0, green: 0.7, blue: 0.5),
+                    Color(red: 0.9, green: 0.5, blue: 0.8),
+                    Color(red: 0.7, green: 0.7, blue: 1.0),
+                    Color(red: 0.55, green: 0.8, blue: 1.0),
+                    Color(red: 1.0, green: 0.55, blue: 0.4),
+                    Color(red: 1.0, green: 0.7, blue: 0.5),
+                    Color(red: 0.9, green: 0.5, blue: 0.8),
+                    Color(red: 0.7, green: 0.7, blue: 1.0),
+                    Color(red: 0.55, green: 0.8, blue: 1.0),
+                    Color(red: 1.0, green: 0.55, blue: 0.4)
                 ]
             )
+            .blur(radius: 40)
+            .scaleEffect(1.6)
+            .opacity(0.95)
             .ignoresSafeArea()
         }
     }
-}
-
-#Preview {
-    AnimatedMeshGradientBackground()
 }
