@@ -423,4 +423,27 @@ struct HomeView: View {
             hasAttemptedDrawing = false
         }
     }
+    
+    private static func isWinter() -> Bool {
+        let month = Calendar.current.component(.month, from: Date())
+        return [11, 12, 1, 2].contains(month)
+    }
+    
+    private static func createGentleSnow() -> VortexSystem {
+        let system = VortexSystem(tags: ["circle"])
+        
+        system.position = [0.5, 0]
+        system.shape = .box(width: 1, height: 0)
+        system.birthRate = 10
+        system.lifespan = 40
+        system.speed = 0.05
+        system.speedVariation = 0.02
+        system.angle = .degrees(180)
+        system.angleRange = .degrees(20)
+        system.size = 0.25
+        system.sizeVariation = 0.5
+        system.sizeMultiplierAtDeath = 1
+        
+        return system
+    }
 }
