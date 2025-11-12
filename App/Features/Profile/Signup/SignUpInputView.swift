@@ -40,9 +40,25 @@ struct SignUpInputView: View {
                 }
                 
                 // Password
-                InputField(placeholder: "Password (min 6 chars)", text: $viewModel.password, isSecure: true)
-                    // ✨ THE FIX: Change to .password to disable strong password suggestion
-                    .textContentType(.password)
+                // Password (🔑 MODIFIED: Added validation logic here)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    InputField(
+                                        placeholder: "Password (min 6 chars)",
+                                        text: $viewModel.password,
+                                        isSecure: true,
+                                        // 🔑 USE: The new property to turn the input field red
+                                        hasError: viewModel.isPasswordTooShort
+                                    )
+                                    // The original file used .password which is correct for hiding text
+                                    .textContentType(.password)
+                                    
+                                    // 🔑 ADDED: Conditional error message for password length
+                                    if viewModel.isPasswordTooShort {
+                                        Text("Password must be at least 6 characters long")
+                                            .font(.caption)
+                                            .foregroundColor(.red)
+                                    }
+                                }
                 
                 // Confirm Password
                 VStack(alignment: .leading, spacing: 4) {
