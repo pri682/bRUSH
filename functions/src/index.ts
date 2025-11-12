@@ -1,14 +1,17 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 
-const GEMINI_API_KEY =
-  process.env.GEMINI_API_KEY || functions.config().gemini?.key;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  throw new Error("❌ Missing Gemini API key! Add GEMINI_API_KEY to .env file.");
+}
 
-// ✅ Corrected Gemini response type
 interface GeminiResponse {
   candidates?: {
     content?: {
@@ -17,27 +20,33 @@ interface GeminiResponse {
   }[];
 }
 
-// ✅ Function to generate a new creative prompt
+// 🧠 Detect current season & trending topic
+function getSeasonalContext(): string {
+  const month = new Date().getMonth();
+  if ([11, 0, 1].includes(month)) return "winter, holidays, new year vibes";
+  if ([2, 3, 4].includes(month)) return "spring, flowers, festivals, fresh energy";
+  if ([5, 6, 7].includes(month)) return "summer, beach, travel, sunshine";
+  return "fall, halloween, cozy weather, gratitude";
+}
+
+// 🪄 Function to generate trend-aware, seasonal prompts
 async function generatePrompt(): Promise<string> {
   const examples = [
-    "What does your brain look like on a happy day?",
-    "Redesign money if it didn’t have numbers.",
-    "If emotions had uniforms, what would 'curiosity' wear?",
-    "Draw the weather inside your head right now.",
-    "Merge two animals that would never meet in real life.",
-    "Turn your favorite song into a creature.",
-    "If dreams had traffic rules, sketch a traffic sign.",
-    "Design a chair for an alien.",
-    "Reimagine Earth if gravity took weekends off.",
-    "Draw a plant that grows emotions instead of fruits.",
+    "Draw a snowman celebrating Diwali.",
+    "Design a surfboard powered by friendship.",
+    "Sketch a pumpkin with WiFi.",
+    "Create a plant that grows summer memories.",
   ];
+
+  const context = getSeasonalContext();
 
   const promptBody = {
     contents: [
       {
         parts: [
           {
-            text: `Generate ONE funny, creative, short drawing prompt (under 15 words).
+            text: `Generate ONE short, fun, creative drawing prompt (under 15 words)
+that matches the current ${context} or trending global mood.
 Example ideas:
 ${examples.join("\n")}`,
           },
@@ -56,50 +65,29 @@ ${examples.join("\n")}`,
   );
 
   const data = (await response.json()) as GeminiResponse;
-
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-    "No prompt generated.";
-
-  return text;
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "No prompt generated.";
 }
 
-// ✅ Function — returns same prompt for 24 hrs, refreshes after midnight
-export const generateDailyPrompt = functions.https.onRequest(
-  async (_req, res): Promise<void> => {
-    try {
-      const today = new Date().toLocaleDateString("en-US", {
-        timeZone: "America/Chicago",
-      });
+// ⏱ Refreshes every 20 seconds
+export const generateTimedPrompt = functions.https.onRequest(async (_req, res) => {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const intervalKey = Math.floor(now / 20);
+    const ref = db.collection("prompts").doc("timed");
+    const doc = await ref.get();
 
-      const ref = db.collection("prompts").doc("daily");
-      const doc = await ref.get();
-
-      // 🔹 If today's prompt already exists → reuse it
-      if (doc.exists && doc.data()?.date === today) {
-        res.status(200).json({
-          success: true,
-          prompt: doc.data()?.prompt,
-          date: doc.data()?.date,
-        });
-        return;
-      }
-
-      // 🔹 Otherwise, generate new and save it
-      const prompt = await generatePrompt();
-      await ref.set({ prompt, date: today });
-
-      res.status(200).json({
-        success: true,
-        prompt,
-        date: today,
-      });
-    } catch (err) {
-      console.error("❌ Error:", err);
-      res.status(500).json({
-        success: false,
-        prompt: "Error generating prompt.",
-      });
+    if (doc.exists && doc.data()?.intervalKey === intervalKey) {
+      res.status(200).json({ success: true, prompt: doc.data()?.prompt, timestamp: doc.data()?.timestamp });
+      return;
     }
+
+    const prompt = await generatePrompt();
+    const timestamp = new Date().toISOString();
+    await ref.set({ prompt, intervalKey, timestamp });
+
+    res.status(200).json({ success: true, prompt, timestamp });
+  } catch (err) {
+    console.error("❌ Error:", err);
+    res.status(500).json({ success: false, prompt: "Error generating prompt." });
   }
-);
+});
