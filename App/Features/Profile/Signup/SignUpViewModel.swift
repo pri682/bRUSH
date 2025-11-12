@@ -31,6 +31,11 @@ class SignUpViewModel: ObservableObject {
     var passwordsMatch: Bool {
         password == confirmPassword
     }
+    
+    // 🔑 KAN-157: Property for basic length validation on password
+    var isPasswordTooShort: Bool {
+        return !password.isEmpty && password.count < 6
+    }
 
     private let auth = AuthService.shared
     private let userService = UserService.shared
