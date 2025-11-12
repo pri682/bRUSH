@@ -2,6 +2,8 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import fetch from "node-fetch";
 import * as dotenv from "dotenv";
+import * as functionsV1 from "firebase-functions/v1";
+
 dotenv.config();
 
 if (!admin.apps.length) admin.initializeApp();
@@ -21,107 +23,123 @@ interface GeminiResponse {
   }[];
 }
 
-// 🌤 Detect current seasonal context - Made less specific (e.g., removed direct 'pumpkins')
+// 🌤 Detect current seasonal context - Refined
 function getSeasonalContext(): string {
   const month = new Date().getMonth();
   if ([11, 0, 1].includes(month))
-    return "winter stillness, crystalline structures, deep blues, and reflection";
+    return "winter stillness, cozy sweaters, warm lights, and reflection";
   if ([2, 3, 4].includes(month))
-    return "spring renewal, soft greens, new growth, and bold colors";
+    return "spring renewal, bright mornings, soft greens, and new beginnings";
   if ([5, 6, 7].includes(month))
-    return "summer warmth, bright skies, expansive spaces, and high energy";
-  // FIX: Changed "dramatic weather" to "shifting light, and soft ground textures" 
-  // to eliminate the strong "wet" trigger.
-  return "autumn harvest, deep rich colors, shifting light, and soft ground textures";
+    return "summer adventures, sunshine, open skies, and lazy afternoons";
+  return "autumn leaves, changing air, deep colors, and calm moods";
 }
 
-// 🌍 Add trending keywords for each month (Expanded for more variety and abstract concepts!)
+// 🌍 Add trending keywords for each month (kept for seasonal variety)
 function getTrendingKeywords(month: number): string[] {
   switch (month) {
-    case 0: // January
-      return ["Frozen Neon", "Arctic Flora", "Clockwork Labyrinth", "Digital Nomad Tent", "Whispering Satellite"];
-    case 1: // February
-      return ["Cybernetic Heart", "Secret Garden Gate", "Self-Love Portal", "Floating Opera House", "Misty Mountain Base"];
-    case 2: // March
-      return ["Emerald Cityscape", "Biotech Butterfly", "Ancient Computer Chip", "Celestial Architect", "First Thaw"];
-    case 3: // April
-      return ["Cosmic Egg", "Rainy Window", "Mythic Beast", "Time-Lapse Flower", "Microplastic Beach"];
-    case 4: // May
-      return ["Biopunk", "Floating Islands", "Submerged City Hall", "Future Botanical Garden", "Solar Powered Snail"];
-    case 5: // June
-      return ["Rainbow Galaxy", "Hidden Waterfall", "Tropical Synthwave", "Shattered Mirror Dimension", "Ephemeral Sculpture"];
-    case 6: // July
-      return ["Sunken Temple", "Glow Stick Party", "Retro Arcade Cabinet", "Molten Metal River", "Desert Glass Tower"];
-    case 7: // August
-      return ["Desert Oasis", "Star Map", "Golden Hour", "Dimensional Rift", "Quiet Train Station"];
-    case 8: // September
-      return ["Magical Library", "Changing Leaves", "Cozy Cabin", "Crystal Cave Entrance", "Echoing Wind Chime"];
-    case 9: // October
-      return ["Glitch Art Ghost", "Haunted Neon Sign", "Spooky Forest Trail", "Candlelit Altar", "Geometric Skeleton"];
-    case 10: // November - Highly abstract and less holiday-centric
-      return ["Ceremonial Mask", "Deep Sea Explorer", "Floating Library", "Cosmic Cartographer", "Abandoned Carousel"];
-    case 11: // December
-      return ["Holiday Lights", "Winter Solstice", "Snow Globe Town", "Zero Gravity Sleigh", "Icy Steampunk Gear"];
+    case 0:
+      return ["AI influencer", "space heater rebellion", "resolutions meme"];
+    case 1:
+      return ["Valentine’s algorithm", "snowstorm TikTok", "digital detox trend"];
+    case 2:
+      return ["spring cleaning app", "March meme madness", "quantum dating AI"];
+    case 3:
+      return ["AI art protest", "cherry blossom filter", "celebrity livestream"];
+    case 4:
+      return ["summer playlist", "self-care robot", "lazy productivity trend"];
+    case 5:
+      return ["travel vlog AI", "Pride avatar filter", "cosmic festival"];
+    case 6:
+      return ["heatwave meme", "retro vacation", "digital garden revival"];
+    case 7:
+      return ["back-to-school influencer", "nostalgia edit", "late-summer chaos"];
+    case 8:
+      return ["pumpkin AI latte", "fall decor influencer", "cozycore revival"];
+    case 9:
+      return ["Halloween filter", "ghost influencer", "spooky playlist bot"];
+    case 10:
+      return ["gratitude app", "cozy productivity", "AI family dinner"];
+    case 11:
+      return ["holiday AI commercial", "winter playlist", "snow meme"];
     default:
-      return ["creativity", "art", "friendship", "ephemeral", "cyberpunk"];
+      return ["AI meme", "daily trend", "weird internet energy"];
   }
 }
 
-// 🪄 Generate creative prompt (refined logic for variety and simplicity)
+// 🪄 Generate vague, funny, and trend-aware daily prompts
 async function generatePrompt(): Promise<string> {
   const month = new Date().getMonth();
-
   const seasonContext = getSeasonalContext();
   const trendingKeywords = getTrendingKeywords(month);
 
-  // 🎲 Random creative tone (Vastly expanded for more variety)
-  const creativeTones = [
-    "surreal", "dreamy", "mystical", "nostalgic", "cyberpunk", "retro-futuristic",
-    "poetic", "cinematic", "abstract", "playful", "minimalist", "baroque",
-    "steampunk", "gothic", "Maximalist", "Vaporwave", "Glitchcore", "Cottagecore",
-    "Neo-Expressionist", "Cozy Horror", "Low Poly", "Line Art", "Ukiyo-e",
-    "Cartoon", "Claymation", "Pixel Art", "Psychedelic", "Fairycore", "Dark Academia"
+  const randomTrend =
+    trendingKeywords[Math.floor(Math.random() * trendingKeywords.length)];
+
+  const humorTones = [
+    "absurd",
+    "deadpan",
+    "chaotic",
+    "sarcastic",
+    "whimsical",
+    "self-aware",
+    "parody",
+    "daydream-like",
+    "meta",
+    "lazy genius",
   ];
   const randomTone =
-    creativeTones[Math.floor(Math.random() * creativeTones.length)];
+    humorTones[Math.floor(Math.random() * humorTones.length)];
 
-  // 🌈 Random emotional theme (Expanded for more depth)
-  const emotionalThemes = [
-    "hope", "curiosity", "peace", "love", "imagination", "freedom", "harmony",
-    "energy", "wonder", "Solitude", "Awe", "Relief", "Acceptance", "Melancholy",
-    "Excitement", "Tranquility", "Resilience", "Ephemeral", "Jubilation", "Vulnerability"
+  const systemPrompt = `You are a witty, internet-savvy creative prompt generator.
+You invent short, vague, and funny drawing prompts that feel like modern memes or surreal jokes.
+Rules:
+- Output ONE prompt only (under 12 words).
+- No quotes, no lists, no explanations.
+- Be vague but visual and relatable.
+- Gently reference online culture (AI, influencers, memes, trends).
+- The prompt should feel like a surreal thought you'd see on social media.`;
+
+  const examples = [
+    "A pigeon explaining AI to a confused robot.",
+    "The moon joining a group chat about astrology.",
+    "A cat becoming a motivational speaker.",
+    "A toaster applying for influencer sponsorships.",
+    "A cloud trying to cancel the sun.",
+    "An avocado giving a TED Talk about anxiety.",
+    "A raccoon running a crypto startup.",
+    "The internet on vacation, ignoring notifications.",
+    "A robot arguing with its own AI therapist.",
+    "A ghost updating its social media bio.",
+    "A pumpkin trying to become a fashion blogger.",
+    "A plant streaming its growth journey live.",
   ];
-  const themeOfDay =
-    emotionalThemes[Math.floor(Math.random() * emotionalThemes.length)];
 
-  // 1. Define the model's persona and output rules clearly
-  const systemPrompt = `You are a creative prompt generator. Your ONLY job is to generate ONE single, imaginative, raw drawing prompt. The prompt MUST be under 10 words. Do not add quotes, headers, or commentary. Use only **BASIC, COMMON, and simple English vocabulary (3rd-grade reading level max)**. FOCUS on blending the three randomized elements below into a unique, concrete image.`;
+  const exampleMix = examples.sort(() => Math.random() - 0.5).slice(0, 5).join("\n");
 
-  // 2. Define the generation task, emphasizing novelty and the blend of abstract concepts
-  const userQuery = `Generate ONE short prompt. The prompt must strictly combine:
-1. The style: ${randomTone}
-2. The emotion: ${themeOfDay}
-3. The trending concept: (Choose ONE from this list: ${trendingKeywords.join(", ")})
-Also, incorporate the visual context of ${seasonContext}.`;
+  const userPrompt = `Generate ONE funny, vague drawing prompt in a ${randomTone} tone.
+It should feel weirdly relatable and gently reflect online culture like ${randomTrend}.
+Include hints of ${seasonContext}.
+Keep it short (max 12 words).
+Examples:
+${exampleMix}`;
 
   const promptBody = {
     contents: [
       {
         role: "user",
-        parts: [{ text: userQuery }],
+        parts: [{ text: userPrompt }],
       },
     ],
-    // Using systemInstruction for better persona grounding and negative constraints
     systemInstruction: { parts: [{ text: systemPrompt }] },
     generationConfig: {
-      temperature: 0.85, // Adjusted temperature slightly down to encourage less repetitive phrasing
-      topK: 50,
-      topP: 0.9,
+      temperature: 1.4,
+      topK: 60,
+      topP: 0.95,
     },
   };
 
   try {
-    // 3. Changed model to a more modern, instruction-following version
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -142,7 +160,7 @@ Also, incorporate the visual context of ${seasonContext}.`;
       data.candidates[0]?.content?.parts?.[0]?.text?.trim() ||
       getFallbackPrompt();
 
-    console.log("🖌️ New Gemini Prompt:", text);
+    console.log("😂 New Funny Prompt:", text);
     return text;
   } catch (error) {
     console.error("❌ Gemini API Error:", error);
@@ -150,22 +168,23 @@ Also, incorporate the visual context of ${seasonContext}.`;
   }
 }
 
-// 🪴 Local fallback in case Gemini fails
+// 🪴 Fallback prompt if Gemini fails
 function getFallbackPrompt(): string {
   const fallbacks = [
-    "Floating ice cream mountain.",
-    "A cozy snow globe library.",
-    "A neon-lit space cat.",
-    "Summer beach time machine.",
-    "A spooky pumpkin spice forest.",
+    "A toaster running for president.",
+    "The internet taking a nap.",
+    "A chicken starting a tech startup.",
+    "A UFO confused by modern fashion.",
+    "A frog trying to use a smartphone.",
   ];
   return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 }
 
 // ✅ Function — returns same prompt for 24 hrs, refreshes after midnight
 export const generateDailyPrompt = functions.https.onRequest(
-  async (_req, res): Promise<void> => {
+  async (req, res): Promise<void> => {
     try {
+      const force = req.query.force === "true";
       const today = new Date().toLocaleDateString("en-US", {
         timeZone: "America/Chicago",
       });
@@ -173,8 +192,7 @@ export const generateDailyPrompt = functions.https.onRequest(
       const ref = db.collection("prompts").doc("daily");
       const doc = await ref.get();
 
-      // 🔹 If today's prompt already exists → reuse it
-      if (doc.exists && doc.data()?.date === today && doc.data()?.prompt) {
+      if (!force && doc.exists && doc.data()?.date === today && doc.data()?.prompt) {
         res.status(200).json({
           success: true,
           prompt: doc.data()?.prompt,
@@ -183,7 +201,6 @@ export const generateDailyPrompt = functions.https.onRequest(
         return;
       }
 
-      // 🔹 Otherwise, generate new and save it
       const prompt = await generatePrompt();
       await ref.set({ prompt, date: today });
 
@@ -201,3 +218,35 @@ export const generateDailyPrompt = functions.https.onRequest(
     }
   }
 );
+
+// 🕛 Scheduled function — auto-refreshes daily at midnight CST
+export const scheduledDailyPrompt = functionsV1.pubsub
+  .schedule("0 0 * * *") // every midnight UTC
+  .timeZone("America/Chicago")
+  .onRun(async () => {
+    try {
+      console.log("🌙 Running scheduledDailyPrompt...");
+
+      const today = new Date().toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
+      });
+
+      const ref = db.collection("prompts").doc("daily");
+      const doc = await ref.get();
+
+      if (doc.exists && doc.data()?.date === today) {
+        console.log("🕒 Prompt already up to date for", today);
+        return null;
+      }
+
+      console.log("✨ Generating a new scheduled prompt for", today);
+      const prompt = await generatePrompt();
+      await ref.set({ prompt, date: today });
+
+      console.log("✅ New prompt saved:", prompt);
+      return null;
+    } catch (error) {
+      console.error("❌ Scheduled prompt generation failed:", error);
+      return null;
+    }
+  });
