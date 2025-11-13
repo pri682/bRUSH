@@ -68,6 +68,11 @@ struct AddFriendView: View {
                                 Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
                                     .buttonStyle(.glassProminent)
                             }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                vm.openProfile(for: user)
+                            }
+                            
                             Spacer()
                             let isFriend = vm.friendIds.contains(user.uid)
                             let isPending = vm.isRequestPending(uid: user.uid)
@@ -109,6 +114,20 @@ struct AddFriendView: View {
             }
             .onAppear {
                 isSearchFocused = true
+            }
+            .sheet(isPresented: $vm.showingProfile, onDismiss: {
+                vm.performAddSearch()
+            }) {
+                if let p = vm.selectedProfile {
+                    FriendProfileSheet(vm: vm, profile: p)
+                } else {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading profile…")
+                    }
+                    .padding()
+                    .presentationDetents([.fraction(0.3)])
+                }
             }
         }
     }
