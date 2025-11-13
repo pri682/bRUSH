@@ -110,11 +110,10 @@ struct SignedInProfileView: View {
                                     } label: {
                                         Image(systemName: "gearshape.fill")
                                             .font(.system(size: 24, weight: .medium))
-                                        // 💡 FIX: Use dynamic color for the gear icon
-                                                .foregroundColor(avatarTextColor.opacity(0.85))
-                                                // 💡 FIX: Use dynamic shadow color
-                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
-                                        }
+                                            // ❗ Gear icon remains hardcoded white as requested
+                                            .foregroundColor(.white.opacity(0.85))
+                                            .shadow(color: .black, radius: 0, x: 1, y: 1)
+                                    }
                                     .padding(.trailing, standardPadding * 0.75)
                                     .padding(.bottom, screenHeight * 0.02)
                                 }
