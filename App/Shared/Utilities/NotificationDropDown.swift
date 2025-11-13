@@ -1,12 +1,10 @@
 import SwiftUI
 
 struct NotificationsDropdown: View {
-    @State private var notifications: [[String: String]] =
-        NotificationManager.shared.getNotificationHistory()
+    @State private var notifications: [[String: String]] = []
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             ZStack {
                 UnevenRoundedRectangle(
                         topLeadingRadius: 14,
@@ -77,8 +75,16 @@ struct NotificationsDropdown: View {
                 .frame(height: 200)
             }
         }
+        .onAppear {
+            DispatchQueue.global(qos: .userInitiated).async {
+                let history = NotificationManager.shared.getNotificationHistory()
+                DispatchQueue.main.async {
+                    self.notifications = history
+                }
+            }
+        }
         .frame(width: 320)
-        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 14))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
     }
     
     // MARK: - Delete helpers
