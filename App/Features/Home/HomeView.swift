@@ -11,7 +11,7 @@ struct HomeView: View {
     
     @Namespace private var launchAnimation
     @State private var isShowingSplash = true
-    private let launchOrange = Color.accentColor
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
     @AppStorage("lastPostDateString") private var lastPostDateString: String = ""
@@ -386,19 +386,23 @@ struct HomeView: View {
 
                 if isShowingSplash {
                     ZStack {
-                        Image("blurred_background")
-                            .resizable()
-                            .scaledToFill()
-                            .ignoresSafeArea()
-                            .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
-                            .padding(.trailing, 50)
+                        Color.clear.overlay(
+                            Image("blurred_background")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        )
+                        .edgesIgnoringSafeArea(.all)
+                        .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
                         
-                        Image("brush_shadow")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 330, height: 191)
-                            .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
-                            .offset(y: -17)
+                        GeometryReader { geo in
+                            Image("brush_shadow")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: geo.size.width * (horizontalSizeClass == .regular ? 0.49 : 0.745))
+                                .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
+                                .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                                .offset(y: geo.size.height * -0.022)
+                        }
                     }
                     .zIndex(5)
                 }
