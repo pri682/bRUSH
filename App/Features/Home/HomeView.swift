@@ -87,22 +87,24 @@ struct HomeView: View {
                                 
                                 ZStack(alignment: .top) {
                                     ScrollView(.vertical) {
-                                        ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                            let item = viewModel.feedItems[index]
-                                            let cardWidth = visibleHeight * (9 / 16)
+                                        VStack(spacing: 20) {
+                                            ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                let item = viewModel.feedItems[index]
+                                                let cardWidth = visibleHeight * (9 / 16)
 
-                                            UserFeedItemView(
-                                                item: item,
-                                                prompt: viewModel.dailyPrompt,
-                                                hasPostedToday: $hasPostedToday,
-                                                hasAttemptedDrawing: $hasAttemptedDrawing,
-                                                isPresentingCreate: $isPresentingCreate,
-                                                loadID: loadID,
-                                                onShowProfile: {},
-                                            )
-                                            .frame(width: cardWidth)
-                                            .id(index)
+                                                UserFeedItemView(
+                                                    item: item,
+                                                    prompt: viewModel.dailyPrompt,
+                                                    hasPostedToday: $hasPostedToday,
+                                                    hasAttemptedDrawing: $hasAttemptedDrawing,
+                                                    isPresentingCreate: $isPresentingCreate,
+                                                    loadID: loadID
+                                                )
+                                                .frame(width: cardWidth)
+                                                .id(index)
+                                            }
                                         }
+                                        .padding(.vertical, 10)
                                         .scrollTargetLayout()
                                     }
                                     .scrollTargetBehavior(.paging)

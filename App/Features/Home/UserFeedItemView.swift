@@ -17,8 +17,6 @@ struct UserFeedItemView: View {
     @Binding var hasAttemptedDrawing: Bool
     @Binding var isPresentingCreate: Bool
     
-    var onShowProfile: () -> Void = {}
-
     @State private var isSharing = false
     @State private var rippleCounter: Int = 0
     @State private var rippleOrigin: CGPoint = .zero
@@ -28,6 +26,9 @@ struct UserFeedItemView: View {
     @State private var imageLoadFailed = false
     
     @State private var isContentLoaded = false
+    
+    @State private var isShowingProfileSheet: Bool = false
+    @StateObject private var friendsViewModel = FriendsViewModel()
 
     init(
         item: FeedItem,
@@ -36,7 +37,6 @@ struct UserFeedItemView: View {
         hasAttemptedDrawing: Binding<Bool>,
         isPresentingCreate: Binding<Bool>,
         loadID: UUID,
-        onShowProfile: @escaping () -> Void = {},
     ) {
         self.item = item
         self.prompt = prompt
@@ -47,7 +47,6 @@ struct UserFeedItemView: View {
         self._hasPostedToday = hasPostedToday
         self._hasAttemptedDrawing = hasAttemptedDrawing
         self._isPresentingCreate = isPresentingCreate
-        self.onShowProfile = onShowProfile
     }
 
     var body: some View {
@@ -106,7 +105,7 @@ struct UserFeedItemView: View {
 
                     if hasPostedToday {
                         userOverlay
-                        medalOverlay
+                        actionsOverlay
                     }
                 }
 
@@ -114,6 +113,32 @@ struct UserFeedItemView: View {
                     noPostOverlay
                 }
             }
+        }
+        .sheet(isPresented: $isShowingProfileSheet) {
+            let profile = UserProfile(
+                uid: item.userId,
+                firstName: item.firstName,
+                lastName: item.lastName,
+                displayName: item.displayName,
+                email: item.email,
+                avatarType: item.avatarType,
+                avatarBackground: item.avatarBackground,
+                avatarBody: item.avatarBody,
+                avatarShirt: item.avatarShirt,
+                avatarEyes: item.avatarEyes,
+                avatarMouth: item.avatarMouth,
+                avatarHair: item.avatarHair,
+                goldMedalsAccumulated: item.goldMedalsAccumulated,
+                silverMedalsAccumulated: item.silverMedalsAccumulated,
+                bronzeMedalsAccumulated: item.bronzeMedalsAccumulated,
+                goldMedalsAwarded: item.goldMedalsAwarded,
+                silverMedalsAwarded: item.silverMedalsAwarded,
+                bronzeMedalsAwarded: item.bronzeMedalsAwarded,
+                totalDrawingCount: item.totalDrawingCount,
+                streakCount: item.streakCount,
+                memberSince: item.memberSince
+            )
+            FriendProfileSheet(vm: friendsViewModel, profile: profile)
         }
         .aspectRatio(9/16, contentMode: .fit)
         .background(Color.clear)
@@ -149,6 +174,10 @@ struct UserFeedItemView: View {
                 self.isContentLoaded = true
             }
         }
+        .onAppear {
+            friendsViewModel.loadMyProfileData()
+            friendsViewModel.refreshFriends()
+        }
     }
     
     private func fetchImage() async -> UIImage? {
@@ -170,22 +199,30 @@ struct UserFeedItemView: View {
 
     private var userOverlay: some View {
         HStack(spacing: 12) {
-            Image(systemName: item.profileSystemImageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-            VStack(alignment: .leading, spacing: 2) {
+            AvatarView(
+                avatarType: AvatarType(rawValue: item.avatarType) ?? .personal,
+                background: item.avatarBackground ?? "background_1",
+                avatarBody: item.avatarBody,
+                shirt: item.avatarShirt,
+                eyes: item.avatarEyes,
+                mouth: item.avatarMouth,
+                hair: item.avatarHair,
+                includeSpacer: false
+            )
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
+            
+            VStack(alignment: .leading) {
                 Text(item.firstName).font(.headline).fontWeight(.semibold)
-                Text("@\(item.displayName)")
-                    .font(.subheadline)
-                    .opacity(0.9)
             }
         }
-        .padding(16)
+        .padding(8)
         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
         .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture { onShowProfile() }
+        .onTapGesture {
+            friendsViewModel.refreshFriends()
+            isShowingProfileSheet = true
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .padding(10)
         .opacity(showOverlays ? 1 : 0)
@@ -193,7 +230,7 @@ struct UserFeedItemView: View {
         .allowsHitTesting(showOverlays)
     }
 
-    private var medalOverlay: some View {
+    private var actionsOverlay: some View {
         VStack(spacing: 16) {
             medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected)
                 .opacity(showOverlays ? 1 : 0)
@@ -276,9 +313,6 @@ struct UserFeedItemView: View {
             VStack(spacing: 4) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 24, weight: .medium))
-                Text("Share")
-                    .font(.caption)
-                    .fontWeight(.semibold)
             }
             .padding(8)
         }

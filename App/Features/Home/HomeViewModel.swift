@@ -12,7 +12,6 @@ final class HomeViewModel: ObservableObject {
 
     private let db = Firestore.firestore()
 
-    // MARK: - Load Daily Prompt
     func loadDailyPrompt() async {
         do {
             let snapshot = try await db.collection("prompts").document("daily").getDocument()
@@ -71,6 +70,26 @@ final class HomeViewModel: ObservableObject {
                     let firstName = userData?["firstName"] as? String ?? "User"
                     let displayName = userData?["displayName"] as? String ?? "username"
                     
+                    let lastName = userData?["lastName"] as? String ?? ""
+                    let email = userData?["email"] as? String ?? ""
+                    let avatarType = userData?["avatarType"] as? String ?? "personal"
+                    let avatarBackground = userData?["avatarBackground"] as? String
+                    let avatarBody = userData?["avatarBody"] as? String
+                    let avatarShirt = userData?["avatarShirt"] as? String
+                    let avatarEyes = userData?["avatarEyes"] as? String
+                    let avatarMouth = userData?["avatarMouth"] as? String
+                    let avatarHair = userData?["avatarHair"] as? String
+                    
+                    let goldMedalsAccumulated = userData?["goldMedalsAccumulated"] as? Int ?? 0
+                    let silverMedalsAccumulated = userData?["silverMedalsAccumulated"] as? Int ?? 0
+                    let bronzeMedalsAccumulated = userData?["bronzeMedalsAccumulated"] as? Int ?? 0
+                    let goldMedalsAwarded = userData?["goldMedalsAwarded"] as? Int ?? 0
+                    let silverMedalsAwarded = userData?["silverMedalsAwarded"] as? Int ?? 0
+                    let bronzeMedalsAwarded = userData?["bronzeMedalsAwarded"] as? Int ?? 0
+                    let totalDrawingCount = userData?["totalDrawingCount"] as? Int ?? 0
+                    let streakCount = userData?["streakCount"] as? Int ?? 0
+                    let memberSince = (userData?["memberSince"] as? Timestamp)?.dateValue() ?? Date()
+                    
                     let item = FeedItem(
                         id: docSnapshot.documentID,
                         userId: uid,
@@ -82,6 +101,24 @@ final class HomeViewModel: ObservableObject {
                         medalBronze: data["bronze"] as? Int ?? 0,
                         date: date,
                         createdAt: (data["createdAt"] as? Timestamp)?.dateValue(),
+                        lastName: lastName,
+                        email: email,
+                        avatarType: avatarType,
+                        avatarBackground: avatarBackground,
+                        avatarBody: avatarBody,
+                        avatarShirt: avatarShirt,
+                        avatarEyes: avatarEyes,
+                        avatarMouth: avatarMouth,
+                        avatarHair: avatarHair,
+                        goldMedalsAccumulated: goldMedalsAccumulated,
+                        silverMedalsAccumulated: silverMedalsAccumulated,
+                        bronzeMedalsAccumulated: bronzeMedalsAccumulated,
+                        goldMedalsAwarded: goldMedalsAwarded,
+                        silverMedalsAwarded: silverMedalsAwarded,
+                        bronzeMedalsAwarded: bronzeMedalsAwarded,
+                        totalDrawingCount: totalDrawingCount,
+                        streakCount: streakCount,
+                        memberSince: memberSince
                     )
                     allFeedItems.append(item)
                 }
