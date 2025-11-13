@@ -78,14 +78,8 @@ struct FriendsView: View {
             }
             .sheet(isPresented: $vm.showingProfile) {
                 if let p = vm.selectedProfile {
-                    FriendProfileSheet(
-                        profile: p,
-                        onConfirmRemove: { uid in
-                            if let f = vm.friends.first(where: { $0.uid == uid}) {
-                                vm.remove(friend: f)
-                            }
-                        }
-                    )
+                    // Pass the view model into the sheet
+                    FriendProfileSheet(vm: vm, profile: p)
                 } else {
                     // Fallback while loading
                     VStack(spacing: 12) {
