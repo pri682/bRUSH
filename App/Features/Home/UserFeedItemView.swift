@@ -3,6 +3,7 @@ import SwiftUI
 struct UserFeedItemView: View {
     let item: FeedItem
     let prompt: String
+    let loadID: UUID
 
     @State private var goldCount: Int
     @State private var silverCount: Int
@@ -15,114 +16,157 @@ struct UserFeedItemView: View {
     @Binding var hasPostedToday: Bool
     @Binding var hasAttemptedDrawing: Bool
     @Binding var isPresentingCreate: Bool
+    
+    var onShowProfile: () -> Void = {}
 
     @State private var isSharing = false
     @State private var rippleCounter: Int = 0
     @State private var rippleOrigin: CGPoint = .zero
+    
+    @Namespace private var transition
+    @State private var loadedImage: UIImage? = nil
+    @State private var imageLoadFailed = false
+    
+    @State private var isContentLoaded = false
 
     init(
         item: FeedItem,
         prompt: String,
         hasPostedToday: Binding<Bool>,
         hasAttemptedDrawing: Binding<Bool>,
-        isPresentingCreate: Binding<Bool>
+        isPresentingCreate: Binding<Bool>,
+        loadID: UUID,
+        onShowProfile: @escaping () -> Void = {},
     ) {
         self.item = item
         self.prompt = prompt
+        self.loadID = loadID
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
         self._hasPostedToday = hasPostedToday
         self._hasAttemptedDrawing = hasAttemptedDrawing
         self._isPresentingCreate = isPresentingCreate
+        self.onShowProfile = onShowProfile
     }
 
     var body: some View {
-        ZStack {
-            if let url = URL(string: item.imageURL) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(.secondarySystemBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxHeight: .infinity)
-                            .clipped()
-                            .modifier(RippleEffect(at: rippleOrigin, trigger: rippleCounter))
-                    case .failure:
-                        Rectangle()
-                            .fill(Color(.secondarySystemBackground))
-                            .overlay(Image(systemName: "photo").foregroundColor(.gray))
-                    @unknown default:
-                        EmptyView()
+        VStack(spacing: 0) {
+            ZStack {
+                ZStack {
+                    AsyncImage(url: URL(string: item.imageURL), transaction: Transaction(animation: .easeIn(duration: 0.3))) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .modifier(RippleEffect(at: rippleOrigin, trigger: rippleCounter))
+                        case .failure:
+                            Rectangle()
+                                .fill(Color(.secondarySystemBackground))
+                                .overlay(Image(systemName: "photo.fill").foregroundColor(.gray))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        case .empty:
+                            ProgressView()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        @unknown default:
+                            ProgressView()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        }
+                    }
+
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            guard hasPostedToday else { return }
+                            rippleOrigin = location
+                            rippleCounter += 1
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+                                showOverlays.toggle()
+                            }
+                        }
+
+                    VStack {
+                        Text(prompt)
+                            .font(.system(size: 16, weight: .semibold))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .glassEffect(.regular.interactive())
+                            .opacity(hasPostedToday ? (showOverlays ? 1 : 0) : 0)
+                            .scaleEffect(showOverlays ? 1 : 0.95)
+                            .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(1.00), value: showOverlays)
+                            .padding(.top, 10)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .allowsHitTesting(false)
+
+                    if hasPostedToday {
+                        userOverlay
+                        medalOverlay
                     }
                 }
-            } else {
-                Rectangle()
-                    .fill(Color(.secondarySystemBackground))
-                    .overlay(Image(systemName: "photo").foregroundColor(.gray))
-            }
 
-            // Ripple & overlay handling
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture { location in
-                    guard hasPostedToday else { return }
-                    rippleOrigin = location
-                    rippleCounter += 1
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
-                        showOverlays.toggle()
-                    }
+                if !hasPostedToday {
+                    noPostOverlay
                 }
-
-            VStack {
-                Text(prompt)
-                    .font(.system(size: 16, weight: .semibold))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .glassEffect(.regular.interactive())
-                    .opacity(hasPostedToday ? (showOverlays ? 1 : 0) : 0)
-                    .scaleEffect(showOverlays ? 1 : 0.95)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(1.00), value: showOverlays)
-                    .padding(.top, 10)
-                Spacer()
-            }
-            .padding(.horizontal)
-            .allowsHitTesting(false)
-
-            if hasPostedToday {
-                userOverlay
-                medalOverlay
-            } else {
-                noPostOverlay
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(radius: 3)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 20)
-        .padding(.top, 70)
+        .aspectRatio(9/16, contentMode: .fit)
+        .background(Color.clear)
+        .opacity(isContentLoaded ? 1 : 0)
+        .animation(.easeIn(duration: 0.3), value: isContentLoaded)
         .sheet(isPresented: $isSharing) {
-            if let url = URL(string: item.imageURL),
-               let data = try? Data(contentsOf: url),
-               let image = UIImage(data: data) {
-                let itemSource = ImageActivityItemSource(
-                    title: "Check out this drawing from \(item.firstName)!",
-                    image: image
-                )
-                ShareSheet(activityItems: [itemSource])
-                    .presentationDetents([.medium, .large])
+            ShareSheetLoaderView(item: item, cachedImage: loadedImage)
+                .presentationDetents([.medium, .large])
+        }
+        .task(id: item.imageURL) {
+            
+            let isFirstLoad = (loadedImage == nil)
+            
+            if isFirstLoad {
+                self.isContentLoaded = false
+                self.imageLoadFailed = false
+            }
+
+            let image = await fetchImage()
+            
+            if Task.isCancelled { return }
+
+            if let image = image {
+                self.loadedImage = image
+                self.imageLoadFailed = false
+            } else {
+                if isFirstLoad {
+                    self.imageLoadFailed = true
+                }
+            }
+            
+            if isFirstLoad {
+                self.isContentLoaded = true
             }
         }
     }
+    
+    private func fetchImage() async -> UIImage? {
+        guard let url = URL(string: item.imageURL) else {
+            return nil
+        }
 
-    // MARK: - Overlays
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if Task.isCancelled { return nil }
+            return UIImage(data: data)
+        } catch {
+            if !(error is CancellationError) {
+                print("Error loading image: \(error.localizedDescription)")
+            }
+            return nil
+        }
+    }
 
     private var userOverlay: some View {
         HStack(spacing: 12) {
@@ -140,9 +184,10 @@ struct UserFeedItemView: View {
         }
         .padding(16)
         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture { onShowProfile() }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 20)
+        .padding(10)
         .opacity(showOverlays ? 1 : 0)
         .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.9), value: showOverlays)
         .allowsHitTesting(showOverlays)
@@ -170,9 +215,9 @@ struct UserFeedItemView: View {
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
                 .allowsHitTesting(showOverlays)
         }
+        .contentShape(Rectangle())
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .padding(.bottom, 20)
-        .padding(.trailing, 20)
+        .padding(10)
     }
 
     private var noPostOverlay: some View {
@@ -185,7 +230,8 @@ struct UserFeedItemView: View {
             } label: {
                 Text("Create Today's Drawing").padding(.horizontal)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.glassProminent)
+            .contentShape(Capsule())
             .disabled(hasAttemptedDrawing)
 
             if hasAttemptedDrawing {
@@ -197,10 +243,9 @@ struct UserFeedItemView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .zIndex(1)
     }
-
-    // MARK: - Buttons
 
     @ViewBuilder
     private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>) -> some View {
@@ -221,7 +266,8 @@ struct UserFeedItemView: View {
                     .stroke(isSelected.wrappedValue ? Color.accentColor : .clear, lineWidth: 2)
             )
         }
-        .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .glassEffect(.clear.tint(color.opacity(0.7)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
         .frame(minWidth: 48, minHeight: 48)
     }
 
@@ -238,6 +284,40 @@ struct UserFeedItemView: View {
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
         .frame(minWidth: 48, minHeight: 48)
+    }
+}
+
+struct ShareSheetLoaderView: View {
+    let item: FeedItem
+    let cachedImage: UIImage?
+
+    @State private var image: UIImage? = nil
+    @State private var isLoading = true
+
+    var body: some View {
+        Group {
+            if let cached = cachedImage {
+                ShareSheet(activityItems: [ImageActivityItemSource(title: "Check out this drawing from \(item.firstName)!", image: cached)])
+            } else if isLoading {
+                ProgressView("Preparing share item...")
+                    .padding()
+                    .task { await loadImage() }
+            } else if let image = image {
+                ShareSheet(activityItems: [ImageActivityItemSource(title: "Check out this drawing from \(item.firstName)!", image: image)])
+            } else {
+                Text("Failed to load image.").foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private func loadImage() async {
+        guard let url = URL(string: item.imageURL) else { isLoading = false; return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let uiImage = UIImage(data: data) { image = uiImage }
+        } catch { print(error) }
+        isLoading = false
     }
 }
