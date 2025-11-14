@@ -79,6 +79,7 @@ final class HomeViewModel: ObservableObject {
                     let avatarEyes = userData?["avatarEyes"] as? String
                     let avatarMouth = userData?["avatarMouth"] as? String
                     let avatarHair = userData?["avatarHair"] as? String
+                    let avatarFacialHair = userData?["avatarFacialHair"] as? String
                     
                     let goldMedalsAccumulated = userData?["goldMedalsAccumulated"] as? Int ?? 0
                     let silverMedalsAccumulated = userData?["silverMedalsAccumulated"] as? Int ?? 0
@@ -110,6 +111,7 @@ final class HomeViewModel: ObservableObject {
                         avatarEyes: avatarEyes,
                         avatarMouth: avatarMouth,
                         avatarHair: avatarHair,
+                        avatarFacialHair: avatarFacialHair,
                         goldMedalsAccumulated: goldMedalsAccumulated,
                         silverMedalsAccumulated: silverMedalsAccumulated,
                         bronzeMedalsAccumulated: bronzeMedalsAccumulated,

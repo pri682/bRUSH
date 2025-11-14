@@ -21,6 +21,7 @@ struct FeedItem: Identifiable {
     let avatarEyes: String?
     let avatarMouth: String?
     let avatarHair: String?
+    let avatarFacialHair: String?
     let goldMedalsAccumulated: Int
     let silverMedalsAccumulated: Int
     let bronzeMedalsAccumulated: Int

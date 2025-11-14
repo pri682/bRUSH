@@ -114,6 +114,10 @@ struct UserFeedItemView: View {
                 }
             }
         }
+        .aspectRatio(9/16, contentMode: .fit)
+        .background(Color.clear)
+        .opacity(isContentLoaded ? 1 : 0)
+        .animation(.easeIn(duration: 0.3), value: isContentLoaded)
         .sheet(isPresented: $isShowingProfileSheet) {
             let profile = UserProfile(
                 uid: item.userId,
@@ -128,6 +132,7 @@ struct UserFeedItemView: View {
                 avatarEyes: item.avatarEyes,
                 avatarMouth: item.avatarMouth,
                 avatarHair: item.avatarHair,
+                avatarFacialHair: item.avatarFacialHair,
                 goldMedalsAccumulated: item.goldMedalsAccumulated,
                 silverMedalsAccumulated: item.silverMedalsAccumulated,
                 bronzeMedalsAccumulated: item.bronzeMedalsAccumulated,
@@ -140,16 +145,11 @@ struct UserFeedItemView: View {
             )
             FriendProfileSheet(vm: friendsViewModel, profile: profile)
         }
-        .aspectRatio(9/16, contentMode: .fit)
-        .background(Color.clear)
-        .opacity(isContentLoaded ? 1 : 0)
-        .animation(.easeIn(duration: 0.3), value: isContentLoaded)
         .sheet(isPresented: $isSharing) {
             ShareSheetLoaderView(item: item, cachedImage: loadedImage)
                 .presentationDetents([.medium, .large])
         }
-        .task(id: item.imageURL) {
-            
+        .task(id: loadID) {
             let isFirstLoad = (loadedImage == nil)
             
             if isFirstLoad {
@@ -175,8 +175,8 @@ struct UserFeedItemView: View {
             }
         }
         .onAppear {
-            friendsViewModel.loadMyProfileData()
             friendsViewModel.refreshFriends()
+            friendsViewModel.refreshIncoming()
         }
     }
     
@@ -207,22 +207,20 @@ struct UserFeedItemView: View {
                 eyes: item.avatarEyes,
                 mouth: item.avatarMouth,
                 hair: item.avatarHair,
+                facialHair: item.avatarFacialHair,
                 includeSpacer: false
             )
             .frame(width: 40, height: 40)
             .clipShape(Circle())
             
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(item.firstName).font(.headline).fontWeight(.semibold)
             }
         }
         .padding(8)
         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
         .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture {
-            friendsViewModel.refreshFriends()
-            isShowingProfileSheet = true
-        }
+        .onTapGesture { isShowingProfileSheet = true }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .padding(10)
         .opacity(showOverlays ? 1 : 0)

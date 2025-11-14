@@ -11,27 +11,7 @@ struct AvatarView: View {
     let hair: String?
     let facialHair: String?
     
-    let includeSpacer: Bool
-    
-    init(
-        avatarType: AvatarType,
-        background: String,
-        avatarBody: String?,
-        shirt: String?,
-        eyes: String?,
-        mouth: String?,
-        hair: String?,
-        includeSpacer: Bool = true
-    ) {
-        self.avatarType = avatarType
-        self.background = background
-        self.avatarBody = avatarBody
-        self.shirt = shirt
-        self.eyes = eyes
-        self.mouth = mouth
-        self.hair = hair
-        self.includeSpacer = includeSpacer
-    }
+    var includeSpacer: Bool = true
     
     var body: some View {
         ZStack {
@@ -52,11 +32,13 @@ struct AvatarView: View {
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let shirt = shirt {
                             Image(shirt)
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let eyes = eyes {
                             Image(eyes)
                                 .resizable()
@@ -69,12 +51,12 @@ struct AvatarView: View {
                                 .scaledToFit()
                         }
                         
-                        // Mouth layer
                         if let mouth = mouth {
                             Image(mouth)
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let hair = hair {
                             Image(hair)
                                 .resizable()
@@ -88,16 +70,19 @@ struct AvatarView: View {
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let eyes = eyes {
                             Image(eyes)
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let mouth = mouth {
                             Image(mouth)
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
                         if let hair = hair {
                             Image(hair)
                                 .resizable()
@@ -133,7 +118,7 @@ struct AvatarView_Previews: PreviewProvider {
             eyes: "eyes_1",
             mouth: "mouth_1",
             hair: "hair_1",
-            facialHair: "facial_hair_1" // Only passed once with a static string value
+            facialHair: "facial_hair_1"
         )
         .frame(width: 200, height: 200)
         .previewLayout(.sizeThatFits)
