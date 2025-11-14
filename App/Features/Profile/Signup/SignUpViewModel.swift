@@ -151,6 +151,7 @@ class SignUpViewModel: ObservableObject {
                     avatarEyes: selectedAvatar?.eyes,
                     avatarMouth: selectedAvatar?.mouth,
                     avatarHair: selectedAvatar?.hair,
+                    avatarFacialHair: selectedAvatar?.facialHair,
                     // Initialize all medal and statistics fields to 0
                     goldMedalsAccumulated: 0,
                     silverMedalsAccumulated: 0,
