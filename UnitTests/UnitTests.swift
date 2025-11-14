@@ -22,11 +22,16 @@ class MockAuthService: AuthProtocol {
     init(isSignedIn: Bool) {
         self.isSignedIn = isSignedIn
     }
+    
+    
 }
 
 // 3. The testable component (ViewModel)
 class TestProfileViewModel {
     private var authService: AuthProtocol
+    
+    // Simulating user input state
+        var username: String = ""
 
     init(authService: AuthProtocol) {
         self.authService = authService
@@ -36,6 +41,12 @@ class TestProfileViewModel {
     func checkSignInStatus() -> Bool {
         return authService.isSignedIn
     }
+    
+    // Function 2: simple validation logic (must be >= 3 chars after trimming)
+        var isUsernameValid: Bool {
+            let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmedUsername.isEmpty && trimmedUsername.count >= 3
+        }
 }
 
 struct UnitTests {
@@ -58,6 +69,21 @@ struct UnitTests {
             
             // We expect the ViewModel to simply return the 'false' state it received after a sign out:
             #expect(viewModel.checkSignInStatus() == false, "Signed Out Check Failed: Should return false when the service is signed out.")
+        }
+    
+    // test 3: Verifies that the ViewModel correctly validates username length
+    @Test func testUsernameValidation_LengthCheck() {
+            // Arrange
+            let mockAuthService = MockAuthService(isSignedIn: true)
+            let viewModel = TestProfileViewModel(authService: mockAuthService)
+            
+            // Scenario 1: Too short (2 characters)
+            viewModel.username = "jo"
+            #expect(viewModel.isUsernameValid == false, "Validation Failed: 'jo' should be invalid (too short).")
+            
+            // Scenario 2: Valid length (4 characters)
+            viewModel.username = "jojo"
+            #expect(viewModel.isUsernameValid == true, "Validation Failed: 'jojo' should be valid.")
         }
 
 }
