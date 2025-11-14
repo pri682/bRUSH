@@ -47,5 +47,14 @@ struct UnitTests {
             // Expect true, show error message otherwise:
             #expect(viewModel.checkSignInStatus() == true, "Signed In Check Failed: Should return true when the service is signed in.")
         }
+    
+    /// Test 2: Verifies the ViewModel correctly handles the 'signed-out' state
+        @Test func testCheckSignInStatus_WhenSignedOut() {
+            // check status after signout:
+            let mockAuthService = MockAuthService(isSignedIn: false)
+            let viewModel = TestProfileViewModel(authService: mockAuthService)
+            // We expect the ViewModel to simply return the 'false' state it received after a sign out:
+            #expect(viewModel.checkSignInStatus() == false, "Signed Out Check Failed: Should return false when the service is signed out.")
+        }
 
 }
