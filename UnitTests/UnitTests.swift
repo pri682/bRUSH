@@ -1,0 +1,51 @@
+//
+//  UnitTests.swift
+//  UnitTests
+//
+//  Created by Meidad Troper on 11/13/25.
+//
+
+import Testing
+import Foundation
+@testable import brush // IMPORTANT: Allows access to app-level code
+
+
+// 1. Essential contract for our authentication dependency
+protocol AuthProtocol {
+    var isSignedIn: Bool { get }
+}
+
+// 2. Mock implementation to control the state for testing
+class MockAuthService: AuthProtocol {
+    var isSignedIn: Bool
+    
+    init(isSignedIn: Bool) {
+        self.isSignedIn = isSignedIn
+    }
+}
+
+// 3. The testable component (ViewModel)
+class TestProfileViewModel {
+    private var authService: AuthProtocol
+
+    init(authService: AuthProtocol) {
+        self.authService = authService
+    }
+
+    // Function to be tested: checks the current sign-in status
+    func checkSignInStatus() -> Bool {
+        return authService.isSignedIn
+    }
+}
+
+struct UnitTests {
+
+    /// Test 1: Verifies the ViewModel correctly handles the 'signed-in' state.
+        @Test func testCheckSignInStatus_WhenSignedIn() {
+            let mockAuthService = MockAuthService(isSignedIn: true) // check if isSignedIn is true
+            let viewModel = TestProfileViewModel(authService: mockAuthService)
+            // Expect true, show error message otherwise:
+            #expect(viewModel.checkSignInStatus() == true, "Signed In Check Failed: Should return true when the service is signed in.")
+        }
+
+}
