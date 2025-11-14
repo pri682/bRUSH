@@ -40,8 +40,12 @@ class TestProfileViewModel {
 
 struct UnitTests {
 
-//    @Test func example() async throws {
-//        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-//    }
+    /// Test 1: Verifies the ViewModel correctly handles the 'signed-in' state.
+        @Test func testCheckSignInStatus_WhenSignedIn() {
+            let mockAuthService = MockAuthService(isSignedIn: true) // check if isSignedIn is true
+            let viewModel = TestProfileViewModel(authService: mockAuthService)
+            // Expect true, show error message otherwise:
+            #expect(viewModel.checkSignInStatus() == true, "Signed In Check Failed: Should return true when the service is signed in.")
+        }
 
 }
