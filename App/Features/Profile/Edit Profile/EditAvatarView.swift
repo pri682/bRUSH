@@ -230,9 +230,12 @@ struct EditAvatarView: View {
         let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
         let isShirtCategory = categoryName.lowercased().contains("shirt")
         let isEyesCategory = categoryName.lowercased().contains("eyes")
+        
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair") // ADDED: new boolean
+        
         let isMouthCategory = categoryName.lowercased().contains("mouth")
         let isHairCategory = categoryName.lowercased().contains("hair")
-        let isFacialHairCategory = categoryName.lowercased().contains("facial hair") // ADDED: new boolean
+        
         
         ZStack {
             if option == Self.removeOptionId {
@@ -292,7 +295,15 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 4. MOUTH LAYER ---
+                // --- 4. FACIAL HAIR LAYER ---
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer { // ADDED: Check for personal
+                    Image(facialHair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                
+                // --- 5. MOUTH LAYER ---
                 if let mouth = mouthLayer {
                     Image(mouth)
                         .resizable()
@@ -300,20 +311,14 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 5. HAIR LAYER ---
+                // --- 6. HAIR LAYER ---
                 if let hair = hairLayer {
                     Image(hair)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-                // --- 6. FACIAL HAIR LAYER ---
-                if selectedAvatarType == .personal, let facialHair = facialHairLayer { // ADDED: Check for personal
-                    Image(facialHair)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: optionSize, height: optionSize)
-                }
+                
                             
             }
         }

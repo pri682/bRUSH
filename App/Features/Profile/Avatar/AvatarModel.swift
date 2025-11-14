@@ -47,9 +47,9 @@ struct AvatarOptions {
     static let personalBodies = (1...7).map { "body_\($0)" }
     static let personalShirts = (1...16).map { "shirt_\($0)" }
     static let personalEyes = (1...7).map { "eyes_\($0)" }
-    static let personalMouths = (1...7).map { "mouth_\($0)" }
+    static let personalMouths = (1...8).map { "mouth_\($0)" }
     static let personalHairs = (1...56).map { "hair_\($0)" }
-    static let personalFacialHairs = (1...3).map { "facial_hair_\($0)" } // Facial Hair
+    static let personalFacialHairs = (1...10).map { "facial_hair_\($0)" } // Facial Hair
 
     
     // Fun avatar options (alien) - using actual fun_ prefixed files
