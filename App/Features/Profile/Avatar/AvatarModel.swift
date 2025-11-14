@@ -42,7 +42,7 @@ struct AvatarParts: Codable, Equatable {
 // Available avatar options
 struct AvatarOptions {
     // Personal avatar options (human)
-    static let personalBackgrounds = (1...16).map { "background_\($0)" }
+    static let personalBackgrounds = (1...21).map { "background_\($0)" }
     static let personalBodies = (1...7).map { "body_\($0)" }
     static let personalShirts = (1...16).map { "shirt_\($0)" }
     static let personalEyes = (1...7).map { "eyes_\($0)" }
@@ -51,7 +51,7 @@ struct AvatarOptions {
 
     
     // Fun avatar options (alien) - using actual fun_ prefixed files
-    static let funBackgrounds = (1...16).map { "background_\($0)" }
+    static let funBackgrounds = (1...21).map { "background_\($0)" }
     static let funFaces = (1...16).map { "fun_face_\($0)" }
     static let funEyes = (1...10).map { "fun_eyes_\($0)" }
     static let funMouths = (1...11).map { "fun_mouth_\($0)" }
