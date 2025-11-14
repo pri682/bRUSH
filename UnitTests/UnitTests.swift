@@ -24,6 +24,19 @@ class MockAuthService: AuthProtocol {
     }
 }
 
+// 3. The testable component (ViewModel)
+class TestProfileViewModel {
+    private var authService: AuthProtocol
+
+    init(authService: AuthProtocol) {
+        self.authService = authService
+    }
+
+    // Function to be tested: checks the current sign-in status
+    func checkSignInStatus() -> Bool {
+        return authService.isSignedIn
+    }
+}
 
 struct UnitTests {
 
