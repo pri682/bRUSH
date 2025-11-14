@@ -84,6 +84,10 @@ struct UnitTests {
             // Scenario 2: Valid length (4 characters)
             viewModel.username = "jojo"
             #expect(viewModel.isUsernameValid == true, "Validation Failed: 'jojo' should be valid.")
+        
+        // Scenario 3: Too long (9 characters)
+        viewModel.username = "iLoveFood"
+        #expect(viewModel.isUsernameValid == false, "Validation Failed: 'iLoveFood' should be invalid (too long. I love food too though, yum yum yum).")
         }
 
 }
