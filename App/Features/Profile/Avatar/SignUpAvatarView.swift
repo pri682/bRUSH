@@ -9,6 +9,7 @@ struct SignUpAvatarView: View {
     @State private var selectedEyes: String? = nil
     @State private var selectedMouth: String? = nil
     @State private var selectedHair: String? = nil
+    @State private var selectedFacialHair: String? = nil
     @State private var selectedCategory = 0
 
     // Undo/Redo
@@ -122,8 +123,9 @@ struct SignUpAvatarView: View {
                     shirt: selectedShirt,
                     eyes: selectedEyes,
                     mouth: selectedMouth,
-                    hair: selectedHair
-                )
+                    hair: selectedHair,
+                    facialHair: selectedFacialHair // Removed the invalid placeholder text
+                    )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.03)
 
@@ -198,6 +200,7 @@ struct SignUpAvatarView: View {
         let isEyes = categoryName.lowercased().contains("eyes")
         let isMouth = categoryName.lowercased().contains("mouth")
         let isHair = categoryName.lowercased().contains("hair")
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair")
 
         ZStack {
             if option == Self.removeOptionId {

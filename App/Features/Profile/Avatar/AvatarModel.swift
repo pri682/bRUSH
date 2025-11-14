@@ -20,6 +20,7 @@ struct AvatarParts: Codable, Equatable {
     var eyes: String?
     var mouth: String?
     var hair: String?
+    var facialHair: String?
     
     // For fun avatars (alien) - these map to the old face/eyes/mouth/hair system
     var face: String? {
@@ -47,7 +48,8 @@ struct AvatarOptions {
     static let personalShirts = (1...16).map { "shirt_\($0)" }
     static let personalEyes = (1...7).map { "eyes_\($0)" }
     static let personalMouths = (1...7).map { "mouth_\($0)" }
-    static let personalHairs = (1...56).map { "hair_\($0)" } // hair one to 56, as an array
+    static let personalHairs = (1...56).map { "hair_\($0)" }
+    static let personalFacialHairs = (1...3).map { "facial_hair_\($0)" } // Facial Hair
 
     
     // Fun avatar options (alien) - using actual fun_ prefixed files

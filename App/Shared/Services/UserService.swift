@@ -15,6 +15,7 @@ public struct UserProfile: Codable, Equatable {
     var avatarEyes: String?
     var avatarMouth: String?
     var avatarHair: String?
+    var avatarFacialHair: String?
     
     // Medal and statistics fields
     var goldMedalsAccumulated: Int

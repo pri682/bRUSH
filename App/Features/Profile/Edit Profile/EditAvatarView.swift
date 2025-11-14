@@ -10,8 +10,10 @@ struct EditAvatarView: View {
     @State private var selectedEyes: String?
     @State private var selectedMouth: String?
     @State private var selectedHair: String?
+    @State private var selectedFacialHair: String?
+    
     @State private var selectedCategory = 0
-
+    
     let onAvatarChange: (AvatarParts) -> Void
     
     // Unique identifier for the "Remove/None" option
@@ -30,14 +32,15 @@ struct EditAvatarView: View {
             shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
-            hair: selectedHair
+            hair: selectedHair,
+            facialHair: selectedFacialHair // Assuming AvatarParts has been updated
         )
     }
 
     private var categories: [String] {
         switch selectedAvatarType {
         case .personal:
-            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Background"]
+            return ["Body", "Shirt", "Eyes", "Mouth", "Hair","Facial Hair", "Background"]
         case .fun:
             return ["Face", "Eyes", "Mouth", "Hair", "Background"]
         }
@@ -56,6 +59,7 @@ struct EditAvatarView: View {
         self._selectedEyes = State(initialValue: userProfile.wrappedValue?.avatarEyes)
         self._selectedMouth = State(initialValue: userProfile.wrappedValue?.avatarMouth)
         self._selectedHair = State(initialValue: userProfile.wrappedValue?.avatarHair)
+        self._selectedFacialHair = State(initialValue: userProfile.wrappedValue?.avatarFacialHair) // Assuming UserProfile has been updated
     }
 
     var body: some View {
@@ -140,7 +144,9 @@ struct EditAvatarView: View {
                     shirt: selectedShirt,
                     eyes: selectedEyes,
                     mouth: selectedMouth,
-                    hair: selectedHair
+                    hair: selectedHair,
+                    facialHair: selectedFacialHair // CORRECTED: Now includes the new argument
+                    
                 )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.04)
@@ -226,6 +232,7 @@ struct EditAvatarView: View {
         let isEyesCategory = categoryName.lowercased().contains("eyes")
         let isMouthCategory = categoryName.lowercased().contains("mouth")
         let isHairCategory = categoryName.lowercased().contains("hair")
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair") // ADDED: new boolean
         
         ZStack {
             if option == Self.removeOptionId {
@@ -257,6 +264,7 @@ struct EditAvatarView: View {
                 let eyesLayer: String? = isEyesCategory ? option : selectedEyes
                 let mouthLayer: String? = isMouthCategory ? option : selectedMouth
                 let hairLayer: String? = isHairCategory ? option : selectedHair
+                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair // CORRECTED: Define the local variable
                 
                 // --- 1. BASE LAYER (Body/Face) ---
                 if let base = baseLayer {
@@ -299,6 +307,14 @@ struct EditAvatarView: View {
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
+                // --- 6. FACIAL HAIR LAYER ---
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer { // ADDED: Check for personal
+                    Image(facialHair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                            
             }
         }
         .frame(width: optionSize, height: optionSize)
@@ -327,7 +343,8 @@ struct EditAvatarView: View {
             case 2: options = AvatarOptions.personalEyes
             case 3: options = AvatarOptions.personalMouths
             case 4: options = AvatarOptions.personalHairs
-            case 5: options = AvatarOptions.personalBackgrounds
+            case 5: options = AvatarOptions.personalFacialHairs
+            case 6: options = AvatarOptions.personalBackgrounds
             default: return []
             }
         case .fun:
@@ -355,6 +372,7 @@ struct EditAvatarView: View {
         selectedEyes = nil
         selectedMouth = nil
         selectedHair = nil
+        selectedFacialHair = nil
         // Background is intentionally not reset
         selectedCategory = 0
     }
@@ -373,7 +391,8 @@ struct EditAvatarView: View {
             case 2: selectedEyes = newValue
             case 3: selectedMouth = newValue
             case 4: selectedHair = newValue
-            case 5: selectedBackground = option // Background cannot be nil
+            case 5: selectedFacialHair = newValue // NEW CASE
+            case 6: selectedBackground = option // Background cannot be nil
             default: break
             }
         case .fun:
@@ -395,6 +414,7 @@ struct EditAvatarView: View {
             profile.avatarEyes = selectedEyes
             profile.avatarMouth = selectedMouth
             profile.avatarHair = selectedHair
+            profile.avatarFacialHair = selectedFacialHair // Assuming UserProfile has been updated
             userProfile = profile
         }
 
@@ -412,7 +432,8 @@ struct EditAvatarView: View {
                 case 2: return selectedEyes == nil
                 case 3: return selectedMouth == nil
                 case 4: return selectedHair == nil
-                case 5: return false // Background must always have a value
+                case 5: return selectedFacialHair == nil
+                case 6: return false // Background must always have a value
                 default: return false
                 }
             case .fun:
@@ -436,7 +457,8 @@ struct EditAvatarView: View {
             case 2: return selectedEyes == option
             case 3: return selectedMouth == option
             case 4: return selectedHair == option
-            case 5: return selectedBackground == option
+            case 5: return selectedFacialHair == option
+            case 6: return selectedBackground == option
             default: return false
             }
         case .fun:
@@ -495,5 +517,6 @@ struct EditAvatarView: View {
         selectedEyes = state.eyes
         selectedMouth = state.mouth
         selectedHair = state.hair
+        selectedFacialHair = state.facialHair
     }
 }
