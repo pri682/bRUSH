@@ -76,8 +76,13 @@ struct AddFriendView: View {
                             Spacer()
                             let isFriend = vm.friendIds.contains(user.uid)
                             let isPending = vm.isRequestPending(uid: user.uid)
+                            let isCurrentUser = (user.uid == vm.meUid)
                             
-                            if isFriend {
+                            if isCurrentUser {
+                                Text("You")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else if isFriend {
                                 Text("Friend")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)

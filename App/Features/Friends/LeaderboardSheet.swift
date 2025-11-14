@@ -43,15 +43,18 @@ struct LeaderboardSheet: View {
             .listSectionSpacing(.compact)
             .navigationTitle("Leaderboard")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .cancel) { dismiss() }
-                }
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItem() {
                     Button {
                         vm.loadLeaderboard()
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
+                }
+                
+                ToolbarSpacer()
+                
+                ToolbarItem() {
+                    Button(role: .cancel) { dismiss() }
                 }
             }
             .onAppear { vm.loadLeaderboard() }
