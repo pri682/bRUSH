@@ -97,6 +97,10 @@ class EditProfileViewModel: ObservableObject {
                 avatarData["avatarHair"] = hair
             }
             
+            if let facialHair = avatarParts.facialHair {
+                        avatarData["avatarFacialHair"] = facialHair
+                    }
+            
             try await UserService.shared.updateProfile(
                 uid: userProfile.uid,
                 data: avatarData

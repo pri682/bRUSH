@@ -13,6 +13,7 @@ struct AvatarView: View {
     let eyes: String?
     let mouth: String?
     let hair: String?
+    let facialHair: String?
     
     var body: some View {
         ZStack {
@@ -53,6 +54,12 @@ struct AvatarView: View {
                                 .scaledToFit()
                         }
                         
+                        if let facialHair = facialHair {
+                            Image(facialHair)
+                                .resizable()
+                                .scaledToFit()
+                        }
+                        
                         // Mouth layer
                         if let mouth = mouth {
                             Image(mouth)
@@ -66,6 +73,8 @@ struct AvatarView: View {
                                 .resizable()
                                 .scaledToFit()
                         }
+                        
+                        
                     } else {
                         // Fun avatar layers (alien) - mapping avatarBody to face
                         // Face layer
@@ -117,6 +126,10 @@ extension AvatarView {
 // Preview for development
 // Ensure this is treated as a SwiftUI file for the PreviewProvider to work
 struct AvatarView_Previews: PreviewProvider {
+    // NOTE: This minimal AvatarType definition is required if it's not in an imported file,
+    // to ensure the PreviewProvider can compile.
+    // enum AvatarType { case personal, fun }
+    
     static var previews: some View {
         AvatarView(
             avatarType: .personal,
@@ -125,7 +138,8 @@ struct AvatarView_Previews: PreviewProvider {
             shirt: "shirt_1",
             eyes: "eyes_1",
             mouth: "mouth_1",
-            hair: "hair_1"
+            hair: "hair_1",
+            facialHair: "facial_hair_1" // Only passed once with a static string value
         )
         .frame(width: 200, height: 200)
         .previewLayout(.sizeThatFits) // This should now resolve

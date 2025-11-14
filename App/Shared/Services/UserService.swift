@@ -15,6 +15,7 @@ public struct UserProfile: Codable, Equatable {
     var avatarEyes: String?
     var avatarMouth: String?
     var avatarHair: String?
+    var avatarFacialHair: String?
     
     // Medal and statistics fields
     var goldMedalsAccumulated: Int
@@ -79,6 +80,10 @@ final class UserService {
             profileData["avatarHair"] = hair
         }
         
+        if let facialHair = userProfile.avatarFacialHair {
+                    profileData["avatarFacialHair"] = facialHair
+                }
+        
         // This is the single critical database write
         try await userRef.setData(profileData)
     }
@@ -110,6 +115,7 @@ final class UserService {
         let avatarEyes = data["avatarEyes"] as? String
         let avatarMouth = data["avatarMouth"] as? String
         let avatarHair = data["avatarHair"] as? String
+        let avatarFacialHair = data["avatarFacialHair"] as? String
         
         // Medal and statistics fields - default to 0 if not present (for existing profiles)
         let goldMedalsAccumulated = data["goldMedalsAccumulated"] as? Int ?? 0
@@ -135,6 +141,7 @@ final class UserService {
             avatarEyes: avatarEyes,
             avatarMouth: avatarMouth,
             avatarHair: avatarHair,
+            avatarFacialHair: avatarFacialHair,
             goldMedalsAccumulated: goldMedalsAccumulated,
             silverMedalsAccumulated: silverMedalsAccumulated,
             bronzeMedalsAccumulated: bronzeMedalsAccumulated,

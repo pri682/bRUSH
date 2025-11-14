@@ -9,6 +9,7 @@ struct SignUpAvatarView: View {
     @State private var selectedEyes: String? = nil
     @State private var selectedMouth: String? = nil
     @State private var selectedHair: String? = nil
+    @State private var selectedFacialHair: String? = nil
     @State private var selectedCategory = 0
 
     // Undo/Redo
@@ -20,7 +21,7 @@ struct SignUpAvatarView: View {
     private var categories: [String] {
         switch selectedAvatarType {
         case .personal:
-            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Background"]
+            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Facial Hair", "Background"]
         case .fun:
             return ["Face", "Eyes", "Mouth", "Hair", "Background"]
         }
@@ -71,7 +72,8 @@ struct SignUpAvatarView: View {
                             shirt: selectedShirt,
                             eyes: selectedEyes,
                             mouth: selectedMouth,
-                            hair: selectedHair
+                            hair: selectedHair,
+                            facialHair: selectedFacialHair // ADDED
                         )
                         Task { await viewModel.submitStep3() }
                     } label: {
@@ -122,8 +124,9 @@ struct SignUpAvatarView: View {
                     shirt: selectedShirt,
                     eyes: selectedEyes,
                     mouth: selectedMouth,
-                    hair: selectedHair
-                )
+                    hair: selectedHair,
+                    facialHair: selectedFacialHair
+                    )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.03)
 
@@ -135,7 +138,7 @@ struct SignUpAvatarView: View {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
                             Button { updateSelection(option) } label: {
-                                improvedOptionPreview(option: option, optionSize: optionSize, screenWidth: screenWidth)
+                                improvedOptionPreview(option: option, optionSize: optionSize, screenWidth: screenWidth, screenHeight: screenHeight)
                             }
                         }
                     }
@@ -184,23 +187,25 @@ struct SignUpAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    // MARK: - Option Preview (identical to EditAvatarView)
+    // MARK: - Option Preview
+    /// Improved option preview that correctly composes layers for the current category, including the "__REMOVE__" option.
     @ViewBuilder
-    private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat) -> some View {
+    private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
-        let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count)
-            ? categories[selectedCategory]
-            : "Background"
-
-        let isBackground = categoryName.lowercased().contains("background")
-        let isBodyOrFace = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
-        let isShirt = categoryName.lowercased().contains("shirt")
-        let isEyes = categoryName.lowercased().contains("eyes")
-        let isMouth = categoryName.lowercased().contains("mouth")
-        let isHair = categoryName.lowercased().contains("hair")
-
+        let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
+        
+        // Booleans for category determination
+        let isBackgroundCategory = categoryName.lowercased().contains("background")
+        let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
+        let isShirtCategory = categoryName.lowercased().contains("shirt")
+        let isEyesCategory = categoryName.lowercased().contains("eyes")
+        let isMouthCategory = categoryName.lowercased().contains("mouth")
+        let isHairCategory = categoryName.lowercased().contains("hair")
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair")
+        
         ZStack {
             if option == Self.removeOptionId {
+                // RENDER THE REMOVE ICON (Nothing option)
                 VStack {
                     Image(systemName: "circle.slash.fill")
                         .font(.system(size: optionSize * 0.5, weight: .bold))
@@ -211,47 +216,74 @@ struct SignUpAvatarView: View {
                 }
                 .frame(width: optionSize, height: optionSize)
                 .background(Color(.systemGray6))
-            } else if isBackground {
+            } else if isBackgroundCategory {
+                // MARK: - Background Preview
                 Image(option)
                     .resizable()
                     .scaledToFill()
                     .frame(width: optionSize, height: optionSize)
                     .clipped()
             } else {
-                if let base = (isBodyOrFace ? option : selectedBody) {
+                // MARK: - Avatar Part Previews (Layered)
+                
+                // Determine which asset string to use for each layer:
+                // Use 'option' if the category matches the layer being previewed, otherwise use the 'selected' part.
+                let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
+                let shirtLayer: String? = isShirtCategory ? option : selectedShirt
+                let eyesLayer: String? = isEyesCategory ? option : selectedEyes
+                let mouthLayer: String? = isMouthCategory ? option : selectedMouth
+                let hairLayer: String? = isHairCategory ? option : selectedHair
+                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
+                
+                // --- 1. BASE LAYER (Body/Face) ---
+                if let base = baseLayer {
                     Image(base)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
+                } else {
+                    Color.clear.frame(width: optionSize, height: optionSize)
                 }
-
-                if selectedAvatarType == .personal, let shirt = (isShirt ? option : selectedShirt) {
+                
+                // --- 2. SHIRT LAYER (Personal Only) ---
+                if selectedAvatarType == .personal, let shirt = shirtLayer {
                     Image(shirt)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-
-                if let eyes = (isEyes ? option : selectedEyes) {
+                
+                // --- 3. EYES LAYER ---
+                if let eyes = eyesLayer {
                     Image(eyes)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-
-                if let mouth = (isMouth ? option : selectedMouth) {
+                
+                // --- 4. MOUTH LAYER ---
+                if let mouth = mouthLayer {
                     Image(mouth)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-
-                if let hair = (isHair ? option : selectedHair) {
+                
+                // --- 5. HAIR LAYER ---
+                if let hair = hairLayer {
                     Image(hair)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
+                // --- 6. FACIAL HAIR LAYER ---
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
+                    Image(facialHair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                        
             }
         }
         .frame(width: optionSize, height: optionSize)
@@ -262,8 +294,7 @@ struct SignUpAvatarView: View {
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3),
-                        lineWidth: isSelected(option) ? 3 : 1)
+                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
         )
     }
 
@@ -278,7 +309,8 @@ struct SignUpAvatarView: View {
             case 2: options = AvatarOptions.personalEyes
             case 3: options = AvatarOptions.personalMouths
             case 4: options = AvatarOptions.personalHairs
-            case 5: options = AvatarOptions.personalBackgrounds
+            case 5: options = AvatarOptions.personalFacialHairs
+            case 6: options = AvatarOptions.personalBackgrounds
             default: return []
             }
         case .fun:
@@ -305,6 +337,7 @@ struct SignUpAvatarView: View {
         selectedEyes = nil
         selectedMouth = nil
         selectedHair = nil
+        selectedFacialHair = nil
         selectedCategory = 0
     }
 
@@ -320,7 +353,8 @@ struct SignUpAvatarView: View {
             case 2: selectedEyes = newValue
             case 3: selectedMouth = newValue
             case 4: selectedHair = newValue
-            case 5: selectedBackground = option
+            case 5: selectedFacialHair = newValue
+            case 6: selectedBackground = option
             default: break
             }
         case .fun:
@@ -337,54 +371,86 @@ struct SignUpAvatarView: View {
 
     private func isSelected(_ option: String) -> Bool {
         if option == Self.removeOptionId {
+            // The 'None' option is selected if the corresponding part is currently nil
+            switch selectedAvatarType {
+            case .personal:
+                switch selectedCategory {
+                case 0: return selectedBody == nil
+                case 1: return selectedShirt == nil
+                case 2: return selectedEyes == nil
+                case 3: return selectedMouth == nil
+                case 4: return selectedHair == nil
+                case 5: return selectedFacialHair == nil
+                case 6: return false // Background must always have a value
+                default: return false
+                }
+            case .fun:
+                switch selectedCategory {
+                case 0: return selectedBody == nil
+                case 1: return selectedEyes == nil
+                case 2: return selectedMouth == nil
+                case 3: return selectedHair == nil
+                case 4: return false // Background must always have a value
+                default: return false
+                }
+            }
+        }
+        
+        // For a normal part, check if it matches the selected state variable.
+        switch selectedAvatarType {
+        case .personal:
             switch selectedCategory {
-            case 0: return selectedBody == nil
-            case 1: return selectedShirt == nil
-            case 2: return selectedEyes == nil
-            case 3: return selectedMouth == nil
-            case 4: return selectedHair == nil
+            case 0: return selectedBody == option
+            case 1: return selectedShirt == option
+            case 2: return selectedEyes == option
+            case 3: return selectedMouth == option
+            case 4: return selectedHair == option
+            case 5: return selectedFacialHair == option
+            case 6: return selectedBackground == option
+            default: return false
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return selectedBody == option
+            case 1: return selectedEyes == option
+            case 2: return selectedMouth == option
+            case 3: return selectedHair == option
+            case 4: return selectedBackground == option
             default: return false
             }
         }
-        switch selectedCategory {
-        case 0: return selectedBody == option
-        case 1: return selectedShirt == option
-        case 2: return selectedEyes == option
-        case 3: return selectedMouth == option
-        case 4: return selectedHair == option
-        case 5: return selectedBackground == option
-        default: return false
-        }
     }
 
-    // MARK: Undo/Redo
+    // MARK: - Undo/Redo
+    
     private var canUndo: Bool { currentHistoryIndex > 0 }
     private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
 
-    private func initializeHistory() {
-        let initial = AvatarParts(
+    // ** THIS WAS THE FIX: 'var' not 'func' **
+    private var currentAvatarParts: AvatarParts {
+        // Helper computed property to get current state
+        AvatarParts(
             avatarType: selectedAvatarType,
             background: selectedBackground,
             body: selectedBody,
             shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
-            hair: selectedHair
+            hair: selectedHair,
+            facialHair: selectedFacialHair
         )
+    }
+
+    private func initializeHistory() {
+        // Now correctly accesses the computed property
+        let initial = currentAvatarParts
         history = [initial]
         currentHistoryIndex = 0
     }
 
     private func saveToHistory() {
-        let state = AvatarParts(
-            avatarType: selectedAvatarType,
-            background: selectedBackground,
-            body: selectedBody,
-            shirt: selectedShirt,
-            eyes: selectedEyes,
-            mouth: selectedMouth,
-            hair: selectedHair
-        )
+        // Now correctly accesses the computed property
+        let state = currentAvatarParts
         history = Array(history.prefix(currentHistoryIndex + 1))
         history.append(state)
         currentHistoryIndex = history.count - 1
@@ -416,5 +482,6 @@ struct SignUpAvatarView: View {
         selectedEyes = state.eyes
         selectedMouth = state.mouth
         selectedHair = state.hair
+        selectedFacialHair = state.facialHair
     }
 }

@@ -83,7 +83,9 @@ struct SignedInProfileView: View {
                                 shirt: profile.avatarShirt,
                                 eyes: profile.avatarEyes,
                                 mouth: profile.avatarMouth,
-                                hair: profile.avatarHair
+                                hair: profile.avatarHair,
+                                facialHair: profile.avatarFacialHair // CORRECTED: Now includes the new argument
+                                
                             )
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
