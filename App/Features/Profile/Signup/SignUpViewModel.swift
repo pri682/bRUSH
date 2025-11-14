@@ -162,6 +162,22 @@ class SignUpViewModel: ObservableObject {
                     streakCount: 0,
                     memberSince: Date()
                 )
+
+                // DEBUG: print the profile payload keys/values before saving to Firestore.
+                // This helps verify that avatarHair / avatarMouth / etc. are present and correctly named.
+                do {
+                    let mirror = Mirror(reflecting: profile)
+                    let fields = mirror.children.compactMap { child in
+                        if let label = child.label {
+                            return "\(label)=\(String(describing: child.value))"
+                        }
+                        return nil
+                    }.joined(separator: ", ")
+                    print("[DEBUG] Creating UserProfile -> \(fields)")
+                } catch {
+                    print("[DEBUG] Creating UserProfile -> (failed to reflect): \(error)")
+                }
+
                 try await userService.createProfile(userProfile: profile)
                 
                 // 3. Save profile locally for fast access

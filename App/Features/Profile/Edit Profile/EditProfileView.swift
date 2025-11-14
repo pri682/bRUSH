@@ -27,7 +27,8 @@ struct EditProfileView: View {
                 shirt: profile.avatarShirt,
                 eyes: profile.avatarEyes,
                 mouth: profile.avatarMouth,
-                hair: profile.avatarHair
+                hair: profile.avatarHair,
+                facialHair: profile.avatarFacialHair
             ))
         }
     }
@@ -205,6 +206,7 @@ struct EditProfileView: View {
                             profile.avatarEyes = original.eyes
                             profile.avatarMouth = original.mouth
                             profile.avatarHair = original.hair
+                            profile.avatarFacialHair = original.facialHair
                             userProfile = profile
                         }
                         
@@ -247,7 +249,8 @@ struct EditProfileView: View {
                                     shirt: profile.avatarShirt,
                                     eyes: profile.avatarEyes,
                                     mouth: profile.avatarMouth,
-                                    hair: profile.avatarHair
+                                    hair: profile.avatarHair,
+                                    facialHair: profile.avatarFacialHair
                                 )
                                 let avatarSuccess = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
                                 success = success && avatarSuccess
