@@ -7,6 +7,10 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
     @State private var showingDeleteConfirmation = false
+    
+    // **NEW:** State to control the sheet presentation
+    @State private var showingAvatarEditor = false
+    
     @State private var currentAvatarParts: AvatarParts?
     @State private var originalAvatarParts: AvatarParts?
 
@@ -67,13 +71,16 @@ struct EditProfileView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your first name (max 10 chars)",
-                                text: $viewModel.firstName,
-                                isSecure: false,
-                                hasError: viewModel.isFirstNameTooLong
-                            )
-                            .autocapitalization(.words)
+                            // Assuming InputField is a custom component
+                            // InputField(
+                            //     placeholder: "Enter your first name (max 10 chars)",
+                            //     text: $viewModel.firstName,
+                            //     isSecure: false,
+                            //     hasError: viewModel.isFirstNameTooLong
+                            // )
+                            TextField("Enter your first name (max 10 chars)", text: $viewModel.firstName)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.words)
                             
                             if viewModel.isFirstNameTooLong {
                                 Text("Too long. 10 max length")
@@ -92,14 +99,17 @@ struct EditProfileView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Username")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
-                                text: $viewModel.displayName,
-                                isSecure: false,
-                                hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
-                            )
-                            .autocapitalization(.none)
-                            .textInputAutocapitalization(.never)
+                            // Assuming InputField is a custom component
+                            // InputField(
+                            //     placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
+                            //     text: $viewModel.displayName,
+                            //     isSecure: false,
+                            //     hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
+                            // )
+                            TextField("Enter your username (3-15 chars, letters/numbers/_ only)", text: $viewModel.displayName)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.none)
+                                .textInputAutocapitalization(.never)
                             
                             if viewModel.isDisplayNameTooLong {
                                 Text("Too long. 15 max length")
@@ -185,18 +195,56 @@ struct EditProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .tag(0)
                     
-                    // Avatar Tab
-                    EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
-                        currentAvatarParts = avatarParts
-                    })
+                    // **MODIFIED** Avatar Tab
+                    VStack(spacing: 24) {
+                        Spacer()
+                        // Avatar Preview
+                        AvatarView(
+                            avatarType: AvatarType(rawValue: userProfile?.avatarType ?? "personal") ?? .personal,
+                            background: userProfile?.avatarBackground ?? "background_1",
+                            avatarBody: userProfile?.avatarBody,
+                            shirt: userProfile?.avatarShirt,
+                            eyes: userProfile?.avatarEyes,
+                            mouth: userProfile?.avatarMouth,
+                            hair: userProfile?.avatarHair,
+                            facialHair: userProfile?.avatarFacialHair
+                        )
+                        .frame(width: 200, height: 200) // A nice large preview
+                        .padding()
+                        
+                        // Button to launch the sheet
+                        Button {
+                            showingAvatarEditor = true
+                        } label: {
+                            Text("Edit Avatar")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.accentColor)
+                                .cornerRadius(12)
+                        }
+                        .padding(.horizontal, 40)
+                        
+                        Spacer()
+                    }
                     .tag(1)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
+            // **CRITICAL FIX: Changed .sheet to .fullScreenCover**
+            // This forces the editor to open full-screen on all devices.
+            .fullScreenCover(isPresented: $showingAvatarEditor) {
+                EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
+                    // This closure is called every time the avatar changes in the sheet
+                    currentAvatarParts = avatarParts
+                })
+            }
             .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .cancel) {
+                    Button("Cancel", role: .cancel) {
                         // Revert avatar changes to original state
                         if let original = originalAvatarParts, var profile = userProfile {
                             profile.avatarType = original.avatarType.rawValue
@@ -216,17 +264,17 @@ struct EditProfileView: View {
                             viewModel.displayName = originalProfile.displayName
                         }
                         
-                        dismiss() 
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
+                    Button("Save", role: .confirm) {
                         Task {
                             var success = true
                             
                             // Always save profile information if there are changes
                             if let originalProfile = userProfile,
-                               (viewModel.firstName != originalProfile.firstName || 
+                               (viewModel.firstName != originalProfile.firstName ||
                                 viewModel.displayName != originalProfile.displayName) {
                                 success = await viewModel.saveChanges()
                                 if success {
@@ -240,7 +288,6 @@ struct EditProfileView: View {
                             }
                             
                             // Always save avatar changes regardless of current tab
-                            // Get current avatar state from userProfile (which gets updated in real-time for preview)
                             if let profile = userProfile {
                                 let avatarParts = AvatarParts(
                                     avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,

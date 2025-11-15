@@ -14,6 +14,9 @@ struct EditAvatarView: View {
     
     @State private var selectedCategory = 0
     
+    // **ADDED** Environment var to dismiss the full-screen cover
+    @Environment(\.dismiss) private var dismiss
+    
     let onAvatarChange: (AvatarParts) -> Void
     
     // Unique identifier for the "Remove/None" option
@@ -33,7 +36,7 @@ struct EditAvatarView: View {
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair,
-            facialHair: selectedFacialHair // Assuming AvatarParts has been updated
+            facialHair: selectedFacialHair
         )
     }
 
@@ -59,7 +62,7 @@ struct EditAvatarView: View {
         self._selectedEyes = State(initialValue: userProfile.wrappedValue?.avatarEyes)
         self._selectedMouth = State(initialValue: userProfile.wrappedValue?.avatarMouth)
         self._selectedHair = State(initialValue: userProfile.wrappedValue?.avatarHair)
-        self._selectedFacialHair = State(initialValue: userProfile.wrappedValue?.avatarFacialHair) // Assuming UserProfile has been updated
+        self._selectedFacialHair = State(initialValue: userProfile.wrappedValue?.avatarFacialHair)
     }
 
     var body: some View {
@@ -67,13 +70,17 @@ struct EditAvatarView: View {
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-
+            
+            // **MODIFIED** Avatar size is now relative to the SHORTER side, making it safer
+            // Since this view is full-screen, screenHeight is reliable.
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
+            
             let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
             let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
             let horizontalPadding = screenWidth * 0.05
             let optionSize = screenWidth * 0.18
 
+            // **MODIFIED** Removed ZStack, using a simple VStack
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
                 HStack {
@@ -104,13 +111,18 @@ struct EditAvatarView: View {
 
                     Spacer()
 
-                    Color.clear
-                        .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
+                    // **ADDED** Close button for the full-screen cover
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.system(size: screenWidth * 0.04, weight: .bold))
+                            .foregroundColor(.accentColor)
+                    }
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
-
-                Spacer()
+                .padding(.bottom, screenHeight * 0.01)
 
                 // Avatar Type Selection Tabs
                 HStack(spacing: 0) {
@@ -145,16 +157,15 @@ struct EditAvatarView: View {
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair,
-                    facialHair: selectedFacialHair // CORRECTED: Now includes the new argument
-                    
+                    facialHair: selectedFacialHair
                 )
                 .frame(width: avatarSize, height: avatarSize)
-                .padding(.bottom, screenHeight * 0.04)
+                .padding(.bottom, screenHeight * 0.03)
 
                 // Category Selection
                 categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
 
-                // Options Grid
+                // **CRITICAL FIX** Options Grid
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
@@ -172,14 +183,15 @@ struct EditAvatarView: View {
                     }
                     .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 30) // Add padding so it doesn't hit edge
                 }
-                .frame(maxHeight: screenHeight * 0.35)
-
-                Spacer()
+                // **REMOVED** .frame(maxHeight: ...)
+                // The ScrollView will now automatically take all remaining vertical space
             }
             .onAppear {
                 initializeHistory()
             }
+            // **REMOVED** .frame(minWidth: ..., minHeight: ...)
         }
     }
 
@@ -219,20 +231,17 @@ struct EditAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    /// Improved option preview that correctly composes layers for the current category, including the "__REMOVE__" option.
+    /// Improved option preview that correctly composes layers
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
         let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
         
-        // Booleans for category determination
         let isBackgroundCategory = categoryName.lowercased().contains("background")
         let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
         let isShirtCategory = categoryName.lowercased().contains("shirt")
         let isEyesCategory = categoryName.lowercased().contains("eyes")
-        
-        let isFacialHairCategory = categoryName.lowercased().contains("facial hair") // ADDED: new boolean
-        
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair")
         let isMouthCategory = categoryName.lowercased().contains("mouth")
         let isHairCategory = categoryName.lowercased().contains("hair")
         
@@ -260,14 +269,12 @@ struct EditAvatarView: View {
             } else {
                 // MARK: - Avatar Part Previews (Layered)
                 
-                // Determine which asset string to use for each layer:
-                // Use 'option' if the category matches the layer being previewed, otherwise use the 'selected' part.
                 let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
                 let shirtLayer: String? = isShirtCategory ? option : selectedShirt
                 let eyesLayer: String? = isEyesCategory ? option : selectedEyes
                 let mouthLayer: String? = isMouthCategory ? option : selectedMouth
                 let hairLayer: String? = isHairCategory ? option : selectedHair
-                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair // CORRECTED: Define the local variable
+                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
                 
                 // --- 1. BASE LAYER (Body/Face) ---
                 if let base = baseLayer {
@@ -296,7 +303,7 @@ struct EditAvatarView: View {
                 }
                 
                 // --- 4. FACIAL HAIR LAYER ---
-                if selectedAvatarType == .personal, let facialHair = facialHairLayer { // ADDED: Check for personal
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
                     Image(facialHair)
                         .resizable()
                         .scaledToFit()
@@ -318,8 +325,6 @@ struct EditAvatarView: View {
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-                
-                            
             }
         }
         .frame(width: optionSize, height: optionSize)
@@ -334,7 +339,7 @@ struct EditAvatarView: View {
         )
     }
 
-    // MARK: - Helper Functions
+    // MARK: - Helper Functions (Unchanged)
 
     private var currentOptions: [String] {
         let options: [String]
@@ -363,7 +368,6 @@ struct EditAvatarView: View {
             }
         }
         
-        // Only add the remove option for non-background categories
         if currentCategoryName != "background" {
             return [Self.removeOptionId] + options
         } else {
@@ -378,14 +382,12 @@ struct EditAvatarView: View {
         selectedMouth = nil
         selectedHair = nil
         selectedFacialHair = nil
-        // Background is intentionally not reset
         selectedCategory = 0
     }
 
     private func updateSelection(_ option: String) {
         saveToHistory()
         
-        // Determine the value to set: nil if __REMOVE__, otherwise the option string
         let newValue: String? = (option == Self.removeOptionId) ? nil : option
         
         switch selectedAvatarType {
@@ -396,8 +398,8 @@ struct EditAvatarView: View {
             case 2: selectedEyes = newValue
             case 3: selectedMouth = newValue
             case 4: selectedHair = newValue
-            case 5: selectedFacialHair = newValue // NEW CASE
-            case 6: selectedBackground = option // Background cannot be nil
+            case 5: selectedFacialHair = newValue
+            case 6: selectedBackground = option
             default: break
             }
         case .fun:
@@ -406,7 +408,7 @@ struct EditAvatarView: View {
             case 1: selectedEyes = newValue
             case 2: selectedMouth = newValue
             case 3: selectedHair = newValue
-            case 4: selectedBackground = option // Background cannot be nil
+            case 4: selectedBackground = option
             default: break
             }
         }
@@ -419,7 +421,7 @@ struct EditAvatarView: View {
             profile.avatarEyes = selectedEyes
             profile.avatarMouth = selectedMouth
             profile.avatarHair = selectedHair
-            profile.avatarFacialHair = selectedFacialHair // Assuming UserProfile has been updated
+            profile.avatarFacialHair = selectedFacialHair
             userProfile = profile
         }
 
@@ -428,7 +430,6 @@ struct EditAvatarView: View {
 
     private func isSelected(_ option: String) -> Bool {
         if option == Self.removeOptionId {
-            // The 'None' option is selected if the corresponding part is currently nil
             switch selectedAvatarType {
             case .personal:
                 switch selectedCategory {
@@ -438,7 +439,7 @@ struct EditAvatarView: View {
                 case 3: return selectedMouth == nil
                 case 4: return selectedHair == nil
                 case 5: return selectedFacialHair == nil
-                case 6: return false // Background must always have a value
+                case 6: return false
                 default: return false
                 }
             case .fun:
@@ -447,13 +448,12 @@ struct EditAvatarView: View {
                 case 1: return selectedEyes == nil
                 case 2: return selectedMouth == nil
                 case 3: return selectedHair == nil
-                case 4: return false // Background must always have a value
+                case 4: return false
                 default: return false
                 }
             }
         }
         
-        // For a normal part, check if it matches the selected state variable.
         switch selectedAvatarType {
         case .personal:
             switch selectedCategory {
@@ -478,7 +478,7 @@ struct EditAvatarView: View {
         }
     }
 
-    // MARK: - Undo/Redo
+    // MARK: - Undo/Redo (Unchanged)
 
     private var canUndo: Bool { currentHistoryIndex > 0 }
     private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
