@@ -225,7 +225,7 @@ struct SignedInProfileView: View {
                                     }
                                 }
                                 .font(.caption)
-                                .foregroundColor(canRefresh() ? .blue : .gray)
+                                .foregroundColor(canRefresh() ? .accent : .gray)
                             }
                             .disabled(isRefreshingMedals || !canRefresh())
                             Spacer()
