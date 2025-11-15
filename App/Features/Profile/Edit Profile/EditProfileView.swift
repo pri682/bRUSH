@@ -7,6 +7,10 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
     @State private var showingDeleteConfirmation = false
+    
+    // State to control the iPad modal sheet
+    @State private var showingAvatarEditor = false
+    
     @State private var currentAvatarParts: AvatarParts?
     @State private var originalAvatarParts: AvatarParts?
 
@@ -34,6 +38,9 @@ struct EditProfileView: View {
     }
 
     var body: some View {
+        // Check for device type
+        let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+        
         NavigationView {
             VStack(spacing: 0) {
                 // Custom Tab Bar
@@ -67,12 +74,13 @@ struct EditProfileView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your first name (max 10 chars)",
-                                text: $viewModel.firstName,
-                                isSecure: false,
-                                hasError: viewModel.isFirstNameTooLong
-                            )
+                            // Using the InputField from your original file
+                             InputField(
+                                 placeholder: "Enter your first name (max 10 chars)",
+                                 text: $viewModel.firstName,
+                                 isSecure: false,
+                                 hasError: viewModel.isFirstNameTooLong
+                             )
                             .autocapitalization(.words)
                             
                             if viewModel.isFirstNameTooLong {
@@ -92,12 +100,12 @@ struct EditProfileView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Username")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
-                                text: $viewModel.displayName,
-                                isSecure: false,
-                                hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
-                            )
+                             InputField(
+                                 placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
+                                 text: $viewModel.displayName,
+                                 isSecure: false,
+                                 hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
+                             )
                             .autocapitalization(.none)
                             .textInputAutocapitalization(.never)
                             
@@ -185,13 +193,58 @@ struct EditProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .tag(0)
                     
-                    // Avatar Tab
-                    EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
-                        currentAvatarParts = avatarParts
-                    })
-                    .tag(1)
+                    // **CRITICAL FIX: Conditional Avatar Tab**
+                    if isIpad {
+                        // --- iPad LAYOUT ---
+                        // Shows a button that presents a full-screen modal
+                        VStack(spacing: 24) {
+                            Spacer()
+                            AvatarView(
+                                avatarType: AvatarType(rawValue: userProfile?.avatarType ?? "personal") ?? .personal,
+                                background: userProfile?.avatarBackground ?? "background_1",
+                                avatarBody: userProfile?.avatarBody,
+                                shirt: userProfile?.avatarShirt,
+                                eyes: userProfile?.avatarEyes,
+                                mouth: userProfile?.avatarMouth,
+                                hair: userProfile?.avatarHair,
+                                facialHair: userProfile?.avatarFacialHair
+                            )
+                            .frame(width: 200, height: 200)
+                            .padding()
+                            
+                            Button {
+                                showingAvatarEditor = true
+                            } label: {
+                                Text("Edit Avatar")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(12)
+                            }
+                            .padding(.horizontal, 40)
+                            
+                            Spacer()
+                        }
+                        .tag(1)
+                        
+                    } else {
+                        // --- iPhone LAYOUT ---
+                        // Shows the editor inline, as you preferred
+                        EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
+                            currentAvatarParts = avatarParts
+                        }, isPresentedModally: false) // Pass modal flag
+                        .tag(1)
+                    }
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            }
+            // This modifier presents the full-screen cover *only* on iPad
+            .fullScreenCover(isPresented: $showingAvatarEditor) {
+                EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
+                    currentAvatarParts = avatarParts
+                }, isPresentedModally: true) // Pass modal flag
             }
             .navigationTitle("Edit Profile")
             .toolbar {
@@ -216,7 +269,7 @@ struct EditProfileView: View {
                             viewModel.displayName = originalProfile.displayName
                         }
                         
-                        dismiss() 
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -226,7 +279,7 @@ struct EditProfileView: View {
                             
                             // Always save profile information if there are changes
                             if let originalProfile = userProfile,
-                               (viewModel.firstName != originalProfile.firstName || 
+                               (viewModel.firstName != originalProfile.firstName ||
                                 viewModel.displayName != originalProfile.displayName) {
                                 success = await viewModel.saveChanges()
                                 if success {
@@ -240,7 +293,6 @@ struct EditProfileView: View {
                             }
                             
                             // Always save avatar changes regardless of current tab
-                            // Get current avatar state from userProfile (which gets updated in real-time for preview)
                             if let profile = userProfile {
                                 let avatarParts = AvatarParts(
                                     avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,

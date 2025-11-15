@@ -14,7 +14,13 @@ struct EditAvatarView: View {
     
     @State private var selectedCategory = 0
     
+    // To dismiss the modal sheet on iPad
+    @Environment(\.dismiss) private var dismiss
+    
     let onAvatarChange: (AvatarParts) -> Void
+    
+    // Flag to check presentation style
+    let isPresentedModally: Bool
     
     // Unique identifier for the "Remove/None" option
     private static let removeOptionId = "__REMOVE__"
@@ -33,7 +39,7 @@ struct EditAvatarView: View {
             eyes: selectedEyes,
             mouth: selectedMouth,
             hair: selectedHair,
-            facialHair: selectedFacialHair // Assuming AvatarParts has been updated
+            facialHair: selectedFacialHair
         )
     }
 
@@ -46,9 +52,10 @@ struct EditAvatarView: View {
         }
     }
 
-    init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void) {
+    init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void, isPresentedModally: Bool = false) {
         self._userProfile = userProfile
         self.onAvatarChange = onAvatarChange
+        self.isPresentedModally = isPresentedModally
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
 
         let avatarType = AvatarType(rawValue: userProfile.wrappedValue?.avatarType ?? "personal") ?? .personal
@@ -59,7 +66,7 @@ struct EditAvatarView: View {
         self._selectedEyes = State(initialValue: userProfile.wrappedValue?.avatarEyes)
         self._selectedMouth = State(initialValue: userProfile.wrappedValue?.avatarMouth)
         self._selectedHair = State(initialValue: userProfile.wrappedValue?.avatarHair)
-        self._selectedFacialHair = State(initialValue: userProfile.wrappedValue?.avatarFacialHair) // Assuming UserProfile has been updated
+        self._selectedFacialHair = State(initialValue: userProfile.wrappedValue?.avatarFacialHair)
     }
 
     var body: some View {
@@ -67,29 +74,35 @@ struct EditAvatarView: View {
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-
+            
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
-            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
-            let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
+            
+            // **CRITICAL FIX: Correct math for option size**
             let horizontalPadding = screenWidth * 0.05
-            let optionSize = screenWidth * 0.18
+            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
+            let gridSpacing = screenWidth * 0.03
+            let columns = Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: columnsCount)
+            
+            // Calculate total horizontal space used by padding and spacing
+            let totalPadding = horizontalPadding * 2
+            let totalSpacing = gridSpacing * CGFloat(columnsCount - 1)
+            
+            // The remaining width is divided by the number of columns
+            let availableWidth = screenWidth - totalPadding - totalSpacing
+            let optionSize = availableWidth / CGFloat(columnsCount) // This is the new, correct size
 
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
                 HStack {
                     HStack(spacing: screenWidth * 0.03) {
-                        Button {
-                            undo()
-                        } label: {
+                        Button { undo() } label: {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
                                 .foregroundColor(canUndo ? .accentColor : .gray)
                         }
                         .disabled(!canUndo)
 
-                        Button {
-                            redo()
-                        } label: {
+                        Button { redo() } label: {
                             Image(systemName: "arrow.uturn.forward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
                                 .foregroundColor(canRedo ? .accentColor : .gray)
@@ -104,19 +117,25 @@ struct EditAvatarView: View {
 
                     Spacer()
 
-                    Color.clear
-                        .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
+                    if isPresentedModally {
+                        Button { dismiss() } label: {
+                            Text("Done")
+                                .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                .foregroundColor(.accentColor)
+                        }
+                    } else {
+                        Color.clear
+                            .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
+                    }
                 }
                 .padding(.horizontal, horizontalPadding)
-                .padding(.top, screenHeight * 0.02)
-
-                Spacer()
+                .padding(.top, isPresentedModally ? (screenHeight * 0.02) : 0)
+                .padding(.bottom, screenHeight * 0.01)
 
                 // Avatar Type Selection Tabs
                 HStack(spacing: 0) {
                     ForEach(AvatarType.allCases, id: \.self) { avatarType in
                         Button {
-                            // Save current state before resetting for type change
                             saveToHistory()
                             selectedAvatarType = avatarType
                             resetSelections()
@@ -145,8 +164,7 @@ struct EditAvatarView: View {
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair,
-                    facialHair: selectedFacialHair // CORRECTED: Now includes the new argument
-                    
+                    facialHair: selectedFacialHair
                 )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.04)
@@ -163,7 +181,7 @@ struct EditAvatarView: View {
                             } label: {
                                 improvedOptionPreview(
                                     option: option,
-                                    optionSize: optionSize,
+                                    optionSize: optionSize, // Use the new correct size
                                     screenWidth: screenWidth,
                                     screenHeight: screenHeight
                                 )
@@ -172,10 +190,8 @@ struct EditAvatarView: View {
                     }
                     .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 30)
                 }
-                .frame(maxHeight: screenHeight * 0.35)
-
-                Spacer()
             }
             .onAppear {
                 initializeHistory()
@@ -219,27 +235,23 @@ struct EditAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    /// Improved option preview that correctly composes layers for the current category, including the "__REMOVE__" option.
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
         let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
         
-        // Booleans for category determination
         let isBackgroundCategory = categoryName.lowercased().contains("background")
         let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
         let isShirtCategory = categoryName.lowercased().contains("shirt")
         let isEyesCategory = categoryName.lowercased().contains("eyes")
-        
-        let isFacialHairCategory = categoryName.lowercased().contains("facial hair") // ADDED: new boolean
-        
+        let isFacialHairCategory = categories[selectedCategory].lowercased() == "facial hair"
+        let isHairCategory = categories[selectedCategory].lowercased() == "hair"
         let isMouthCategory = categoryName.lowercased().contains("mouth")
-        let isHairCategory = categoryName.lowercased().contains("hair")
+        
         
         
         ZStack {
             if option == Self.removeOptionId {
-                // RENDER THE REMOVE ICON (Nothing option)
                 VStack {
                     Image(systemName: "circle.slash.fill")
                         .font(.system(size: optionSize * 0.5, weight: .bold))
@@ -251,25 +263,19 @@ struct EditAvatarView: View {
                 .frame(width: optionSize, height: optionSize)
                 .background(Color(.systemGray6))
             } else if isBackgroundCategory {
-                // MARK: - Background Preview
                 Image(option)
                     .resizable()
                     .scaledToFill()
                     .frame(width: optionSize, height: optionSize)
                     .clipped()
             } else {
-                // MARK: - Avatar Part Previews (Layered)
-                
-                // Determine which asset string to use for each layer:
-                // Use 'option' if the category matches the layer being previewed, otherwise use the 'selected' part.
                 let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
                 let shirtLayer: String? = isShirtCategory ? option : selectedShirt
                 let eyesLayer: String? = isEyesCategory ? option : selectedEyes
                 let mouthLayer: String? = isMouthCategory ? option : selectedMouth
                 let hairLayer: String? = isHairCategory ? option : selectedHair
-                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair // CORRECTED: Define the local variable
+                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
                 
-                // --- 1. BASE LAYER (Body/Face) ---
                 if let base = baseLayer {
                     Image(base)
                         .resizable()
@@ -279,7 +285,6 @@ struct EditAvatarView: View {
                     Color.clear.frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 2. SHIRT LAYER (Personal Only) ---
                 if selectedAvatarType == .personal, let shirt = shirtLayer {
                     Image(shirt)
                         .resizable()
@@ -287,7 +292,6 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 3. EYES LAYER ---
                 if let eyes = eyesLayer {
                     Image(eyes)
                         .resizable()
@@ -295,15 +299,13 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 4. FACIAL HAIR LAYER ---
-                if selectedAvatarType == .personal, let facialHair = facialHairLayer { // ADDED: Check for personal
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
                     Image(facialHair)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 5. MOUTH LAYER ---
                 if let mouth = mouthLayer {
                     Image(mouth)
                         .resizable()
@@ -311,15 +313,12 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 6. HAIR LAYER ---
                 if let hair = hairLayer {
                     Image(hair)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-                
-                            
             }
         }
         .frame(width: optionSize, height: optionSize)
@@ -334,7 +333,7 @@ struct EditAvatarView: View {
         )
     }
 
-    // MARK: - Helper Functions
+    // MARK: - Helper Functions (Unchanged)
 
     private var currentOptions: [String] {
         let options: [String]
@@ -363,7 +362,6 @@ struct EditAvatarView: View {
             }
         }
         
-        // Only add the remove option for non-background categories
         if currentCategoryName != "background" {
             return [Self.removeOptionId] + options
         } else {
@@ -378,14 +376,12 @@ struct EditAvatarView: View {
         selectedMouth = nil
         selectedHair = nil
         selectedFacialHair = nil
-        // Background is intentionally not reset
         selectedCategory = 0
     }
 
     private func updateSelection(_ option: String) {
         saveToHistory()
         
-        // Determine the value to set: nil if __REMOVE__, otherwise the option string
         let newValue: String? = (option == Self.removeOptionId) ? nil : option
         
         switch selectedAvatarType {
@@ -396,8 +392,8 @@ struct EditAvatarView: View {
             case 2: selectedEyes = newValue
             case 3: selectedMouth = newValue
             case 4: selectedHair = newValue
-            case 5: selectedFacialHair = newValue // NEW CASE
-            case 6: selectedBackground = option // Background cannot be nil
+            case 5: selectedFacialHair = newValue
+            case 6: selectedBackground = option
             default: break
             }
         case .fun:
@@ -406,7 +402,7 @@ struct EditAvatarView: View {
             case 1: selectedEyes = newValue
             case 2: selectedMouth = newValue
             case 3: selectedHair = newValue
-            case 4: selectedBackground = option // Background cannot be nil
+            case 4: selectedBackground = option
             default: break
             }
         }
@@ -419,7 +415,7 @@ struct EditAvatarView: View {
             profile.avatarEyes = selectedEyes
             profile.avatarMouth = selectedMouth
             profile.avatarHair = selectedHair
-            profile.avatarFacialHair = selectedFacialHair // Assuming UserProfile has been updated
+            profile.avatarFacialHair = selectedFacialHair
             userProfile = profile
         }
 
@@ -428,7 +424,6 @@ struct EditAvatarView: View {
 
     private func isSelected(_ option: String) -> Bool {
         if option == Self.removeOptionId {
-            // The 'None' option is selected if the corresponding part is currently nil
             switch selectedAvatarType {
             case .personal:
                 switch selectedCategory {
@@ -438,7 +433,7 @@ struct EditAvatarView: View {
                 case 3: return selectedMouth == nil
                 case 4: return selectedHair == nil
                 case 5: return selectedFacialHair == nil
-                case 6: return false // Background must always have a value
+                case 6: return false
                 default: return false
                 }
             case .fun:
@@ -447,13 +442,12 @@ struct EditAvatarView: View {
                 case 1: return selectedEyes == nil
                 case 2: return selectedMouth == nil
                 case 3: return selectedHair == nil
-                case 4: return false // Background must always have a value
+                case 4: return false
                 default: return false
                 }
             }
         }
         
-        // For a normal part, check if it matches the selected state variable.
         switch selectedAvatarType {
         case .personal:
             switch selectedCategory {
@@ -478,7 +472,7 @@ struct EditAvatarView: View {
         }
     }
 
-    // MARK: - Undo/Redo
+    // MARK: - Undo/Redo (Unchanged)
 
     private var canUndo: Bool { currentHistoryIndex > 0 }
     private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
