@@ -31,6 +31,10 @@ struct HomeView: View {
     @State private var currentItemID: Int? = 0
     @Namespace private var transition
     
+    @AppStorage("dailyGoldAwarded") private var dailyGoldAwarded: Bool = false
+    @AppStorage("dailySilverAwarded") private var dailySilverAwarded: Bool = false
+    @AppStorage("dailyBronzeAwarded") private var dailyBronzeAwarded: Bool = false
+    
     @State private var didJustPost: Bool = false
     @State private var actuallyShowStreakView: Bool = false
     
@@ -95,10 +99,16 @@ struct HomeView: View {
                                                 UserFeedItemView(
                                                     item: item,
                                                     prompt: viewModel.dailyPrompt,
+                                                    loadID: loadID,
                                                     hasPostedToday: $hasPostedToday,
                                                     hasAttemptedDrawing: $hasAttemptedDrawing,
                                                     isPresentingCreate: $isPresentingCreate,
-                                                    loadID: loadID
+                                                    isGoldDisabled: $dailyGoldAwarded,
+                                                    isSilverDisabled: $dailySilverAwarded,
+                                                    isBronzeDisabled: $dailyBronzeAwarded,
+                                                    onGoldTapped: { isSelected in dailyGoldAwarded = isSelected },
+                                                    onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
+                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected }
                                                 )
                                                 .frame(width: cardWidth)
                                                 .id(index)
@@ -427,6 +437,10 @@ struct HomeView: View {
         if lastPostDateString != todayString {
             hasPostedToday = false
             hasAttemptedDrawing = false
+            
+            dailyGoldAwarded = false
+            dailySilverAwarded = false
+            dailyBronzeAwarded = false
         }
     }
     

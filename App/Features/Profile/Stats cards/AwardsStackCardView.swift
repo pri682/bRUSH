@@ -38,8 +38,8 @@ struct AwardsStackCardView: View {
             let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
             let adjustedMedalSize = medalIconSize * medalScaleFactor
             
-            let accumulatedTitle = isCurrentUser ? "Granted to You" : "Granted to User"
-            let awardedTitle = "Awarded to Friends"
+            let accumulatedTitle = isCurrentUser ? "Medals Received" : "Medals Received"
+            let awardedTitle = isCurrentUser ? "Medals Given" : "Medals Given"
 
             VStack(spacing: 0) {
                 MedalRowView(

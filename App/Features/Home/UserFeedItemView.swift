@@ -30,23 +30,46 @@ struct UserFeedItemView: View {
     @State private var isShowingProfileSheet: Bool = false
     @StateObject private var friendsViewModel = FriendsViewModel()
 
+    @Binding var isGoldDisabled: Bool
+    @Binding var isSilverDisabled: Bool
+    @Binding var isBronzeDisabled: Bool
+    var onGoldTapped: ((Bool) -> Void)?
+    var onSilverTapped: ((Bool) -> Void)?
+    var onBronzeTapped: ((Bool) -> Void)?
+
     init(
         item: FeedItem,
         prompt: String,
+        loadID: UUID,
         hasPostedToday: Binding<Bool>,
         hasAttemptedDrawing: Binding<Bool>,
         isPresentingCreate: Binding<Bool>,
-        loadID: UUID,
+        isGoldDisabled: Binding<Bool>,
+        isSilverDisabled: Binding<Bool>,
+        isBronzeDisabled: Binding<Bool>,
+        onGoldTapped: ((Bool) -> Void)? = nil,
+        onSilverTapped: ((Bool) -> Void)? = nil,
+        onBronzeTapped: ((Bool) -> Void)? = nil
     ) {
         self.item = item
         self.prompt = prompt
         self.loadID = loadID
+
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
+
         self._hasPostedToday = hasPostedToday
         self._hasAttemptedDrawing = hasAttemptedDrawing
         self._isPresentingCreate = isPresentingCreate
+
+        self._isGoldDisabled = isGoldDisabled
+        self._isSilverDisabled = isSilverDisabled
+        self._isBronzeDisabled = isBronzeDisabled
+
+        self.onGoldTapped = onGoldTapped
+        self.onSilverTapped = onSilverTapped
+        self.onBronzeTapped = onBronzeTapped
     }
 
     var body: some View {
@@ -230,17 +253,20 @@ struct UserFeedItemView: View {
 
     private var actionsOverlay: some View {
         VStack(spacing: 16) {
-            medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected)
+            medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected,
+                        isDisabled: isGoldDisabled, onTapped: onGoldTapped)
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
                 .allowsHitTesting(showOverlays)
 
-            medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected)
+            medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected,
+                        isDisabled: isSilverDisabled, onTapped: onSilverTapped)
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
                 .allowsHitTesting(showOverlays)
             
-            medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected)
+            medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected,
+                        isDisabled: isBronzeDisabled, onTapped: onBronzeTapped)
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
                 .allowsHitTesting(showOverlays)
@@ -283,27 +309,74 @@ struct UserFeedItemView: View {
     }
 
     @ViewBuilder
-    private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>) -> some View {
-        Button {
-            isSelected.wrappedValue.toggle()
-            count.wrappedValue += isSelected.wrappedValue ? 1 : -1
-        } label: {
-            VStack(spacing: 4) {
-                Image(assetName).resizable().scaledToFit().frame(width: 32, height: 32)
-                Text("\(count.wrappedValue)")
-                    .foregroundColor(.white)
-                    .font(.caption)
-                    .fontWeight(.semibold)
+    private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>,
+                             isDisabled: Bool, onTapped: ((Bool) -> Void)?) -> some View {
+        ZStack {
+            if isSelected.wrappedValue {
+                Button {
+                    isSelected.wrappedValue.toggle()
+                    count.wrappedValue -= 1
+                    onTapped?(isSelected.wrappedValue)
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(assetName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 32, height: 32)
+                        Text("\(count.wrappedValue)")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(8)
+                }
+                .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .contentShape(RoundedRectangle(cornerRadius: 12))
+                .frame(minWidth: 48, minHeight: 48)
+            } else if isDisabled {
+                Button {} label: {
+                    VStack(spacing: 4) {
+                        Image(assetName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 32, height: 32)
+                            .saturation(0)
+                            .opacity(0.5)
+                        Text("\(count.wrappedValue)")
+                            .foregroundColor(.white.opacity(0.5))
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(8)
+                }
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                .contentShape(RoundedRectangle(cornerRadius: 12))
+                .frame(minWidth: 48, minHeight: 48)
+                .disabled(true)
+            } else {
+                Button {
+                    isSelected.wrappedValue.toggle()
+                    count.wrappedValue += 1
+                    onTapped?(isSelected.wrappedValue)
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(assetName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 32, height: 32)
+                        Text("\(count.wrappedValue)")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(8)
+                }
+                .glassEffect(.clear.tint(color.opacity(0.5)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .contentShape(RoundedRectangle(cornerRadius: 12))
+                .frame(minWidth: 48, minHeight: 48)
             }
-            .padding(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected.wrappedValue ? Color.accentColor : .clear, lineWidth: 2)
-            )
         }
-        .glassEffect(.clear.tint(color.opacity(0.7)).interactive(), in: RoundedRectangle(cornerRadius: 12))
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .frame(minWidth: 48, minHeight: 48)
+        .animation(.easeInOut, value: isSelected.wrappedValue)
     }
 
     private func shareButton() -> some View {
@@ -312,7 +385,7 @@ struct UserFeedItemView: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 24, weight: .medium))
             }
-            .padding(8)
+            .padding(10)
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
