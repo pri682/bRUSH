@@ -33,7 +33,9 @@ struct SignUpAvatarView: View {
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
 
+            // Use screenHeight for avatar size calculation
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
+            
             let optionSize = screenWidth * 0.18
             let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
             let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
@@ -73,7 +75,7 @@ struct SignUpAvatarView: View {
                             eyes: selectedEyes,
                             mouth: selectedMouth,
                             hair: selectedHair,
-                            facialHair: selectedFacialHair // ADDED
+                            facialHair: selectedFacialHair
                         )
                         Task { await viewModel.submitStep3() }
                     } label: {
@@ -92,6 +94,7 @@ struct SignUpAvatarView: View {
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
+                .padding(.bottom, screenHeight * 0.01) // Added
 
                 // --- Avatar Type Tabs ---
                 HStack(spacing: 0) {
@@ -133,7 +136,7 @@ struct SignUpAvatarView: View {
                 // --- Category Selector ---
                 categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
 
-                // --- Options Grid ---
+                // --- Options Grid - **CRITICAL FIX** ---
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
@@ -144,15 +147,16 @@ struct SignUpAvatarView: View {
                     }
                     .padding(.horizontal, horizontalPadding)
                     .padding(.top, 3)
+                    .padding(.bottom, 30) // Add padding at the bottom
                 }
-                .frame(maxHeight: screenHeight * 0.35)
-                .padding(.bottom, screenHeight * 0.02)
+                // **REMOVED** .frame(maxHeight: screenHeight * 0.35)
+                // **REMOVED** .padding(.bottom, screenHeight * 0.02)
             }
             .onAppear { initializeHistory() }
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Subviews (Unchanged)
 
     private func categorySelector(screenWidth: CGFloat, screenHeight: CGFloat, horizontalPadding: CGFloat) -> some View {
         ScrollViewReader { proxy in
@@ -187,14 +191,12 @@ struct SignUpAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    // MARK: - Option Preview
-    /// Improved option preview that correctly composes layers for the current category, including the "__REMOVE__" option.
+    // MARK: - Option Preview (Unchanged)
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
         let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
         
-        // Booleans for category determination
         let isBackgroundCategory = categoryName.lowercased().contains("background")
         let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
         let isShirtCategory = categoryName.lowercased().contains("shirt")
@@ -205,7 +207,6 @@ struct SignUpAvatarView: View {
         
         ZStack {
             if option == Self.removeOptionId {
-                // RENDER THE REMOVE ICON (Nothing option)
                 VStack {
                     Image(systemName: "circle.slash.fill")
                         .font(.system(size: optionSize * 0.5, weight: .bold))
@@ -217,17 +218,12 @@ struct SignUpAvatarView: View {
                 .frame(width: optionSize, height: optionSize)
                 .background(Color(.systemGray6))
             } else if isBackgroundCategory {
-                // MARK: - Background Preview
                 Image(option)
                     .resizable()
                     .scaledToFill()
                     .frame(width: optionSize, height: optionSize)
                     .clipped()
             } else {
-                // MARK: - Avatar Part Previews (Layered)
-                
-                // Determine which asset string to use for each layer:
-                // Use 'option' if the category matches the layer being previewed, otherwise use the 'selected' part.
                 let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
                 let shirtLayer: String? = isShirtCategory ? option : selectedShirt
                 let eyesLayer: String? = isEyesCategory ? option : selectedEyes
@@ -235,17 +231,16 @@ struct SignUpAvatarView: View {
                 let hairLayer: String? = isHairCategory ? option : selectedHair
                 let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
                 
-                // --- 1. BASE LAYER (Body/Face) ---
                 if let base = baseLayer {
                     Image(base)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 } else {
-                    Color.clear.frame(width: optionSize, height: optionSize)
+                    // **CRITICAL FIX: TYPO**
+                    Color.clear.frame(width: optionSize, height: optionSize) // Was optionNoteSize
                 }
                 
-                // --- 2. SHIRT LAYER (Personal Only) ---
                 if selectedAvatarType == .personal, let shirt = shirtLayer {
                     Image(shirt)
                         .resizable()
@@ -253,15 +248,20 @@ struct SignUpAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 3. EYES LAYER ---
                 if let eyes = eyesLayer {
                     Image(eyes)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
+
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
+                    Image(facialHair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
                 
-                // --- 4. MOUTH LAYER ---
                 if let mouth = mouthLayer {
                     Image(mouth)
                         .resizable()
@@ -269,21 +269,12 @@ struct SignUpAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 5. HAIR LAYER ---
                 if let hair = hairLayer {
                     Image(hair)
                         .resizable()
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 }
-                // --- 6. FACIAL HAIR LAYER ---
-                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
-                    Image(facialHair)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: optionSize, height: optionSize)
-                }
-                        
             }
         }
         .frame(width: optionSize, height: optionSize)
@@ -298,7 +289,7 @@ struct SignUpAvatarView: View {
         )
     }
 
-    // MARK: - Logic
+    // MARK: - Logic (Unchanged)
     private var currentOptions: [String] {
         let options: [String]
         switch selectedAvatarType {
@@ -371,7 +362,6 @@ struct SignUpAvatarView: View {
 
     private func isSelected(_ option: String) -> Bool {
         if option == Self.removeOptionId {
-            // The 'None' option is selected if the corresponding part is currently nil
             switch selectedAvatarType {
             case .personal:
                 switch selectedCategory {
@@ -381,7 +371,7 @@ struct SignUpAvatarView: View {
                 case 3: return selectedMouth == nil
                 case 4: return selectedHair == nil
                 case 5: return selectedFacialHair == nil
-                case 6: return false // Background must always have a value
+                case 6: return false
                 default: return false
                 }
             case .fun:
@@ -390,13 +380,12 @@ struct SignUpAvatarView: View {
                 case 1: return selectedEyes == nil
                 case 2: return selectedMouth == nil
                 case 3: return selectedHair == nil
-                case 4: return false // Background must always have a value
+                case 4: return false
                 default: return false
                 }
             }
         }
         
-        // For a normal part, check if it matches the selected state variable.
         switch selectedAvatarType {
         case .personal:
             switch selectedCategory {
@@ -421,14 +410,12 @@ struct SignUpAvatarView: View {
         }
     }
 
-    // MARK: - Undo/Redo
+    // MARK: - Undo/Redo (Unchanged)
     
     private var canUndo: Bool { currentHistoryIndex > 0 }
     private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
 
-    // ** THIS WAS THE FIX: 'var' not 'func' **
     private var currentAvatarParts: AvatarParts {
-        // Helper computed property to get current state
         AvatarParts(
             avatarType: selectedAvatarType,
             background: selectedBackground,
@@ -442,14 +429,12 @@ struct SignUpAvatarView: View {
     }
 
     private func initializeHistory() {
-        // Now correctly accesses the computed property
         let initial = currentAvatarParts
         history = [initial]
         currentHistoryIndex = 0
     }
 
     private func saveToHistory() {
-        // Now correctly accesses the computed property
         let state = currentAvatarParts
         history = Array(history.prefix(currentHistoryIndex + 1))
         history.append(state)

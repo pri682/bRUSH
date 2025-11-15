@@ -14,10 +14,13 @@ struct EditAvatarView: View {
     
     @State private var selectedCategory = 0
     
-    // **ADDED** Environment var to dismiss the full-screen cover
+    // To dismiss the modal sheet on iPad
     @Environment(\.dismiss) private var dismiss
     
     let onAvatarChange: (AvatarParts) -> Void
+    
+    // Flag to check presentation style
+    let isPresentedModally: Bool
     
     // Unique identifier for the "Remove/None" option
     private static let removeOptionId = "__REMOVE__"
@@ -49,9 +52,11 @@ struct EditAvatarView: View {
         }
     }
 
-    init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void) {
+    // **MODIFIED:** Added isPresentedModally to init
+    init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void, isPresentedModally: Bool = false) {
         self._userProfile = userProfile
         self.onAvatarChange = onAvatarChange
+        self.isPresentedModally = isPresentedModally // This line fixes the compile error
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
 
         let avatarType = AvatarType(rawValue: userProfile.wrappedValue?.avatarType ?? "personal") ?? .personal
@@ -70,9 +75,8 @@ struct EditAvatarView: View {
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-            
-            // **MODIFIED** Avatar size is now relative to the SHORTER side, making it safer
-            // Since this view is full-screen, screenHeight is reliable.
+
+            // Use screenHeight for avatar size calculation, as it's more reliable
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
             
             let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
@@ -80,7 +84,6 @@ struct EditAvatarView: View {
             let horizontalPadding = screenWidth * 0.05
             let optionSize = screenWidth * 0.18
 
-            // **MODIFIED** Removed ZStack, using a simple VStack
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
                 HStack {
@@ -111,24 +114,31 @@ struct EditAvatarView: View {
 
                     Spacer()
 
-                    // **ADDED** Close button for the full-screen cover
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.system(size: screenWidth * 0.04, weight: .bold))
-                            .foregroundColor(.accentColor)
+                    // **CRITICAL FIX: Conditional Done Button**
+                    if isPresentedModally {
+                        // Show "Done" button only on iPad (modal)
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Done")
+                                .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                .foregroundColor(.accentColor)
+                        }
+                    } else {
+                        // Keep original placeholder for iPhone (inline)
+                        Color.clear
+                            .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
                     }
                 }
                 .padding(.horizontal, horizontalPadding)
-                .padding(.top, screenHeight * 0.02)
+                // Add padding for safe area only if modal
+                .padding(.top, isPresentedModally ? (screenHeight * 0.02) : 0)
                 .padding(.bottom, screenHeight * 0.01)
 
                 // Avatar Type Selection Tabs
                 HStack(spacing: 0) {
                     ForEach(AvatarType.allCases, id: \.self) { avatarType in
                         Button {
-                            // Save current state before resetting for type change
                             saveToHistory()
                             selectedAvatarType = avatarType
                             resetSelections()
@@ -160,12 +170,12 @@ struct EditAvatarView: View {
                     facialHair: selectedFacialHair
                 )
                 .frame(width: avatarSize, height: avatarSize)
-                .padding(.bottom, screenHeight * 0.03)
+                .padding(.bottom, screenHeight * 0.04)
 
                 // Category Selection
                 categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
 
-                // **CRITICAL FIX** Options Grid
+                // **CRITICAL FIX: Options Grid**
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
@@ -183,15 +193,13 @@ struct EditAvatarView: View {
                     }
                     .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 30) // Add padding so it doesn't hit edge
+                    .padding(.bottom, 30) // Add padding at the bottom
                 }
-                // **REMOVED** .frame(maxHeight: ...)
-                // The ScrollView will now automatically take all remaining vertical space
+                // **REMOVED** .frame(maxHeight: screenHeight * 0.35)
             }
             .onAppear {
                 initializeHistory()
             }
-            // **REMOVED** .frame(minWidth: ..., minHeight: ...)
         }
     }
 
@@ -231,7 +239,7 @@ struct EditAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    /// Improved option preview that correctly composes layers
+    /// Improved option preview (Unchanged)
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
