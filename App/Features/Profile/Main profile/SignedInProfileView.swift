@@ -192,24 +192,35 @@ struct SignedInProfileView: View {
                                             .scaleEffect(0.7)
                                     } else {
                                         Image(systemName: "arrow.clockwise")
-                                            .font(.caption)
+                                            .font(isIpad ? .system(size: 26) : .caption)
+                                            .padding(.top, isIpad ? 200 : 8)
                                     }
                                     
                                     if let lastUpdate = lastMedalUpdate {
                                         if needsUpdate(from: lastUpdate) {
                                             if canRefresh() {
                                                 Text("Last Updated \(timeDisplayString(from: lastUpdate)), Update now?")
+                                                    .font(isIpad ? .system(size: 26) : .caption)
+                                                    .padding(.top, isIpad ? 200 : 8)
                                             } else {
                                                 Text("Last Updated \(timeDisplayString(from: lastUpdate)), Please wait...")
+                                                    .font(isIpad ? .system(size: 26) : .caption)
+                                                    .padding(.top, isIpad ? 200 : 8)
                                             }
                                         } else {
                                             Text("Last Updated \(timeDisplayString(from: lastUpdate))")
+                                                .font(isIpad ? .system(size: 26) : .caption)
+                                                .padding(.top, isIpad ? 200 : 8)
                                         }
                                     } else {
                                         if canRefresh() {
                                             Text("Update medal counts now?")
+                                                .font(isIpad ? .system(size: 26) : .caption)
+                                                .padding(.top, isIpad ? 200 : 8)
                                         } else {
                                             Text("Please wait before updating again...")
+                                                .font(isIpad ? .system(size: 26) : .caption)
+                                                .padding(.top, isIpad ? 200 : 8)
                                         }
                                     }
                                 }
@@ -223,7 +234,7 @@ struct SignedInProfileView: View {
                         
                         Spacer(minLength: 100)
                     }
-                    .padding(.bottom, screenHeight * 0.03)
+                            .padding(.top, isIpad ? -60 : 8)
                 }
                 .frame(maxWidth: .infinity)
             }
