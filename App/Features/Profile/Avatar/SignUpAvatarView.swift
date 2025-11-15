@@ -33,13 +33,21 @@ struct SignUpAvatarView: View {
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
 
-            // Use screenHeight for avatar size calculation
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
             
-            let optionSize = screenWidth * 0.18
-            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
-            let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
+            // **CRITICAL FIX: Correct math for option size**
             let horizontalPadding = screenWidth * 0.05
+            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
+            let gridSpacing = screenWidth * 0.03
+            let columns = Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: columnsCount)
+            
+            // Calculate total horizontal space used by padding and spacing
+            let totalPadding = horizontalPadding * 2
+            let totalSpacing = gridSpacing * CGFloat(columnsCount - 1)
+            
+            // The remaining width is divided by the number of columns
+            let availableWidth = screenWidth - totalPadding - totalSpacing
+            let optionSize = availableWidth / CGFloat(columnsCount) // This is the new, correct size
 
             VStack(spacing: 0) {
                 // --- Header Bar ---
@@ -94,7 +102,7 @@ struct SignUpAvatarView: View {
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
-                .padding(.bottom, screenHeight * 0.01) // Added
+                .padding(.bottom, screenHeight * 0.01)
 
                 // --- Avatar Type Tabs ---
                 HStack(spacing: 0) {
@@ -136,21 +144,24 @@ struct SignUpAvatarView: View {
                 // --- Category Selector ---
                 categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
 
-                // --- Options Grid - **CRITICAL FIX** ---
+                // --- Options Grid ---
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
                             Button { updateSelection(option) } label: {
-                                improvedOptionPreview(option: option, optionSize: optionSize, screenWidth: screenWidth, screenHeight: screenHeight)
+                                improvedOptionPreview(
+                                    option: option,
+                                    optionSize: optionSize, // Use the new correct size
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight
+                                )
                             }
                         }
                     }
                     .padding(.horizontal, horizontalPadding)
                     .padding(.top, 3)
-                    .padding(.bottom, 30) // Add padding at the bottom
+                    .padding(.bottom, 30)
                 }
-                // **REMOVED** .frame(maxHeight: screenHeight * 0.35)
-                // **REMOVED** .padding(.bottom, screenHeight * 0.02)
             }
             .onAppear { initializeHistory() }
         }
@@ -191,7 +202,6 @@ struct SignUpAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    // MARK: - Option Preview (Unchanged)
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
@@ -237,8 +247,7 @@ struct SignUpAvatarView: View {
                         .scaledToFit()
                         .frame(width: optionSize, height: optionSize)
                 } else {
-                    // **CRITICAL FIX: TYPO**
-                    Color.clear.frame(width: optionSize, height: optionSize) // Was optionNoteSize
+                    Color.clear.frame(width: optionSize, height: optionSize)
                 }
                 
                 if selectedAvatarType == .personal, let shirt = shirtLayer {

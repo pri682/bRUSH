@@ -52,11 +52,10 @@ struct EditAvatarView: View {
         }
     }
 
-    // **MODIFIED:** Added isPresentedModally to init
     init(userProfile: Binding<UserProfile?>, onAvatarChange: @escaping (AvatarParts) -> Void, isPresentedModally: Bool = false) {
         self._userProfile = userProfile
         self.onAvatarChange = onAvatarChange
-        self.isPresentedModally = isPresentedModally // This line fixes the compile error
+        self.isPresentedModally = isPresentedModally
         self._viewModel = StateObject(wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!))
 
         let avatarType = AvatarType(rawValue: userProfile.wrappedValue?.avatarType ?? "personal") ?? .personal
@@ -75,31 +74,35 @@ struct EditAvatarView: View {
             let screenWidth = geometry.size.width
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-
-            // Use screenHeight for avatar size calculation, as it's more reliable
+            
             let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
             
-            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
-            let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
+            // **CRITICAL FIX: Correct math for option size**
             let horizontalPadding = screenWidth * 0.05
-            let optionSize = screenWidth * 0.18
+            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
+            let gridSpacing = screenWidth * 0.03
+            let columns = Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: columnsCount)
+            
+            // Calculate total horizontal space used by padding and spacing
+            let totalPadding = horizontalPadding * 2
+            let totalSpacing = gridSpacing * CGFloat(columnsCount - 1)
+            
+            // The remaining width is divided by the number of columns
+            let availableWidth = screenWidth - totalPadding - totalSpacing
+            let optionSize = availableWidth / CGFloat(columnsCount) // This is the new, correct size
 
             VStack(spacing: 0) {
                 // Navigation Bar with Undo/Redo
                 HStack {
                     HStack(spacing: screenWidth * 0.03) {
-                        Button {
-                            undo()
-                        } label: {
+                        Button { undo() } label: {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
                                 .foregroundColor(canUndo ? .accentColor : .gray)
                         }
                         .disabled(!canUndo)
 
-                        Button {
-                            redo()
-                        } label: {
+                        Button { redo() } label: {
                             Image(systemName: "arrow.uturn.forward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
                                 .foregroundColor(canRedo ? .accentColor : .gray)
@@ -114,24 +117,18 @@ struct EditAvatarView: View {
 
                     Spacer()
 
-                    // **CRITICAL FIX: Conditional Done Button**
                     if isPresentedModally {
-                        // Show "Done" button only on iPad (modal)
-                        Button {
-                            dismiss()
-                        } label: {
+                        Button { dismiss() } label: {
                             Text("Done")
                                 .font(.system(size: screenWidth * 0.04, weight: .bold))
                                 .foregroundColor(.accentColor)
                         }
                     } else {
-                        // Keep original placeholder for iPhone (inline)
                         Color.clear
                             .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)
                     }
                 }
                 .padding(.horizontal, horizontalPadding)
-                // Add padding for safe area only if modal
                 .padding(.top, isPresentedModally ? (screenHeight * 0.02) : 0)
                 .padding(.bottom, screenHeight * 0.01)
 
@@ -175,7 +172,7 @@ struct EditAvatarView: View {
                 // Category Selection
                 categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
 
-                // **CRITICAL FIX: Options Grid**
+                // Options Grid
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
@@ -184,7 +181,7 @@ struct EditAvatarView: View {
                             } label: {
                                 improvedOptionPreview(
                                     option: option,
-                                    optionSize: optionSize,
+                                    optionSize: optionSize, // Use the new correct size
                                     screenWidth: screenWidth,
                                     screenHeight: screenHeight
                                 )
@@ -193,9 +190,8 @@ struct EditAvatarView: View {
                     }
                     .padding(.top, 3)
                     .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 30) // Add padding at the bottom
+                    .padding(.bottom, 30)
                 }
-                // **REMOVED** .frame(maxHeight: screenHeight * 0.35)
             }
             .onAppear {
                 initializeHistory()
@@ -239,7 +235,6 @@ struct EditAvatarView: View {
         .padding(.bottom, screenHeight * 0.02)
     }
 
-    /// Improved option preview (Unchanged)
     @ViewBuilder
     private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
         let cornerRadius = screenWidth * 0.03
@@ -256,7 +251,6 @@ struct EditAvatarView: View {
         
         ZStack {
             if option == Self.removeOptionId {
-                // RENDER THE REMOVE ICON (Nothing option)
                 VStack {
                     Image(systemName: "circle.slash.fill")
                         .font(.system(size: optionSize * 0.5, weight: .bold))
@@ -268,15 +262,12 @@ struct EditAvatarView: View {
                 .frame(width: optionSize, height: optionSize)
                 .background(Color(.systemGray6))
             } else if isBackgroundCategory {
-                // MARK: - Background Preview
                 Image(option)
                     .resizable()
                     .scaledToFill()
                     .frame(width: optionSize, height: optionSize)
                     .clipped()
             } else {
-                // MARK: - Avatar Part Previews (Layered)
-                
                 let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
                 let shirtLayer: String? = isShirtCategory ? option : selectedShirt
                 let eyesLayer: String? = isEyesCategory ? option : selectedEyes
@@ -284,7 +275,6 @@ struct EditAvatarView: View {
                 let hairLayer: String? = isHairCategory ? option : selectedHair
                 let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
                 
-                // --- 1. BASE LAYER (Body/Face) ---
                 if let base = baseLayer {
                     Image(base)
                         .resizable()
@@ -294,7 +284,6 @@ struct EditAvatarView: View {
                     Color.clear.frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 2. SHIRT LAYER (Personal Only) ---
                 if selectedAvatarType == .personal, let shirt = shirtLayer {
                     Image(shirt)
                         .resizable()
@@ -302,7 +291,6 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 3. EYES LAYER ---
                 if let eyes = eyesLayer {
                     Image(eyes)
                         .resizable()
@@ -310,7 +298,6 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 4. FACIAL HAIR LAYER ---
                 if selectedAvatarType == .personal, let facialHair = facialHairLayer {
                     Image(facialHair)
                         .resizable()
@@ -318,7 +305,6 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 5. MOUTH LAYER ---
                 if let mouth = mouthLayer {
                     Image(mouth)
                         .resizable()
@@ -326,7 +312,6 @@ struct EditAvatarView: View {
                         .frame(width: optionSize, height: optionSize)
                 }
                 
-                // --- 6. HAIR LAYER ---
                 if let hair = hairLayer {
                     Image(hair)
                         .resizable()
