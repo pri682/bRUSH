@@ -90,7 +90,15 @@ class DrawingUploader {
             if let err = err {
                 completion(.failure(err))
             } else {
-                completion(.success(imageURL))
+                // 🌟 CALL STREAK UPDATE HERE 🌟
+                Task {
+                    do {
+                        _ = try await UserService.shared.updateStreakAndTotalDrawingCount(uid: userID)
+                        completion(.success(imageURL))
+                    } catch {
+                        completion(.failure(error))
+                    }
+                }
             }
         }
     }

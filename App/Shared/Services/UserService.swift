@@ -27,6 +27,7 @@ public struct UserProfile: Codable, Equatable {
     var totalDrawingCount: Int
     var streakCount: Int
     var memberSince: Date
+    var lastCompletedDate: Date?
 }
 
 final class UserService {
@@ -35,7 +36,65 @@ final class UserService {
     private let usersCollection = "users"
 
     private init() {}
-
+    
+    
+    // -------------------------------------------------------
+    // UPDATE STREAK + DRAW COUNT
+    // -------------------------------------------------------
+    func updateStreakAndTotalDrawingCount(uid: String) async throws -> Int {
+        let userRef = db.collection(usersCollection).document(uid)
+        let today = Calendar.current.startOfDay(for: Date())
+        
+        var newStreakCount = 1
+        var lastCompletedDate: Date? = nil
+        
+        let doc = try await userRef.getDocument()
+        guard let data = doc.data() else {
+            throw AuthError.backend("Profile not found.")
+        }
+        
+        let currentStreak = data["streakCount"] as? Int ?? 0
+        let currentTotalDrawings = data["totalDrawingCount"] as? Int ?? 0
+        let lastDateTimestamp = data["lastCompletedDate"] as? Timestamp
+        let currentLastCompletedDate = lastDateTimestamp?.dateValue()
+        
+        if let lastCompleted = currentLastCompletedDate, lastCompleted < today {
+            if Calendar.current.isDateInYesterday(lastCompleted) {
+                newStreakCount = currentStreak + 1
+            } else if !Calendar.current.isDateInToday(lastCompleted) {
+                newStreakCount = 1
+            } else {
+                newStreakCount = currentStreak
+            }
+        } else if currentLastCompletedDate == nil {
+            newStreakCount = 1
+        } else {
+            newStreakCount = currentStreak
+        }
+        
+        if currentLastCompletedDate == nil || currentLastCompletedDate! < today {
+            lastCompletedDate = Date()
+        } else {
+            lastCompletedDate = currentLastCompletedDate
+        }
+        
+        var updateData: [String: Any] = [
+            "streakCount": newStreakCount,
+            "totalDrawingCount": currentTotalDrawings + 1
+        ]
+        
+        if lastCompletedDate != currentLastCompletedDate {
+            updateData["lastCompletedDate"] = lastCompletedDate
+        }
+        
+        try await userRef.updateData(updateData)
+        return newStreakCount
+    }
+    
+    
+    // -------------------------------------------------------
+    // CREATE PROFILE
+    // -------------------------------------------------------
     func createProfile(userProfile: UserProfile) async throws {
         let uid = userProfile.uid
         let userRef = db.collection(usersCollection).document(uid)
@@ -48,7 +107,7 @@ final class UserService {
             "email": userProfile.email.lowercased(),
             "avatarType": userProfile.avatarType,
             "createdAt": FieldValue.serverTimestamp(),
-            // Medal and statistics fields - initialized to 0
+            
             "goldMedalsAccumulated": userProfile.goldMedalsAccumulated,
             "silverMedalsAccumulated": userProfile.silverMedalsAccumulated,
             "bronzeMedalsAccumulated": userProfile.bronzeMedalsAccumulated,
@@ -60,55 +119,43 @@ final class UserService {
             "memberSince": userProfile.memberSince
         ]
         
-        // Add avatar fields if they exist
-        if let background = userProfile.avatarBackground {
-            profileData["avatarBackground"] = background
-        }
-        if let body = userProfile.avatarBody {
-            profileData["avatarBody"] = body
-        }
-        if let shirt = userProfile.avatarShirt {
-            profileData["avatarShirt"] = shirt
-        }
-        if let eyes = userProfile.avatarEyes {
-            profileData["avatarEyes"] = eyes
-        }
-        if let mouth = userProfile.avatarMouth {
-            profileData["avatarMouth"] = mouth
-        }
-        if let hair = userProfile.avatarHair {
-            profileData["avatarHair"] = hair
-        }
+        if let background = userProfile.avatarBackground { profileData["avatarBackground"] = background }
+        if let body = userProfile.avatarBody { profileData["avatarBody"] = body }
+        if let shirt = userProfile.avatarShirt { profileData["avatarShirt"] = shirt }
+        if let eyes = userProfile.avatarEyes { profileData["avatarEyes"] = eyes }
+        if let mouth = userProfile.avatarMouth { profileData["avatarMouth"] = mouth }
+        if let hair = userProfile.avatarHair { profileData["avatarHair"] = hair }
+        if let facialHair = userProfile.avatarFacialHair { profileData["avatarFacialHair"] = facialHair }
         
-        if let facialHair = userProfile.avatarFacialHair {
-                    profileData["avatarFacialHair"] = facialHair
-                }
-        
-        // This is the single critical database write
         try await userRef.setData(profileData)
     }
     
+    
+    // -------------------------------------------------------
+    // DELETE PROFILE
+    // -------------------------------------------------------
     func deleteProfile(uid: String) async throws {
-        let userRef = db.collection(usersCollection).document(uid)
-        try await userRef.delete()
+        try await db.collection(usersCollection).document(uid).delete()
     }
     
+    
+    // -------------------------------------------------------
+    // FETCH PROFILE  (FIXED)
+    // -------------------------------------------------------
     func fetchProfile(uid: String) async throws -> UserProfile {
         let doc = try await db.collection(usersCollection).document(uid).getDocument()
+        
         guard let data = doc.data() else {
             throw AuthError.backend("Profile not found.")
         }
         
-        // Manual decoding to handle missing avatar fields in existing profiles
-        guard let uid = data["uid"] as? String,
-              let firstName = data["firstName"] as? String,
-              let lastName = data["lastName"] as? String,
-              let displayName = data["displayName"] as? String,
-              let email = data["email"] as? String else {
-            throw AuthError.backend("Invalid profile data.")
-        }
+        let uid = data["uid"] as? String ?? ""
+        let firstName = data["firstName"] as? String ?? ""
+        let lastName = data["lastName"] as? String ?? ""
+        let displayName = data["displayName"] as? String ?? ""
+        let email = data["email"] as? String ?? ""
         
-        let avatarType = data["avatarType"] as? String ?? "personal" // Default to personal for existing profiles
+        let avatarType = data["avatarType"] as? String ?? "personal"
         let avatarBackground = data["avatarBackground"] as? String
         let avatarBody = data["avatarBody"] as? String
         let avatarShirt = data["avatarShirt"] as? String
@@ -117,16 +164,19 @@ final class UserService {
         let avatarHair = data["avatarHair"] as? String
         let avatarFacialHair = data["avatarFacialHair"] as? String
         
-        // Medal and statistics fields - default to 0 if not present (for existing profiles)
         let goldMedalsAccumulated = data["goldMedalsAccumulated"] as? Int ?? 0
         let silverMedalsAccumulated = data["silverMedalsAccumulated"] as? Int ?? 0
         let bronzeMedalsAccumulated = data["bronzeMedalsAccumulated"] as? Int ?? 0
+        
         let goldMedalsAwarded = data["goldMedalsAwarded"] as? Int ?? 0
         let silverMedalsAwarded = data["silverMedalsAwarded"] as? Int ?? 0
         let bronzeMedalsAwarded = data["bronzeMedalsAwarded"] as? Int ?? 0
+        
         let totalDrawingCount = data["totalDrawingCount"] as? Int ?? 0
         let streakCount = data["streakCount"] as? Int ?? 0
+        
         let memberSince = (data["memberSince"] as? Timestamp)?.dateValue() ?? Date()
+        let lastCompletedDate = (data["lastCompletedDate"] as? Timestamp)?.dateValue()
         
         return UserProfile(
             uid: uid,
@@ -150,28 +200,31 @@ final class UserService {
             bronzeMedalsAwarded: bronzeMedalsAwarded,
             totalDrawingCount: totalDrawingCount,
             streakCount: streakCount,
-            memberSince: memberSince
+            memberSince: memberSince,
+            lastCompletedDate: lastCompletedDate
         )
     }
     
+    
+    // -------------------------------------------------------
+    // UPDATE ANY FIELD
+    // -------------------------------------------------------
     func updateProfile(uid: String, data: [String: Any]) async throws {
-        let userRef = db.collection(usersCollection).document(uid)
-        try await userRef.updateData(data)
+        try await db.collection(usersCollection).document(uid).updateData(data)
     }
     
-    // MARK: - Date Formatting Utility
+    
+    // -------------------------------------------------------
+    // DATE FORMAT HELPER
+    // -------------------------------------------------------
     static func formatMemberSinceDate(_ date: Date) -> (year: String, monthDay: String) {
         let formatter = DateFormatter()
-        
-        // Get year
         formatter.dateFormat = "yyyy"
         let year = formatter.string(from: date)
         
-        // Get month abbreviation and day
         formatter.dateFormat = "MMM d"
         let monthDay = formatter.string(from: date)
         
-        return (year: year, monthDay: monthDay)
+        return (year, monthDay)
     }
-
 }

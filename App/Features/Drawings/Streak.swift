@@ -22,27 +22,39 @@ struct StreakManager {
     
     mutating func markCompletedToday() {
         let today = Calendar.current.startOfDay(for: Date())
-        let lastCompleted = UserDefaults.standard.object(forKey: lastCompletedKey) as? Date
+        let last = UserDefaults.standard.object(forKey: lastCompletedKey) as? Date
+        let current = UserDefaults.standard.integer(forKey: currentKey)
+        let longest = UserDefaults.standard.integer(forKey: longestKey)
         
-        if let last = lastCompleted {
-            if Calendar.current.isDateInYesterday(last) {
+        var newStreak = 1  // Default if first day or missed day
+        
+        if let lastDate = last {
             
-                let newStreak = currentStreak + 1
-                UserDefaults.standard.set(newStreak, forKey: currentKey)
-                UserDefaults.standard.set(today, forKey: lastCompletedKey)
+            if Calendar.current.isDate(lastDate, inSameDayAs: today) {
+                // Already completed today → streak stays the same
+                newStreak = current
                 
-                if newStreak > longestStreak {
-                    UserDefaults.standard.set(newStreak, forKey: longestKey)
-                }
-            } else if !Calendar.current.isDateInToday(last) {
-           
-                UserDefaults.standard.set(1, forKey: currentKey)
-                UserDefaults.standard.set(today, forKey: lastCompletedKey)
+            } else if Calendar.current.isDateInYesterday(lastDate) {
+                // Completed yesterday → continue streak
+                newStreak = current + 1
+                
+            } else {
+                // Missed one or more days → reset streak
+                newStreak = 1
             }
+            
         } else {
-      
-            UserDefaults.standard.set(1, forKey: currentKey)
-            UserDefaults.standard.set(today, forKey: lastCompletedKey)
+            // First completion ever
+            newStreak = 1
+        }
+        
+        // Save final streak values
+        UserDefaults.standard.set(newStreak, forKey: currentKey)
+        UserDefaults.standard.set(today, forKey: lastCompletedKey)
+        
+        // Update longest streak if needed
+        if newStreak > longest {
+            UserDefaults.standard.set(newStreak, forKey: longestKey)
         }
     }
 }
