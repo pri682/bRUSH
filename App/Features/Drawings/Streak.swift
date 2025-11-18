@@ -37,6 +37,10 @@ struct StreakManager {
             } else if Calendar.current.isDateInYesterday(lastDate) {
                 // Completed yesterday → continue streak
                 newStreak = current + 1
+                
+            } else {
+                // Missed one or more days → reset streak
+                newStreak = 1
             }
             
         } else {
