@@ -5,7 +5,7 @@ import FirebaseFirestore
 
 @MainActor
 class FriendsViewModel: ObservableObject {
-    @Published var friends: [Friend] = []
+    @Published var friends: [UserProfile] = []
     @Published var searchText: String = ""
     @Published var requests: [FriendRequest] = []
     @Published var addQuery: String = ""
@@ -16,9 +16,7 @@ class FriendsViewModel: ObservableObject {
     @Published var leaderboard: [LeaderboardEntry] = []
     @Published var isLoadingLeaderboard = false
     @Published var leaderboardError: String?
-    @Published var currentUserHandle: String?
-    @Published var currentUserFirstName: String?
-    @Published var currentUserLastName: String?
+    @Published var currentUser: UserProfile?
     @Published var friendIds: Set<String> = []
     @Published var showingProfile: Bool = false
     @Published var selectedProfile: UserProfile? = nil
@@ -30,30 +28,32 @@ class FriendsViewModel: ObservableObject {
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
     var meUid: String? { AuthService.shared.user?.id }
-    private var myHandle: String { currentUserHandle ?? AuthService.shared.user?.displayName ?? "unknown" }
+    
+    private var myHandle: String { currentUser?.displayName ?? AuthService.shared.user?.displayName ?? "unknown" }
     private var myFullName: String {
-        [currentUserFirstName, currentUserLastName].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+        guard let user = currentUser else { return "" }
+        return [user.firstName, user.lastName].filter { !$0.isEmpty }.joined(separator: " ")
     }
     private let userService = UserService.shared
     
     private func hydrateFriendsFromIds() {
         self.friends = []
-        let db = Firestore.firestore()
         let ids = Array(self.friendIds)
-        for uid in ids {
-            Task { @MainActor in
+        Task { @MainActor in
+            var loadedProfiles: [UserProfile] = []
+            for uid in ids {
                 do {
-                    let doc = try await db.collection("users").document(uid).getDocument()
-                    let data = doc.data()
-                    let dn = (data?["displayName"] as? String) ?? "unknown"
-                    let fn = (data?["firstName"] as? String) ?? ""
-                    let ln = (data?["lastName"] as? String) ?? ""
-                    let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
-                    let profileImageURL: String? = data?["profileImageURL"] as? String
-                    
-                    self.friends.append(Friend(uid: uid, name: fullName.isEmpty ? dn : fullName, handle: "@\(dn)", profileImageURL: profileImageURL))
+                    let profile = try await userService.fetchProfile(uid: uid)
+                    loadedProfiles.append(profile)
                 } catch {
+                    // handle error silently or log
                 }
+            }
+            self.friends = loadedProfiles.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+            
+            // Automatically update leaderboard if we have data
+            if !leaderboard.isEmpty {
+                loadLeaderboard()
             }
         }
     }
@@ -72,10 +72,13 @@ class FriendsViewModel: ObservableObject {
         }
     }
     
-    var filteredFriends: [Friend] {
+    var filteredFriends: [UserProfile] {
         guard !searchText.isEmpty else { return friends }
-        return friends.filter { $0.name.lowercased().contains(searchText.lowercased()) ||
-                                $0.handle.lowercased().contains(searchText.lowercased()) }
+        return friends.filter {
+            let name = [$0.firstName, $0.lastName].filter { !$0.isEmpty }.joined(separator: " ")
+            return name.localizedCaseInsensitiveContains(searchText) ||
+                   $0.displayName.localizedCaseInsensitiveContains(searchText)
+        }
     }
     
     @MainActor
@@ -89,33 +92,27 @@ class FriendsViewModel: ObservableObject {
             performAddSearch()
         }
     }
-        func removeRemote(uids: [String]) async {
-            guard let me = AuthService.shared.user?.id, !uids.isEmpty else { return }
-            for other in uids {
-                do {
-                    try await requestService.removeFriend(me: me, other: other)
-                } catch {
-                    print("Failed to remove friend remotely: \(other), error: \(error)")
-                }
-            }
-            await MainActor.run {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.refreshFriends()
-                }
+    func removeRemote(uids: [String]) async {
+        guard let me = AuthService.shared.user?.id, !uids.isEmpty else { return }
+        for other in uids {
+            do {
+                try await requestService.removeFriend(me: me, other: other)
+            } catch {
+                print("Failed to remove friend remotely: \(other), error: \(error)")
             }
         }
+        await MainActor.run {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.refreshFriends()
+            }
+        }
+    }
     
     func loadMyProfileData() {
         guard let me = meUid else { return }
         Task { @MainActor in
             do {
-                let doc = try await Firestore.firestore()
-                    .collection("users").document(me).getDocument()
-                if let data = doc.data() {
-                    self.currentUserHandle = data["displayName"] as? String
-                    self.currentUserFirstName = data["firstName"] as? String
-                    self.currentUserLastName = data["lastName"] as? String
-                }
+                self.currentUser = try await userService.fetchProfile(uid: me)
             } catch {
             }
         }
@@ -127,8 +124,11 @@ class FriendsViewModel: ObservableObject {
             do {
                 try await requestService.accept(me: me, other: req.fromUid)
                 requests.removeAll { $0.id == req.id }
-                friends.append(Friend(uid: req.fromUid, name: req.fromName, handle: req.handle, profileImageURL: nil))
-                refreshFriends()
+                // Fetch the new friend profile
+                if let newProfile = try? await userService.fetchProfile(uid: req.fromUid) {
+                    friends.append(newProfile)
+                    refreshFriends()
+                }
             }
             catch {
                 addError = "Failed to accept friend request."
@@ -248,182 +248,154 @@ class FriendsViewModel: ObservableObject {
     }
     
     func loadLeaderboard(for date: Date = Date()) {
-            isLoadingLeaderboard = true
-            leaderboardError = nil
-            Task { @MainActor in
-                do {
-                    let db = Firestore.firestore()
-                    var ids = Array(friendIds)
-                    if let me = meUid {
-                        ids.append(me)
-                    }
-                    guard !ids.isEmpty else {
-                        leaderboard = []
-                        isLoadingLeaderboard = false
-                        return
-                    }
-                    let chunkSize = 10
-                    var allEntries: [LeaderboardEntry] = []
-                    var medalMap: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
-                    
-                    for start in stride(from: 0, to: ids.count, by: chunkSize) {
-                                    let end = min(start + chunkSize, ids.count)
-                                    let chunk = Array(ids[start..<end])
-
-                                    let snap = try await db.collection("users")
-                                        .whereField(FieldPath.documentID(), in: chunk)
-                                        .getDocuments()
-
-                                    for doc in snap.documents {
-                                        let uid = doc.documentID
-                                        let data = doc.data()
-
-                                        let displayName = (data["displayName"] as? String) ?? "Unknown"
-                                        let fn = (data["firstName"] as? String) ?? ""
-                                        let ln = (data["lastName"] as? String) ?? ""
-                                        let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
-                                        
-                                        let handle = "@\(displayName)"
-
-                                        let gold = (data["goldMedalsAccumulated"] as? Int) ?? 0
-                                        let silver = (data["silverMedalsAccumulated"] as? Int) ?? 0
-                                        let bronze = (data["bronzeMedalsAccumulated"] as? Int) ?? 0
-                                        let profileImageURL = (data["profileImageURL"] as? String) ?? nil
-
-                                        medalMap[uid] = (gold, silver, bronze)
-
-                                        allEntries.append(
-                                            LeaderboardEntry(
-                                                uid: uid,
-                                                fullName: fullName.isEmpty ? displayName : fullName,
-                                                handle: handle,
-                                                gold: gold,
-                                                silver: silver,
-                                                bronze: bronze,
-                                                submittedAt: Date(),
-                                                profileImageURL: profileImageURL,
-                                                avatarType: data["avatarType"] as? String,
-                                                avatarBackground: data["avatarBackground"] as? String,
-                                                avatarBody: data["avatarBody"] as? String,
-                                                avatarShirt: data["avatarShirt"] as? String,
-                                                avatarEyes: data["avatarEyes"] as? String,
-                                                avatarMouth: data["avatarMouth"] as? String,
-                                                avatarHair: data["avatarHair"] as? String,
-                                                avatarFacialHair: data["avatarFacialHair"] as? String
-                                            )
-                                        )
-                                        #if DEBUG
-                                        if let aType = data["avatarType"] as? String {
-                                            print("[Leaderboard] entry avatar uid=\(uid) type=\(aType) bg=\(data["avatarBackground"] as? String ?? "nil") body=\(data["avatarBody"] as? String ?? "nil") eyes=\(data["avatarEyes"] as? String ?? "nil") mouth=\(data["avatarMouth"] as? String ?? "nil") hair=\(data["avatarHair"] as? String ?? "nil") facialHair=\(data["avatarFacialHair"] as? String ?? "nil") url=\(profileImageURL ?? "nil")")
-                                        } else {
-                                            print("[Leaderboard] entry no avatar parts uid=\(uid) url=\(profileImageURL ?? "nil")")
-                                        }
-                                        #endif
-                                    }
-                                }
-                                allEntries.sort {
-                                    if $0.points != $1.points { return $0.points > $1.points }
-                                    return $0.submittedAt < $1.submittedAt
-                                }
-                                self.leaderboard = allEntries
-                                self.medalCountsByUid = medalMap
-
-                                // Debug: log top entries for verification
-                                #if DEBUG
-                                print("[FriendsViewModel] leaderboard loaded (count:\(allEntries.count))")
-                                for (i, e) in allEntries.prefix(10).enumerated() {
-                                    print("\(i+1): uid=\(e.uid) name='\(e.fullName)' points=\(e.points)")
-                                }
-                                #endif
-                } catch {
-                    leaderboardError = "Failed to load leaderboard."
-                }
-                isLoadingLeaderboard = false
+        isLoadingLeaderboard = true
+        leaderboardError = nil
+        
+        var allProfiles = friends
+        if let me = currentUser {
+            // Avoid duplicates
+            if !allProfiles.contains(where: { $0.uid == me.uid }) {
+                allProfiles.append(me)
             }
         }
-        func sendFriendRequest(to user: FriendSearchResult) {
-            let handleLabel = "@\(user.handle)"
-            guard !sent.contains(where: { $0.toUid == user.uid }) else { return }
-            sent.append(.init(toName: user.fullName, toUid: user.uid, handle: handleLabel))
-            guard let me = meUid else { return }
-            let senderHandle = myHandle
-            let senderDisplay = myFullName
-            
-            pendingOutgoing.insert(user.uid)
-            Task { @MainActor in
-                do {
-                    try await FriendRequestServiceFirebase().sendRequest(
-                        fromUid: me,
-                        fromHandle: senderHandle,
-                        fromDisplay: senderDisplay.isEmpty ? senderHandle : senderDisplay,
-                        toUid: user.uid)
-                }
-                catch {
-                    sent.removeAll { $0.handle == handleLabel }
-                    pendingOutgoing.remove(user.uid)
-                    addError = "Failed to send friend request."
-                }
-            }
+        
+        let entries = allProfiles.map { LeaderboardEntry(profile: $0) }
+        
+        // Sort by points desc
+        self.leaderboard = entries.sorted {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.fullName < $1.fullName
         }
-        func refreshIncoming() {
-            guard let me = meUid else {
-                self.requests = []
-                return
-            }
-            Task { @MainActor in
-                do {
-                    let dtos = try await requestService.fetchIncoming(forUid: me)
-                    self.requests = dtos.map { dto in
-                        FriendRequest(
-                            fromUid: dto.fromUid,
-                            fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
-                            handle: dto.fromHandle
-                        )
-                    }
-                } catch {
-                    addError = "Failed to load friend requests."
-                }
-            }
+        
+        // Populate medal counts for quick lookup if needed
+        var medalMap: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
+        for entry in entries {
+            medalMap[entry.uid] = (entry.gold, entry.silver, entry.bronze)
         }
-    func remove(friend: Friend) {
-            guard let me = AuthService.shared.user?.id else { return }
-            Task { @MainActor in
-                do {
-                    try await requestService.removeFriend(me: me, other: friend.uid)
-                    if let idx = friends.firstIndex(of: friend) {
-                        friends.remove(at: idx)
-                    } else {
-                        friends.removeAll { $0.uid == friend.uid }
-                    }
-                    friendIds.remove(friend.uid)
-                    if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        performAddSearch()
-                    }
-                    refreshFriends()
-                } catch {
-                    print("Failed to remove friend: \(error)")
-                }
-            }
-        }
+        self.medalCountsByUid = medalMap
+        
+        isLoadingLeaderboard = false
+    }
     
-    func openProfile(for friend: Friend) {
-        Task {
-            await MainActor.run {
-                selectedProfile = nil
-                showingProfile = true
-            }
+    func sendFriendRequest(to user: FriendSearchResult) {
+        let handleLabel = "@\(user.handle)"
+        guard !sent.contains(where: { $0.toUid == user.uid }) else { return }
+        sent.append(.init(toName: user.fullName, toUid: user.uid, handle: handleLabel))
+        guard let me = meUid else { return }
+        let senderHandle = myHandle
+        let senderDisplay = myFullName
+        
+        pendingOutgoing.insert(user.uid)
+        Task { @MainActor in
             do {
-                let profile = try await userService.fetchProfile(uid: friend.uid)
+                try await FriendRequestServiceFirebase().sendRequest(
+                    fromUid: me,
+                    fromHandle: senderHandle,
+                    fromDisplay: senderDisplay.isEmpty ? senderHandle : senderDisplay,
+                    toUid: user.uid)
+            }
+            catch {
+                sent.removeAll { $0.handle == handleLabel }
+                pendingOutgoing.remove(user.uid)
+                addError = "Failed to send friend request."
+            }
+        }
+    }
+    
+    func refreshIncoming() {
+        guard let me = meUid else {
+            self.requests = []
+            return
+        }
+        
+        Task {
+            do {
+                // 1. Fetch raw DTOs
+                let dtos = try await requestService.fetchIncoming(forUid: me)
+                
+                // 2. Hydrate profiles in parallel using TaskGroup
+                var hydratedRequests: [FriendRequest] = []
+                
+                await withTaskGroup(of: FriendRequest?.self) { group in
+                    for dto in dtos {
+                        group.addTask {
+                            // Clean the UID to avoid "not found" errors due to whitespace
+                            let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !cleanUid.isEmpty else { return nil }
+                            
+                            do {
+                                // Try to fetch the fresh profile
+                                let profile = try await self.userService.fetchProfile(uid: cleanUid)
+                                
+                                let fullName = [profile.firstName, profile.lastName]
+                                    .filter { !$0.isEmpty }
+                                    .joined(separator: " ")
+                                
+                                let finalName = fullName.isEmpty ? profile.displayName : fullName
+                                let finalHandle = "@\(profile.displayName)"
+                                
+                                return FriendRequest(
+                                    fromUid: cleanUid,
+                                    fromName: finalName.isEmpty ? "Unknown" : finalName,
+                                    handle: finalHandle.isEmpty ? "@unknown" : finalHandle
+                                )
+                            } catch {
+                                // Fallback to DTO data if fetch fails
+                                print("Failed to hydrate request for \(cleanUid): \(error.localizedDescription)")
+                                return FriendRequest(
+                                    fromUid: cleanUid,
+                                    fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
+                                    handle: dto.fromHandle
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Collect results
+                    for await req in group {
+                        if let req = req {
+                            hydratedRequests.append(req)
+                        }
+                    }
+                }
+                
+                // 3. Update UI on MainActor
                 await MainActor.run {
-                    self.selectedProfile = profile
+                    self.requests = hydratedRequests
                 }
             } catch {
-                print("Failed to fetch profile: \(error)")
                 await MainActor.run {
-                    showingProfile = false
+                    self.addError = "Failed to load friend requests."
                 }
             }
         }
+    }
+    
+    func remove(friendProfile: UserProfile) {
+        guard let me = AuthService.shared.user?.id else { return }
+        Task { @MainActor in
+            do {
+                try await requestService.removeFriend(me: me, other: friendProfile.uid)
+                if let idx = friends.firstIndex(of: friendProfile) {
+                    friends.remove(at: idx)
+                } else {
+                    friends.removeAll { $0.uid == friendProfile.uid }
+                }
+                friendIds.remove(friendProfile.uid)
+                if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    performAddSearch()
+                }
+                refreshFriends()
+            } catch {
+                print("Failed to remove friend: \(error)")
+            }
+        }
+    }
+    
+    // Open profile from local object
+    func openProfile(for profile: UserProfile) {
+        self.selectedProfile = profile
+        self.showingProfile = true
     }
     
     func openProfile(for searchResult: FriendSearchResult) {
@@ -471,11 +443,11 @@ class FriendsViewModel: ObservableObject {
     }
     func resetSessionData() {
         friends = []
+        currentUser = nil
         requests = []
         sent = []
         pendingOutgoing = []
         addResults = []
         addQuery = ""
     }
-    }
-
+}

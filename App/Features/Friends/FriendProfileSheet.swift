@@ -73,13 +73,7 @@ struct FriendProfileSheet: View {
                                     titleVisibility: .visible
                                 ) {
                                     Button("Remove", role: .destructive) {
-                                        let friendToRemove = Friend(
-                                            uid: profile.uid,
-                                            name: profile.displayName,
-                                            handle: profile.displayName,
-                                            profileImageURL: profile.avatarBackground ?? ""
-                                        )
-                                        vm.remove(friend: friendToRemove)
+                                        vm.remove(friendProfile: profile)
                                         dismiss()
                                     }
                                     Button("Cancel", role: .cancel) {}
