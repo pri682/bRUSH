@@ -138,3 +138,22 @@ final class LeaderboardTests: XCTestCase {
         XCTAssertEqual(entries.map { $0.uid }, ["earlier", "later"],
                       "When points are equal, earlier submittedAt should rank higher")
     }
+
+ 
+    // Test: User with high score appears at top
+    func testLeaderboard_HighScoreAtTop() {
+        let user1 = makeEntry(uid: "u1", name: "Alice", gold: 1, silver: 2, bronze: 3)  // 155 pts
+        let user2 = makeEntry(uid: "u2", name: "Bob", gold: 5, silver: 1, bronze: 0)    // 525 pts
+        let user3 = makeEntry(uid: "u3", name: "Carol", gold: 2, silver: 0, bronze: 5)  // 250 pts
+        
+        var leaderboard = [user1, user2, user3]
+        leaderboard.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(leaderboard[0].uid, "u2", "Bob with 525 pts should be rank 1")
+        XCTAssertEqual(leaderboard[1].uid, "u3", "Carol with 250 pts should be rank 2")
+        XCTAssertEqual(leaderboard[2].uid, "u1", "Alice with 155 pts should be rank 3")
+    }
+    
