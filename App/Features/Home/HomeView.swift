@@ -81,11 +81,10 @@ struct HomeView: View {
                                 
                                 ZStack(alignment: .center) {
                                     ScrollView(.vertical) {
-                                        VStack(alignment: .center) {
+                                        VStack {
                                             ForEach(viewModel.feedItems.indices, id: \.self) { index in
                                                 let item = viewModel.feedItems[index]
                                                 let cardWidth = visibleHeight * (9 / 16)
-                                                
 
                                                 UserFeedItemView(
                                                     item: item,
@@ -106,8 +105,8 @@ struct HomeView: View {
                                                 .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
                                                 .id(index)
                                             }
-                                            .scrollTargetLayout()
                                         }
+                                        .scrollTargetLayout()
                                     }
                                     .scrollTargetBehavior(.paging)
                                     .scrollIndicators(.hidden)
