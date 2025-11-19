@@ -18,22 +18,23 @@ struct ShareCardEditView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // 1. Top Half: Mini Preview
-            // We use a GeometryReader to give it specific proportion of the screen
-            GeometryReader { geo in
-                ZStack {
-                    // We pass bindings so the mini preview updates live
-                    ShareCardPreviewView(
-                        backgroundColor: .constant(.clear), // Transparent BG so it fits in the edit view
-                        cardColor: $cardColor,
-                        cardText: $cardText,
-                        textColor: $textColor
-                    )
-                    .scaleEffect(0.7) // Scale it down to fit nicely
-                }
-                .frame(width: geo.size.width, height: geo.size.height)
+            // 1. Top Half: Mini Preview (The Studio View)
+            ZStack {
+                // We render the card at FULL SCREEN size so layouts/fonts calculate correctly
+                ShareCardPreviewView(
+                    backgroundColor: .constant(.clear),
+                    cardColor: $cardColor,
+                    cardText: $cardText,
+                    textColor: $textColor
+                )
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                // Then we scale the whole result down to fit this top container
+                // 0.42 is roughly 42% size, which fits nicely in the top 45% of the screen
+                .scaleEffect(0.42)
             }
-            .frame(height: UIScreen.main.bounds.height * 0.45) // Takes up top 45% of screen
+            .frame(height: UIScreen.main.bounds.height * 0.45) // Container is top 45% of screen
+            // Clip it so the unscaled parts don't bleed over controls
+            .clipped()
             
             // 2. Bottom Half: Controls (The "White Sheet" look)
             VStack(spacing: 20) {
@@ -87,7 +88,8 @@ struct ShareCardEditView: View {
                 }
             }
             .background(Color.white)
-            // We assume 'cornerRadius(_:corners:)' is defined elsewhere in your project
+            // NOTE: Assuming 'cornerRadius(_:corners:)' is in your Extensions file.
+            // If not, change this to standard .cornerRadius(30)
             .cornerRadius(30, corners: [.topLeft, .topRight])
             .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
             .edgesIgnoringSafeArea(.bottom)
