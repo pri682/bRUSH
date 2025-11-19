@@ -62,7 +62,6 @@ struct brushApp: App {
                 }
             }
             .environmentObject(dataModel) // Inject the DataModel
-            .tabBarMinimizeBehavior(.onScrollDown)
         }
     }
 }

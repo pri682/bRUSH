@@ -119,13 +119,28 @@ final class UserService {
             "memberSince": userProfile.memberSince
         ]
         
-        if let background = userProfile.avatarBackground { profileData["avatarBackground"] = background }
-        if let body = userProfile.avatarBody { profileData["avatarBody"] = body }
-        if let shirt = userProfile.avatarShirt { profileData["avatarShirt"] = shirt }
-        if let eyes = userProfile.avatarEyes { profileData["avatarEyes"] = eyes }
-        if let mouth = userProfile.avatarMouth { profileData["avatarMouth"] = mouth }
-        if let hair = userProfile.avatarHair { profileData["avatarHair"] = hair }
-        if let facialHair = userProfile.avatarFacialHair { profileData["avatarFacialHair"] = facialHair }
+        // Add avatar fields if they exist
+        if let background = userProfile.avatarBackground {
+            profileData["avatarBackground"] = background
+        }
+        if let body = userProfile.avatarBody {
+            profileData["avatarBody"] = body
+        }
+        if let shirt = userProfile.avatarShirt {
+            profileData["avatarShirt"] = shirt
+        }
+        if let eyes = userProfile.avatarEyes {
+            profileData["avatarEyes"] = eyes
+        }
+        if let mouth = userProfile.avatarMouth {
+            profileData["avatarMouth"] = mouth
+        }
+        if let hair = userProfile.avatarHair {
+            profileData["avatarHair"] = hair
+        }
+        if let facialHair = userProfile.avatarFacialHair {
+            profileData["avatarFacialHair"] = facialHair
+        }
         
         try await userRef.setData(profileData)
     }

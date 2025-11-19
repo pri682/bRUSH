@@ -1,17 +1,36 @@
 import Foundation
 
 struct FeedItem: Identifiable {
-    let id: String               // Firestore document ID
-    let userId: String           // UID of the user who made the post
-    let firstName: String      // Full first name from /users/{uid}
-    let displayName: String         // "@displayName" style handle
-    let imageURL: String         // Firebase Storage image URL
+    let id: String
+    let userId: String
+    let firstName: String
+    let displayName: String
+    let imageURL: String
     let medalGold: Int
     let medalSilver: Int
     let medalBronze: Int
     let date: String
     let createdAt: Date?
     
-    // Profile image placeholder for UI
+    let lastName: String
+    let email: String
+    let avatarType: String
+    let avatarBackground: String?
+    let avatarBody: String?
+    let avatarShirt: String?
+    let avatarEyes: String?
+    let avatarMouth: String?
+    let avatarHair: String?
+    let avatarFacialHair: String?
+    let goldMedalsAccumulated: Int
+    let silverMedalsAccumulated: Int
+    let bronzeMedalsAccumulated: Int
+    let goldMedalsAwarded: Int
+    let silverMedalsAwarded: Int
+    let bronzeMedalsAwarded: Int
+    let totalDrawingCount: Int
+    let streakCount: Int
+    let memberSince: Date
+
     var profileSystemImageName: String { "person.circle.fill" }
 }

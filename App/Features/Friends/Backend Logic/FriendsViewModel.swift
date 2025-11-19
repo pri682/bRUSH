@@ -40,7 +40,6 @@ class FriendsViewModel: ObservableObject {
         self.friends = []
         let db = Firestore.firestore()
         let ids = Array(self.friendIds)
-        // fetch each friend's profile (displayName) and append to `friends`
         for uid in ids {
             Task { @MainActor in
                 do {
@@ -53,7 +52,6 @@ class FriendsViewModel: ObservableObject {
                     
                     self.friends.append(Friend(uid: uid, name: fullName.isEmpty ? dn : fullName, handle: "@\(dn)"))
                 } catch {
-                    // ignore; leave friend out or append placeholder
                 }
             }
         }
@@ -69,7 +67,6 @@ class FriendsViewModel: ObservableObject {
                 self.friendIds = Set(snap.documents.map { $0.documentID })
                 self.hydrateFriendsFromIds()
             } catch {
-                // non-fatal; keep empty set
             }
         }
     }
@@ -84,11 +81,9 @@ class FriendsViewModel: ObservableObject {
     func removeLocally(uids: [String]) {
         guard !uids.isEmpty else { return }
         let uidSet = Set(uids)
-        // Update arrays synchronously
         friends.removeAll { uidSet.contains($0.uid) }
         friendIds.subtract(uidSet)
         
-        // If Add Friend search is open, refresh badges
         if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             performAddSearch()
         }
@@ -102,7 +97,6 @@ class FriendsViewModel: ObservableObject {
                     print("Failed to remove friend remotely: \(other), error: \(error)")
                 }
             }
-            // light re-sync after animations settle
             await MainActor.run {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     self.refreshFriends()
@@ -122,7 +116,6 @@ class FriendsViewModel: ObservableObject {
                     self.currentUserLastName = data["lastName"] as? String
                 }
             } catch {
-                // non-fatal; UI can still function with optimistic pending state
             }
         }
     }
@@ -153,10 +146,8 @@ class FriendsViewModel: ObservableObject {
         }
     }
     
-    // This is the private search task
     private func searchTask(for query: String) async {
-        // require sign in to search users
-        guard AuthService.shared.user != nil else {
+        guard let me = meUid else {
             await MainActor.run {
                 self.addResults = []
                 self.addError = "Sign in to search for friends."
@@ -178,7 +169,6 @@ class FriendsViewModel: ObservableObject {
             return
         }
         
-        // isSearchingAdd is already true from the sink.
         await MainActor.run {
             addError = nil
         }
@@ -186,47 +176,40 @@ class FriendsViewModel: ObservableObject {
         do {
             let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
             
-            await MainActor.run {
-                self.addResults = hits.map { hit in
-                    FriendSearchResult(uid: hit.uid, handle: hit.handle, fullName: hit.fullName)
-                }
-                pendingOutgoing = []
-            }
-            
-            guard let me = meUid else {
-                await MainActor.run { self.isSearchingAdd = false }
-                return
-            }
+            let searchResults = hits.map { FriendSearchResult(uid: $0.uid, handle: $0.handle, fullName: $0.fullName) }
+            var newPendingOutgoing: Set<String> = []
 
-            // Check for pending requests for the results
-            for hit in self.addResults {
-                Task { @MainActor in
-                    do {
-                        if try await requestService.hasPending(fromUid: me, toUid: hit.uid) {
-                            pendingOutgoing.insert(hit.uid)
-                        }
-                    } catch {
-                        // ignore individual failures; row just won’t show “Pending”
+            await withTaskGroup(of: (String, Bool).self) { group in
+                for hit in searchResults {
+                    group.addTask {
+                        let isPending = (try? await self.requestService.hasPending(fromUid: me, toUid: hit.uid)) ?? false
+                        return (hit.uid, isPending)
                     }
                 }
+                
+                for await (uid, isPending) in group {
+                    if isPending {
+                        newPendingOutgoing.insert(uid)
+                    }
+                }
+            }
+
+            await MainActor.run {
+                self.addResults = searchResults
+                self.pendingOutgoing = newPendingOutgoing
+                self.isSearchingAdd = false
             }
             
         } catch {
             await MainActor.run {
                 self.addResults = []
                 self.addError = "Search failed. Please try again."
+                self.isSearchingAdd = false
             }
-        }
-        
-        // Set searching to false at the very end
-        await MainActor.run {
-            isSearchingAdd = false
         }
     }
     
-    // This public function is for buttons (like onSubmit or manual refresh)
     func performAddSearch() {
-        // Just run the task with the current query
         Task {
             await searchTask(for: addQuery)
         }
@@ -236,13 +219,9 @@ class FriendsViewModel: ObservableObject {
         $addQuery
             .removeDuplicates()
             .map { [weak self] query -> String in
-                // This map operator runs *before* the debounce.
-                // We set the searching state immediately.
                 let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
                 Task { @MainActor in
-                    // Show searching spinner if query is not empty
                     self?.isSearchingAdd = !trimmed.isEmpty
-                    // Clear error and old results immediately
                     self?.addError = nil
                     if trimmed.isEmpty {
                         self?.addResults = []
@@ -252,15 +231,13 @@ class FriendsViewModel: ObservableObject {
             }
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .sink { [weak self] trimmedQuery in
-                // This sink runs *after* the debounce.
                 if trimmedQuery.isEmpty {
                     Task { @MainActor in
                         self?.addResults = []
                         self?.addError = nil
-                        self?.isSearchingAdd = false // Turn off spinner
+                        self?.isSearchingAdd = false
                     }
                 } else {
-                    // Run the actual search
                     Task {
                         await self?.searchTask(for: trimmedQuery)
                     }
@@ -325,7 +302,6 @@ class FriendsViewModel: ObservableObject {
                                         ))
                                     }
                                 }
-                                // Sort: points desc, then earlier submittedAt first
                                 allEntries.sort {
                                     if $0.points != $1.points { return $0.points > $1.points }
                                     return $0.submittedAt < $1.submittedAt
@@ -387,7 +363,6 @@ class FriendsViewModel: ObservableObject {
             Task { @MainActor in
                 do {
                     try await requestService.removeFriend(me: me, other: friend.uid)
-                    // Locally drop it
                     if let idx = friends.firstIndex(of: friend) {
                         friends.remove(at: idx)
                     } else {
@@ -403,17 +378,67 @@ class FriendsViewModel: ObservableObject {
                 }
             }
         }
+    
     func openProfile(for friend: Friend) {
-            Task {
-                do {
-                    let profile = try await userService.fetchProfile(uid: friend.uid)
+        Task {
+            await MainActor.run {
+                selectedProfile = nil
+                showingProfile = true
+            }
+            do {
+                let profile = try await userService.fetchProfile(uid: friend.uid)
+                await MainActor.run {
                     self.selectedProfile = profile
-                    self.showingProfile = true
-                } catch {
-                    print("Failed to fetch profile: \(error)")
+                }
+            } catch {
+                print("Failed to fetch profile: \(error)")
+                await MainActor.run {
+                    showingProfile = false
                 }
             }
         }
+    }
+    
+    func openProfile(for searchResult: FriendSearchResult) {
+        Task {
+            await MainActor.run {
+                selectedProfile = nil
+                showingProfile = true
+            }
+            do {
+                let profile = try await userService.fetchProfile(uid: searchResult.uid)
+                await MainActor.run {
+                    self.selectedProfile = profile
+                }
+            } catch {
+                print("Failed to fetch profile: \(error)")
+                await MainActor.run {
+                    showingProfile = false
+                }
+            }
+        }
+    }
+    
+    func openProfile(for request: FriendRequest) {
+        Task {
+            await MainActor.run {
+                selectedProfile = nil
+                showingProfile = true
+            }
+            do {
+                let profile = try await userService.fetchProfile(uid: request.fromUid)
+                await MainActor.run {
+                    self.selectedProfile = profile
+                }
+            } catch {
+                print("Failed to fetch profile: \(error)")
+                await MainActor.run {
+                    showingProfile = false
+                }
+            }
+        }
+    }
+    
     func isRequestPending(uid: String) -> Bool {
         pendingOutgoing.contains(uid)
     }

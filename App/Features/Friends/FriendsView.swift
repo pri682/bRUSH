@@ -4,54 +4,96 @@ struct FriendsView: View {
     @StateObject private var vm = FriendsViewModel()
     @State private var showAddSheet = false
     @State private var showLeaderboard = false
-    @State private var showRemoveConfirm = false
-    @State private var pendingRemoval: Friend? = nil
+    @State private var isInitiallyLoading = true
+    
+    enum FriendsTab: String, CaseIterable {
+        case friends = "Friends"
+        case requests = "Requests"
+    }
+    @State private var selectedTab: FriendsTab = .friends
+    
+    var filteredRequests: [FriendRequest] {
+        guard !vm.searchText.isEmpty else { return vm.requests }
+        return vm.requests.filter {
+            $0.fromName.lowercased().contains(vm.searchText.lowercased()) ||
+            $0.handle.lowercased().contains(vm.searchText.lowercased())
+        }
+    }
     
     var body: some View {
         NavigationStack {
-            List {
-                if !vm.requests.isEmpty && vm.searchText.isEmpty {
-                    Section("Friend Requests") {
-                        ForEach(vm.requests) { req in
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(req.fromName).font(.headline)
-                                    Text(req.handle).foregroundStyle(.secondary).font(.caption)
-                                }
-                                Spacer()
-                                Button("Accept") { vm.accept(req) }
-                                    .buttonStyle(.glassProminent)
-                                Button("Decline") { vm.decline(req) }
-                                    .buttonStyle(.glass)
+            VStack(spacing: 0) {
+                Picker("View", selection: $selectedTab) {
+                    ForEach(FriendsTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
+                List {
+                    if selectedTab == .friends {
+                        if vm.filteredFriends.isEmpty && !isInitiallyLoading {
+                            if vm.searchText.isEmpty {
+                                Text("No friends yet. Add some!")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("No friends found for \"\(vm.searchText)\"")
+                                    .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 4)
+                        } else if isInitiallyLoading && vm.friends.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                        }
+                        
+                        ForEach(vm.filteredFriends) { friend in
+                            friendRow(friend)
+                        }
+                        .onDelete(perform: deleteFriends)
+                        
+                    } else if selectedTab == .requests {
+                        if filteredRequests.isEmpty && !isInitiallyLoading {
+                            if vm.searchText.isEmpty {
+                                Text("No new friend requests.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("No requests found for \"\(vm.searchText)\"")
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else if isInitiallyLoading && vm.requests.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                        }
+                        
+                        ForEach(filteredRequests) { req in
+                            requestRow(req)
                         }
                     }
                 }
-                Section("Friends (\(vm.filteredFriends.count))") {
-                    ForEach(vm.filteredFriends) { friend in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(friend.name).font(.headline)
-                            Text(friend.handle).foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 2)
-                        .contentShape(Rectangle())
-                        .onTapGesture { vm.openProfile(for: friend) }
-                    }
-                    .onDelete { indexSet in
-                        let uids = indexSet.compactMap { idx in
-                            vm.filteredFriends[safe: idx]?.uid
-                        }
-                        vm.removeLocally(uids: uids)
-                        Task { await vm.removeRemote(uids: uids) }
-                    }
+                .listStyle(.insetGrouped)
+            }
+            .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                guard isInitiallyLoading else { return }
+                
+                vm.loadMyProfileData()
+                vm.refreshFriends()
+                vm.refreshIncoming()
+                vm.loadLeaderboard()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    isInitiallyLoading = false
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear { vm.loadMyProfileData(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard(); vm.resetSessionData() }
-            .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
+            .searchable(text: $vm.searchText, prompt: "Search \(selectedTab.rawValue)")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -78,16 +120,8 @@ struct FriendsView: View {
             }
             .sheet(isPresented: $vm.showingProfile) {
                 if let p = vm.selectedProfile {
-                    FriendProfileSheet(
-                        profile: p,
-                        onConfirmRemove: { uid in
-                            if let f = vm.friends.first(where: { $0.uid == uid}) {
-                                vm.remove(friend: f)
-                            }
-                        }
-                    )
+                    FriendProfileSheet(vm: vm, profile: p)
                 } else {
-                    // Fallback while loading
                     VStack(spacing: 12) {
                         ProgressView()
                         Text("Loading profile…")
@@ -100,6 +134,52 @@ struct FriendsView: View {
                 LeaderboardSheet(vm: vm)
             }
         }
+    }
+    
+    @ViewBuilder
+    private func friendRow(_ friend: Friend) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(friend.name).font(.headline)
+                Text(friend.handle).foregroundStyle(.secondary).font(.caption)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture { vm.openProfile(for: friend) }
+    }
+    
+    @ViewBuilder
+    private func requestRow(_ req: FriendRequest) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(req.fromName).font(.headline)
+                Text(req.handle).foregroundStyle(.secondary).font(.caption)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                vm.openProfile(for: req)
+            }
+            
+            Spacer()
+            
+            if vm.searchText.isEmpty {
+                Button("Accept") { vm.accept(req) }
+                    .buttonStyle(.glassProminent)
+                Button("Decline") { vm.decline(req) }
+                    .buttonStyle(.glass)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private func deleteFriends(at offsets: IndexSet) {
+        let uids = offsets.compactMap { idx in
+            vm.filteredFriends[safe: idx]?.uid
+        }
+        vm.removeLocally(uids: uids)
+        Task { await vm.removeRemote(uids: uids) }
     }
 }
 

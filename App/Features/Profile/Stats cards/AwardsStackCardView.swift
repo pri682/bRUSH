@@ -6,11 +6,10 @@ struct AwardsStackCardView: View {
     let secondPlaceCount: Int
     let thirdPlaceCount: Int
     let medalIconSize: CGFloat
+    var isCurrentUser: Bool = false
 
-    // Base medal scale
     private let baseMedalScaleFactor: CGFloat = 1.8
 
-    // Colors
     private let goldNumberColor = Color(hex: "#ff9c00")!
     private let goldBackgroundStart = Color(hex: "#f8f1d5")!
     private let goldBackgroundEnd = Color(hex: "#eadba7")!
@@ -28,24 +27,23 @@ struct AwardsStackCardView: View {
             let cardWidth = geometry.size.width
             let cardHeight = geometry.size.height
             
-            // Device / size detection
             let isPad = UIDevice.current.userInterfaceIdiom == .pad || cardWidth > 600
             
-            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)  // Give more height on iPad
+            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)
             let radius = min(cardWidth, cardHeight) * 0.06
 
-            // Font & medal scaling
             let fontFactorBase = cardWidth / 400
-            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)  // More conservative iPad scaling
+            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)
             
-            // 🔧 Slightly smaller medals on iPad
             let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
             let adjustedMedalSize = medalIconSize * medalScaleFactor
+            
+            let accumulatedTitle = isCurrentUser ? "Medals Received" : "Medals Received"
+            let awardedTitle = isCurrentUser ? "Medals Given" : "Medals Given"
 
             VStack(spacing: 0) {
-                // MARK: - Gold
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: firstPlaceCount,
                     imageName: "gold_medal",
                     countColor: goldNumberColor,
@@ -62,7 +60,6 @@ struct AwardsStackCardView: View {
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
                 .overlay(
-                    // Gold section drop shadow
                     Rectangle()
                         .fill(Color.black.opacity(0.08))
                         .frame(height: 2)
@@ -73,9 +70,8 @@ struct AwardsStackCardView: View {
                 
                 Divider().opacity(0.15)
 
-                // MARK: - Silver
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: secondPlaceCount,
                     imageName: "silver_medal",
                     countColor: silverNumberColor,
@@ -91,7 +87,6 @@ struct AwardsStackCardView: View {
                     )
                 )
                 .overlay(
-                    // Silver section drop shadow
                     Rectangle()
                         .fill(Color.black.opacity(0.08))
                         .frame(height: 2)
@@ -102,9 +97,8 @@ struct AwardsStackCardView: View {
 
                 Divider().opacity(0.15)
 
-                // MARK: - Bronze
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: thirdPlaceCount,
                     imageName: "bronze_medal",
                     countColor: bronzeNumberColor,
@@ -128,7 +122,6 @@ struct AwardsStackCardView: View {
     }
 }
 
-// MARK: - Helpers
 extension Color {
     init?(hex: String) {
         let hexColor = hex.replacingOccurrences(of: "#", with: "")
