@@ -6,11 +6,9 @@ struct ShareCardEditView: View {
     @Binding var cardText: String
     @Binding var textColor: Color
     
-    // Categories for the "Steps"
     let categories = ["Message", "Text Color", "Card Color", "Background"]
     @State private var selectedCategoryIndex = 0
     
-    // Preset Colors for quick selection
     let presetColors: [Color] = [
         .white, .black, .red, .orange, .yellow, .green, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink, .brown
     ]
@@ -18,28 +16,30 @@ struct ShareCardEditView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // 1. Top Half: Mini Preview (The Studio View)
-            ZStack {
-                // We render the card at FULL SCREEN size so layouts/fonts calculate correctly
-                ShareCardPreviewView(
-                    backgroundColor: .constant(.clear),
-                    cardColor: $cardColor,
-                    cardText: $cardText,
-                    textColor: $textColor
-                )
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                // Then we scale the whole result down to fit this top container
-                // 0.42 is roughly 42% size, which fits nicely in the top 45% of the screen
-                .scaleEffect(0.42)
+            // 1. Top Half: Mini Preview (Uses the fixed ShareCardPreviewView)
+            GeometryReader { geo in
+                ZStack(alignment: .center) {
+                    // This calls the fixed ShareCardPreviewView
+                    ShareCardPreviewView(
+                        backgroundColor: .constant(.clear), // Transparent BG for the edit view
+                        cardColor: $cardColor,
+                        cardText: $cardText,
+                        textColor: $textColor
+                    )
+                    // Scale factor for the mini-preview
+                    .scaleEffect(0.65)
+                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.7)
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
             }
-            .frame(height: UIScreen.main.bounds.height * 0.45) // Container is top 45% of screen
-            // Clip it so the unscaled parts don't bleed over controls
+            .frame(height: UIScreen.main.bounds.height * 0.45)
+            .background(Color.black.opacity(0.05))
             .clipped()
             
-            // 2. Bottom Half: Controls (The "White Sheet" look)
+            // 2. Bottom Half: Controls
             VStack(spacing: 20) {
                 
-                // Category Tabs (Scrollable)
+                // Category Tabs
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 25) {
                         ForEach(0..<categories.count, id: \.self) { index in
@@ -71,8 +71,8 @@ struct ShareCardEditView: View {
                 ScrollView {
                     VStack {
                         switch selectedCategoryIndex {
-                        case 0: // Message
-                            textInputControl
+                        case 0: // Message (Now just instructions)
+                            messageInstructionControl
                         case 1: // Text Color
                             colorGridControl(binding: $textColor)
                         case 2: // Card Color
@@ -84,13 +84,11 @@ struct ShareCardEditView: View {
                         }
                     }
                     .padding(.horizontal, 25)
-                    .padding(.bottom, 50) // Space for Home bar
+                    .padding(.bottom, 50)
                 }
             }
             .background(Color.white)
-            // NOTE: Assuming 'cornerRadius(_:corners:)' is in your Extensions file.
-            // If not, change this to standard .cornerRadius(30)
-            .cornerRadius(30, corners: [.topLeft, .topRight])
+            .cornerRadius(30)
             .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
             .edgesIgnoringSafeArea(.bottom)
         }
@@ -98,25 +96,26 @@ struct ShareCardEditView: View {
     
     // MARK: - Sub-Controls
     
-    var textInputControl: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("What's the vibe?")
+    var messageInstructionControl: some View {
+        VStack(spacing: 15) {
+            Image(systemName: "photo")
+                .font(.system(size: 40))
+                .foregroundColor(.gray.opacity(0.5))
+                .padding(.top, 20)
+            
+            Text("The card is using the static asset 'card_1.png'.")
                 .font(.headline)
                 .foregroundColor(.gray)
             
-            TextField("LETS GO", text: $cardText, axis: .vertical)
-                .font(.system(size: 30, weight: .black).italic())
-                .multilineTextAlignment(.center)
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(15)
-                .frame(height: 100)
-            
-            Text("Tip: Short words (2-3 lines) look best.")
-                .font(.caption)
-                .foregroundColor(.gray)
+            Text("Static Card")
+                .font(.caption.bold())
+                .foregroundColor(.black.opacity(0.6))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.black.opacity(0.05))
+                .clipShape(Capsule())
         }
-        .padding(.top, 20)
+        .frame(height: 150)
     }
     
     func colorGridControl(binding: Binding<Color>) -> some View {

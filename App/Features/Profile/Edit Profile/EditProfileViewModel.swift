@@ -10,6 +10,7 @@ class EditProfileViewModel: ObservableObject {
     @Published var displayNameError: String?
     @Published private(set) var isSaving = false
 
+    // We keep this to access the UID, but we create copies when saving updates
     private let userProfile: UserProfile
 
     init(userProfile: UserProfile) {
@@ -41,7 +42,7 @@ class EditProfileViewModel: ObservableObject {
         return allowedChars.isSuperset(of: CharacterSet(charactersIn: username))
     }
 
-    /// Save changes to Firestore
+    /// Save changes to Firestore (Profile Info)
     func saveChanges() async -> Bool {
         // Validate before save
         firstNameError = validateFirstName()
@@ -70,40 +71,32 @@ class EditProfileViewModel: ObservableObject {
     }
     
     /// Save avatar changes to Firestore
+    /// ✅ FIXED: Uses updateUserAvatar to handle deletions correctly
     func saveAvatarChanges(avatarParts: AvatarParts) async -> Bool {
         isSaving = true
         defer { isSaving = false }
 
+        // 1. Create a mutable copy of the profile
+        var updatedProfile = self.userProfile
+        
+        // 2. Apply the new avatar parts to the struct
+        // Since 'updatedProfile' is a struct, assigning nil to these optional properties
+        // keeps them as nil.
+        updatedProfile.avatarType = avatarParts.avatarType.rawValue
+        updatedProfile.avatarBackground = avatarParts.background
+        updatedProfile.avatarBody = avatarParts.body
+        updatedProfile.avatarShirt = avatarParts.shirt
+        updatedProfile.avatarEyes = avatarParts.eyes
+        updatedProfile.avatarMouth = avatarParts.mouth
+        updatedProfile.avatarHair = avatarParts.hair
+        updatedProfile.avatarFacialHair = avatarParts.facialHair
+
         do {
-            var avatarData: [String: Any] = [:]
-            
-            // Avatar type and background are always required
-            avatarData["avatarType"] = avatarParts.avatarType.rawValue
-            avatarData["avatarBackground"] = avatarParts.background
-            
-            if let body = avatarParts.body {
-                avatarData["avatarBody"] = body
-            }
-            if let shirt = avatarParts.shirt {
-                avatarData["avatarShirt"] = shirt
-            }
-            if let eyes = avatarParts.eyes {
-                avatarData["avatarEyes"] = eyes
-            }
-            if let mouth = avatarParts.mouth {
-                avatarData["avatarMouth"] = mouth
-            }
-            if let hair = avatarParts.hair {
-                avatarData["avatarHair"] = hair
-            }
-            
-            if let facialHair = avatarParts.facialHair {
-                        avatarData["avatarFacialHair"] = facialHair
-                    }
-            
-            try await UserService.shared.updateProfile(
-                uid: userProfile.uid,
-                data: avatarData
+            // 3. Pass the whole struct to the new Service method
+            // The Service will see the 'nil' values and send FieldValue.delete() to Firebase
+            try await UserService.shared.updateUserAvatar(
+                uid: updatedProfile.uid,
+                profile: updatedProfile
             )
             return true
         } catch {

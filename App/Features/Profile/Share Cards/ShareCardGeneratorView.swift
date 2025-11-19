@@ -7,10 +7,10 @@ struct ShareCardGeneratorView: View {
     @State private var currentTab: String = "Preview"
     
     // Customization State
-    @State private var backgroundColor: Color = Color(hex: "#1A237E") ?? .blue
-    @State private var cardColor: Color = Color(hex: "#2A2A72") ?? .indigo
-    @State private var cardText: String = "LET'S\nGOO"
-    @State private var textColor: Color = Color(hex: "#FF5252") ?? .red
+    @State private var backgroundColor: Color = Color(hex: "#FFA500") ?? .orange
+    @State private var cardColor: Color = Color(hex: "#FFD700") ?? .yellow
+    @State private var cardText: String = "BRUSH"
+    @State private var textColor: Color = Color(hex: "#8B4513") ?? .brown
     
     let tabs = ["Preview", "Edit"]
     @Namespace private var animation
@@ -30,10 +30,12 @@ struct ShareCardGeneratorView: View {
                         backgroundColor: $backgroundColor,
                         cardColor: $cardColor,
                         cardText: $cardText,
-                        textColor: $textColor
+                        textColor: $textColor,
+                        userProfile: userProfile // Pass profile
                     )
                     .transition(.opacity)
                 } else {
+                    // Passing transparent bg to edit view so it floats nicely
                     ShareCardEditView(
                         backgroundColor: $backgroundColor,
                         cardColor: $cardColor,
@@ -43,26 +45,23 @@ struct ShareCardGeneratorView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .animation(.easeInOut(duration: 0.3), value: currentTab)
             
-            // MARK: - Liquid Glass Nav
+            // Custom Tab Header
             VStack {
-                HStack {
+                HStack(spacing: 20) {
                     Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .bold))
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
                             .foregroundColor(.white.opacity(0.8))
-                            .padding(12)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
                     }
+                    .frame(width: 40, height: 40)
                     
                     Spacer()
                     
                     HStack(spacing: 0) {
                         ForEach(tabs, id: \.self) { tab in
                             Text(tab)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(currentTab == tab ? .black : .white.opacity(0.7))
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 20)

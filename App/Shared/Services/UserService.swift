@@ -210,23 +210,49 @@ final class UserService {
     }
     
     // -------------------------------------------------------
-    // UPDATE ANY FIELD
+    // UPDATE ANY FIELD (Generic)
     // -------------------------------------------------------
+    // ⚠️ Note: Do NOT use this for saving Avatar changes if items are being removed.
+    // Swift dictionaries drop nil values, so Firestore won't know to delete the field.
     func updateProfile(uid: String, data: [String: Any]) async throws {
         try await db.collection(usersCollection).document(uid).updateData(data)
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 1009230f (KAN-187 Card Template, Better Design, Easier UX)
     // -------------------------------------------------------
-    // DATE FORMAT HELPER
+    // UPDATE AVATAR SPECIFICALLY (Handles Deletions)
     // -------------------------------------------------------
+    // ✅ Use THIS function for saving the avatar.
+    func updateUserAvatar(uid: String, profile: UserProfile) async throws {
+        var data: [String: Any] = [
+            "avatarType": profile.avatarType
+        ]
+        
+        // Helper: If value is nil, send FieldValue.delete() to remove it from Firestore
+        func setValueOrDelete(_ value: String?) -> Any {
+            return value ?? FieldValue.delete()
+        }
+        
+        data["avatarBackground"] = setValueOrDelete(profile.avatarBackground)
+        data["avatarBody"] = setValueOrDelete(profile.avatarBody)
+        data["avatarShirt"] = setValueOrDelete(profile.avatarShirt)
+        data["avatarEyes"] = setValueOrDelete(profile.avatarEyes)
+        data["avatarMouth"] = setValueOrDelete(profile.avatarMouth)
+        data["avatarHair"] = setValueOrDelete(profile.avatarHair)
+        data["avatarFacialHair"] = setValueOrDelete(profile.avatarFacialHair)
+        
+        try await db.collection(usersCollection).document(uid).updateData(data)
+    }
+    
     static func formatMemberSinceDate(_ date: Date) -> (year: String, monthDay: String) {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy"
         let year = formatter.string(from: date)
-        
         formatter.dateFormat = "MMM d"
         let monthDay = formatter.string(from: date)
-        
         return (year, monthDay)
     }
 }
