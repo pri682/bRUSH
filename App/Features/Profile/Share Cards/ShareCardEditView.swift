@@ -16,17 +16,17 @@ struct ShareCardEditView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // 1. Top Half: Mini Preview (Uses the fixed ShareCardPreviewView)
+            // 1. Top Half: Mini Preview
             GeometryReader { geo in
                 ZStack(alignment: .center) {
-                    // This calls the fixed ShareCardPreviewView
+                    // Pass showActions: false to hide the buttons/dots here
                     ShareCardPreviewView(
-                        backgroundColor: .constant(.clear), // Transparent BG for the edit view
+                        backgroundColor: .constant(.clear),
                         cardColor: $cardColor,
                         cardText: $cardText,
-                        textColor: $textColor
+                        textColor: $textColor,
+                        showActions: false // <--- Hides controls
                     )
-                    // Scale factor for the mini-preview
                     .scaleEffect(0.65)
                     .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.7)
                 }
@@ -71,7 +71,7 @@ struct ShareCardEditView: View {
                 ScrollView {
                     VStack {
                         switch selectedCategoryIndex {
-                        case 0: // Message (Now just instructions)
+                        case 0: // Message
                             messageInstructionControl
                         case 1: // Text Color
                             colorGridControl(binding: $textColor)

@@ -110,6 +110,7 @@ struct SignedInProfileView: View {
                                 HStack {
                                     Spacer()
                                     
+<<<<<<< HEAD
                                     // 🔥 NEW: Share Button
                                     Button {
                                         showingShareCard = true
@@ -131,7 +132,34 @@ struct SignedInProfileView: View {
                                             .foregroundColor(avatarTextColor.opacity(0.85))
                                             // 💡 FIX: Use dynamic shadow color
                                             .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+=======
+                                    // Stack buttons Vertically (Share above Gear)
+                                    VStack(spacing: 20) {
+                                        
+                                        // 🔥 NEW: Share Button (Top)
+                                        Button {
+                                            showingShareCard = true
+                                        } label: {
+                                            Image(systemName: "square.and.arrow.up.fill")
+                                                .font(.system(size: 24, weight: .medium))
+                                                .foregroundColor(avatarTextColor.opacity(0.85))
+                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+>>>>>>> 7fcf979e (KAN-187 Added share Button for Cards)
                                         }
+                                        
+                                        // Existing Gear button (Bottom)
+                                        Button {
+                                            showingEditProfile = true
+                                        } label: {
+                                            Image(systemName: "gearshape.fill")
+                                                .font(.system(size: 24, weight: .medium))
+                                            // 💡 FIX: Use dynamic color for the gear icon
+                                                .foregroundColor(avatarTextColor.opacity(0.85))
+                                            // 💡 FIX: Use dynamic shadow color
+                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                        }
+                                    }
+                                    // Apply padding to the stack so they align perfectly
                                     .padding(.trailing, standardPadding * 0.75)
                                     .padding(.bottom, screenHeight * 0.02)
                                 }
