@@ -106,3 +106,19 @@ final class LeaderboardTests: XCTestCase {
         let entry = makeEntry(uid: "u1", gold: 2, silver: 0, bronze: 0)
         XCTAssertEqual(entry.points, 200, "Only gold medals: 2*100 = 200")
     }
+
+// Test: Sorting by points (higher points first)
+    func testSorting_HigherPointsFirst() {
+        let low = makeEntry(uid: "low", gold: 1, silver: 0, bronze: 0)    // 100 pts
+        let high = makeEntry(uid: "high", gold: 5, silver: 0, bronze: 0)  // 500 pts
+        let mid = makeEntry(uid: "mid", gold: 3, silver: 0, bronze: 0)    // 300 pts
+        
+        var entries = [low, high, mid]
+        entries.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(entries.map { $0.uid }, ["high", "mid", "low"],
+                      "Entries should be sorted by points descending")
+    }
