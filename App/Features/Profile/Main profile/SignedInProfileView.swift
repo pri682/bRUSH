@@ -76,7 +76,6 @@ struct SignedInProfileView: View {
                                 mouth: profile.avatarMouth,
                                 hair: profile.avatarHair,
                                 facialHair: profile.avatarFacialHair // CORRECTED: Now includes the new argument
-                                
                             )
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
@@ -102,10 +101,10 @@ struct SignedInProfileView: View {
                                     } label: {
                                         Image(systemName: "gearshape.fill")
                                             .font(.system(size: 24, weight: .medium))
-                                        // 💡 FIX: Use dynamic color for the gear icon
-                                                .foregroundColor(avatarTextColor.opacity(0.85))
-                                                // 💡 FIX: Use dynamic shadow color
-                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                            // 💡 FIX: Use dynamic color for the gear icon
+                                            .foregroundColor(avatarTextColor.opacity(0.85))
+                                            // 💡 FIX: Use dynamic shadow color
+                                            .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
                                         }
                                     .padding(.trailing, standardPadding * 0.75)
                                     .padding(.bottom, screenHeight * 0.02)

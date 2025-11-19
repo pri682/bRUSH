@@ -46,11 +46,7 @@ struct HomeView: View {
             .first
         return keyWindow?.safeAreaInsets ?? .zero
     }
-    
-    private var headerContentHeight: CGFloat {
-        return 34 + 24
-    }
-    
+
     private func reloadFeed(showOverlay: Bool) async {
         if showOverlay {
             await MainActor.run {
@@ -71,7 +67,7 @@ struct HomeView: View {
     var body: some View {
             ZStack {
                 NavigationStack {
-                    ZStack(alignment: .top) {
+                    ZStack {
                         AnimatedMeshGradientBackground()
                             .ignoresSafeArea()
                             .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
@@ -79,22 +75,17 @@ struct HomeView: View {
 
                         VStack(spacing: 0) {
                             GeometryReader { geometry in
-                                let horizontalPadding: CGFloat = 24
-                                
-                                let maxContentWidth: CGFloat = 700
-                                let contentWidth = min(geometry.size.width - (horizontalPadding * 2), maxContentWidth)
-                                let headerOffset = safeAreaInsets.top + headerContentHeight
-                                let visibleHeight = geometry.size.height - headerOffset
+                                let visibleHeight = geometry.size.height - safeAreaInsets.top
                                 
                                 let availablePageHeight = geometry.size.height
                                 
-                                
-                                ZStack(alignment: .top) {
+                                ZStack(alignment: .center) {
                                     ScrollView(.vertical) {
-                                        VStack(spacing: 20) {
+                                        VStack(alignment: .center) {
                                             ForEach(viewModel.feedItems.indices, id: \.self) { index in
                                                 let item = viewModel.feedItems[index]
                                                 let cardWidth = visibleHeight * (9 / 16)
+                                                
 
                                                 UserFeedItemView(
                                                     item: item,
@@ -110,18 +101,17 @@ struct HomeView: View {
                                                     onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
                                                     onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected }
                                                 )
-                                                .frame(width: cardWidth)
+                                                .frame(width: cardWidth, height: geometry.size.height - (UIDevice.current.userInterfaceIdiom == .phone ? 90 : 0))
+                                                .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67)
+                                                .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
                                                 .id(index)
                                             }
+                                            .scrollTargetLayout()
                                         }
-                                        .padding(.vertical, 10)
-                                        .scrollTargetLayout()
                                     }
                                     .scrollTargetBehavior(.paging)
                                     .scrollIndicators(.hidden)
                                     .scrollPosition(id: $currentItemID)
-                                    .contentMargins(.vertical, headerOffset)
-                                    .ignoresSafeArea(edges: .bottom)
                                     .onChange(of: currentItemID) { oldValue, newValue in
                                         if let newIndex = newValue {
                                             withAnimation {

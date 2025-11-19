@@ -20,7 +20,7 @@ struct AvatarView: View {
                 .scaledToFill()
             
             VStack {
-                if includeSpacer && UIDevice.current.userInterfaceIdiom == .phone {
+                if includeSpacer {
                     Color.clear
                         .frame(height: 65)
                 }

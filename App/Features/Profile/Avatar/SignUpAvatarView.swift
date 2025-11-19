@@ -93,19 +93,15 @@ struct SignUpAvatarView: View {
                             Text("Done")
                                 .font(.system(size: screenWidth * 0.04, weight: .semibold))
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, screenWidth * 0.04)
-                        .padding(.vertical, screenWidth * 0.02)
-                        .background(Color.green)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
+                    .buttonStyle(.glassProminent)
+                    .tint(Color.green)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
                 .padding(.bottom, screenHeight * 0.01)
 
-                // --- Avatar Type Tabs ---
-                HStack(spacing: 0) {
+                HStack(spacing: 5) {
                     ForEach(AvatarType.allCases, id: \.self) { avatarType in
                         Button {
                             saveToHistory()
@@ -125,9 +121,9 @@ struct SignUpAvatarView: View {
                     }
                 }
                 .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, screenHeight * 0.02)
+                .padding(.bottom, screenHeight * 0.02)
+                .animation(.easeInOut(duration: 0.3), value: selectedAvatarType)
 
-                // --- Avatar Preview ---
                 AvatarView(
                     avatarType: selectedAvatarType,
                     background: selectedBackground,
@@ -136,8 +132,9 @@ struct SignUpAvatarView: View {
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair,
-                    facialHair: selectedFacialHair
-                    )
+                    facialHair: selectedFacialHair,
+                    includeSpacer: false
+                )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.03)
 

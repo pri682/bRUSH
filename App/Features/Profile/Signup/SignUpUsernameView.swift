@@ -58,16 +58,11 @@ struct SignUpUsernameView: View {
                 viewModel.submitStep2()
             }
             .font(.headline)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(Color.accentColor)
-            .cornerRadius(6) // Less rounded corners
             .disabled(
                 !viewModel.isStep2Valid ||
                 viewModel.isLoading
             )
-            .padding(.top, 16)
+            .buttonStyle(.glassProminent)
         }
         .padding(.horizontal) // Add padding to make the view look good
     }

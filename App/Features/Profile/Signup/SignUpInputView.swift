@@ -83,13 +83,9 @@ struct SignUpInputView: View {
                 viewModel.submitStep1()
             }
             .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(Color.accentColor)
-            .cornerRadius(12) // Less rounded corners
             .disabled(!viewModel.isStep1Valid || viewModel.isLoading)
-            .padding(.top, 16)
+            .buttonStyle(.glassProminent)
         }
     }
 }
