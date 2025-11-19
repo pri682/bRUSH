@@ -49,8 +49,9 @@ class FriendsViewModel: ObservableObject {
                     let fn = (data?["firstName"] as? String) ?? ""
                     let ln = (data?["lastName"] as? String) ?? ""
                     let fullName = [fn, ln].filter { !$0.isEmpty }.joined(separator: " ")
+                    let profileImageURL: String? = data?["profileImageURL"] as? String
                     
-                    self.friends.append(Friend(uid: uid, name: fullName.isEmpty ? dn : fullName, handle: "@\(dn)"))
+                    self.friends.append(Friend(uid: uid, name: fullName.isEmpty ? dn : fullName, handle: "@\(dn)", profileImageURL: profileImageURL))
                 } catch {
                 }
             }
@@ -126,7 +127,7 @@ class FriendsViewModel: ObservableObject {
             do {
                 try await requestService.accept(me: me, other: req.fromUid)
                 requests.removeAll { $0.id == req.id }
-                friends.append(Friend(uid: req.fromUid, name: req.fromName, handle: req.handle))
+                friends.append(Friend(uid: req.fromUid, name: req.fromName, handle: req.handle, profileImageURL: nil))
                 refreshFriends()
             }
             catch {
@@ -287,6 +288,7 @@ class FriendsViewModel: ObservableObject {
                                         let gold = (data["goldMedalsAccumulated"] as? Int) ?? 0
                                         let silver = (data["silverMedalsAccumulated"] as? Int) ?? 0
                                         let bronze = (data["bronzeMedalsAccumulated"] as? Int) ?? 0
+                                        let profileImageURL = (data["profileImageURL"] as? String) ?? nil
 
                                         medalMap[uid] = (gold, silver, bronze)
 
@@ -298,8 +300,25 @@ class FriendsViewModel: ObservableObject {
                                                 gold: gold,
                                                 silver: silver,
                                                 bronze: bronze,
-                                                submittedAt: Date()
-                                        ))
+                                                submittedAt: Date(),
+                                                profileImageURL: profileImageURL,
+                                                avatarType: data["avatarType"] as? String,
+                                                avatarBackground: data["avatarBackground"] as? String,
+                                                avatarBody: data["avatarBody"] as? String,
+                                                avatarShirt: data["avatarShirt"] as? String,
+                                                avatarEyes: data["avatarEyes"] as? String,
+                                                avatarMouth: data["avatarMouth"] as? String,
+                                                avatarHair: data["avatarHair"] as? String,
+                                                avatarFacialHair: data["avatarFacialHair"] as? String
+                                            )
+                                        )
+                                        #if DEBUG
+                                        if let aType = data["avatarType"] as? String {
+                                            print("[Leaderboard] entry avatar uid=\(uid) type=\(aType) bg=\(data["avatarBackground"] as? String ?? "nil") body=\(data["avatarBody"] as? String ?? "nil") eyes=\(data["avatarEyes"] as? String ?? "nil") mouth=\(data["avatarMouth"] as? String ?? "nil") hair=\(data["avatarHair"] as? String ?? "nil") facialHair=\(data["avatarFacialHair"] as? String ?? "nil") url=\(profileImageURL ?? "nil")")
+                                        } else {
+                                            print("[Leaderboard] entry no avatar parts uid=\(uid) url=\(profileImageURL ?? "nil")")
+                                        }
+                                        #endif
                                     }
                                 }
                                 allEntries.sort {
@@ -308,6 +327,14 @@ class FriendsViewModel: ObservableObject {
                                 }
                                 self.leaderboard = allEntries
                                 self.medalCountsByUid = medalMap
+
+                                // Debug: log top entries for verification
+                                #if DEBUG
+                                print("[FriendsViewModel] leaderboard loaded (count:\(allEntries.count))")
+                                for (i, e) in allEntries.prefix(10).enumerated() {
+                                    print("\(i+1): uid=\(e.uid) name='\(e.fullName)' points=\(e.points)")
+                                }
+                                #endif
                 } catch {
                     leaderboardError = "Failed to load leaderboard."
                 }
@@ -451,3 +478,4 @@ class FriendsViewModel: ObservableObject {
         addQuery = ""
     }
     }
+

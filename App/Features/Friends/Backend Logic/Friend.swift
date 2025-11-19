@@ -5,4 +5,5 @@ struct Friend: Identifiable, Hashable, Equatable {
     let uid: String
     let name: String
     let handle: String
+    let profileImageURL: String?
 }
