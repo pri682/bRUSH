@@ -156,4 +156,24 @@ final class LeaderboardTests: XCTestCase {
         XCTAssertEqual(leaderboard[1].uid, "u3", "Carol with 250 pts should be rank 2")
         XCTAssertEqual(leaderboard[2].uid, "u1", "Alice with 155 pts should be rank 3")
     }
+
+// Test: Multiple users with same score, sorted by submission time
+    func testLeaderboard_SameScoreSortedByTime() {
+        let baseDate = Date(timeIntervalSince1970: 1700000000)
+        let user1 = makeEntry(uid: "u1", name: "First", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate)
+        let user2 = makeEntry(uid: "u2", name: "Second", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(10))
+        let user3 = makeEntry(uid: "u3", name: "Third", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(20))
+        
+        var leaderboard = [user3, user1, user2]
+        leaderboard.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(leaderboard.map { $0.uid }, ["u1", "u2", "u3"],
+                      "Same points should be ordered by earliest submission time")
+    }
+}
+
+
     
