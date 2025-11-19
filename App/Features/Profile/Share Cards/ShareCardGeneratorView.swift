@@ -1,28 +1,16 @@
-//
-//  ShareCardGeneratorView.swift
-//  brush
-//
-//  Created by Meidad Troper on 11/18/25.
-//
-
-
-//
-//  ShareCardGeneratorView.swift
-//  brush
-//
-//  Created by Meidad Troper on 11/18/25.
-//
 import SwiftUI
+
 struct ShareCardGeneratorView: View {
     let userProfile: UserProfile
     
-    // MARK: - State for Customization
-    // We lift the state up here so it persists between tabs
+    // MARK: - State
     @State private var currentTab: String = "Preview"
     
-    // ✅ FIX: Add '?? .blue' to handle the optional Color
+    // Customization State
     @State private var backgroundColor: Color = Color(hex: "#1A237E") ?? .blue
     @State private var cardColor: Color = Color(hex: "#2A2A72") ?? .indigo
+    @State private var cardText: String = "LET'S\nGOO"
+    @State private var textColor: Color = Color(hex: "#FF5252") ?? .red
     
     let tabs = ["Preview", "Edit"]
     @Namespace private var animation
@@ -31,38 +19,35 @@ struct ShareCardGeneratorView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            // MARK: - Background Layer (Global)
-            // This ensures the background color is behind everything, even the nav bar
+            // Global Background
             backgroundColor
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // MARK: - Main Content Area
-                ZStack {
-                    if currentTab == "Preview" {
-                        ShareCardPreviewView(
-                            backgroundColor: $backgroundColor,
-                            cardColor: $cardColor
-                        )
-                        .transition(.opacity)
-                    } else {
-                        ShareCardEditView(
-                            backgroundColor: $backgroundColor,
-                            cardColor: $cardColor
-                        )
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                    }
+            // MARK: - Main Content
+            ZStack {
+                if currentTab == "Preview" {
+                    ShareCardPreviewView(
+                        backgroundColor: $backgroundColor,
+                        cardColor: $cardColor,
+                        cardText: $cardText,
+                        textColor: $textColor
+                    )
+                    .transition(.opacity)
+                } else {
+                    ShareCardEditView(
+                        backgroundColor: $backgroundColor,
+                        cardColor: $cardColor,
+                        cardText: $cardText,
+                        textColor: $textColor
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                // We add animation to the View switching
-                .animation(.easeInOut(duration: 0.3), value: currentTab)
             }
+            .animation(.easeInOut(duration: 0.3), value: currentTab)
             
-            // MARK: - Liquid Glass Navigation Bar
-            // Floating on top of the content
+            // MARK: - Liquid Glass Nav
             VStack {
                 HStack {
-                    // Close Button
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .bold))
@@ -74,7 +59,6 @@ struct ShareCardGeneratorView: View {
                     
                     Spacer()
                     
-                    // Liquid Glass Segmented Control
                     HStack(spacing: 0) {
                         ForEach(tabs, id: \.self) { tab in
                             Text(tab)
@@ -98,16 +82,11 @@ struct ShareCardGeneratorView: View {
                         }
                     }
                     .padding(4)
-                    .background(.ultraThinMaterial) // The "Liquid Glass" effect
+                    .background(.ultraThinMaterial)
                     .clipShape(Capsule())
-                    .overlay(
-                        Capsule()
-                            .stroke(.white.opacity(0.2), lineWidth: 0.5)
-                    )
+                    .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 0.5))
                     
                     Spacer()
-                    
-                    // Invisible spacer to balance the Close button centered layout
                     Color.clear.frame(width: 40, height: 40)
                 }
                 .padding(.horizontal)
@@ -118,5 +97,3 @@ struct ShareCardGeneratorView: View {
         }
     }
 }
-
-
