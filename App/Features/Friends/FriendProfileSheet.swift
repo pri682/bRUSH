@@ -76,7 +76,8 @@ struct FriendProfileSheet: View {
                                         let friendToRemove = Friend(
                                             uid: profile.uid,
                                             name: profile.displayName,
-                                            handle: profile.displayName
+                                            handle: profile.displayName,
+                                            profileImageURL: profile.avatarBackground ?? ""
                                         )
                                         vm.remove(friend: friendToRemove)
                                         dismiss()

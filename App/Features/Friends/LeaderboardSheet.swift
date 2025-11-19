@@ -11,12 +11,6 @@ struct LeaderboardSheet: View {
                     podiumSection
                     listSection
                 }
-                
-                ToolbarSpacer()
-                
-                ToolbarItem() {
-                    Button(role: .cancel) { dismiss() }
-                }
             }
             .navigationTitle("Leaderboard")
             .navigationBarTitleDisplayMode(.inline)
@@ -42,10 +36,7 @@ struct LeaderboardSheet: View {
         // Profile sheet presentation
         .sheet(isPresented: $vm.showingProfile) {
             if let profile = vm.selectedProfile {
-                FriendProfileSheet(profile: profile) { uid in
-                    // remove friend action uses existing remove(friend:) API with constructed Friend
-                    vm.remove(friend: Friend(uid: uid, name: profile.displayName, handle: "@\(profile.displayName)", profileImageURL: nil))
-                }
+                FriendProfileSheet(vm: vm, profile: profile)
             }
         }
         .presentationDetents([.large])
@@ -423,7 +414,8 @@ private struct LeaderboardAvatarView: View {
                         eyes: entry.avatarEyes,
                         mouth: entry.avatarMouth,
                         hair: entry.avatarHair,
-                        facialHair: entry.avatarFacialHair
+                        facialHair: entry.avatarFacialHair,
+                        includeSpacer: false
                     )
                     .frame(width: size * 1.3, height: size * 1.3)
                     .offset(y: -size * 0.05)
@@ -448,6 +440,5 @@ private struct LeaderboardAvatarView: View {
             .frame(width: size, height: size)
     }
 }
-
 
     
