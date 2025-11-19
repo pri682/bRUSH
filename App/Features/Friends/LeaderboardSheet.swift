@@ -3,6 +3,7 @@ import SwiftUI
 struct LeaderboardSheet: View {
     @ObservedObject var vm: FriendsViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showScoringInfo = false
     
     var body: some View {
         NavigationStack {
@@ -21,11 +22,28 @@ struct LeaderboardSheet: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        Text("Leaderboard")
+                            .font(.headline)
+                        Button(action: { showScoringInfo = true }) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Score calculation info")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { vm.loadLeaderboard() }) {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
+            }
+            .alert("How Scores Are Calculated", isPresented: $showScoringInfo) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Points are based on medals earned:\n\n🥇 Gold = 100 pts\n🥈 Silver = 25 pts\n🥉 Bronze = 10 pts\n\nEarn medals in challenges to climb the leaderboard.")
             }
             .onAppear {
                 vm.refreshFriends()
