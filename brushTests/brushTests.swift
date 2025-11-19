@@ -56,3 +56,53 @@ final class FriendsViewModelTests: XCTestCase {
         XCTAssertEqual(vm.sent.first?.toUid, "uX")
     }
 }
+
+// MARK: - Leaderboard Tests
+final class LeaderboardTests: XCTestCase {
+    
+    // Helper to create leaderboard entries
+    private func makeEntry(
+        uid: String,
+        name: String = "Test User",
+        handle: String = "@test",
+        gold: Int,
+        silver: Int,
+        bronze: Int,
+        submittedAt: Date = Date()
+    ) -> LeaderboardEntry {
+        LeaderboardEntry(
+            uid: uid,
+            fullName: name,
+            handle: handle,
+            gold: gold,
+            silver: silver,
+            bronze: bronze,
+            submittedAt: submittedAt,
+            profileImageURL: nil,
+            avatarType: nil,
+            avatarBackground: nil,
+            avatarBody: nil,
+            avatarShirt: nil,
+            avatarEyes: nil,
+            avatarMouth: nil,
+            avatarHair: nil,
+            avatarFacialHair: nil
+        )
+    }
+    
+    // Test: Points calculation formula
+    func testPointsCalculation_CorrectFormula() {
+        let entry = makeEntry(uid: "u1", gold: 3, silver: 5, bronze: 7)
+        // 3*100 + 5*25 + 7*10 = 300 + 125 + 70 = 495
+        XCTAssertEqual(entry.points, 495, "Points should be gold*100 + silver*25 + bronze*10")
+    }
+    
+    func testPointsCalculation_ZeroMedals() {
+        let entry = makeEntry(uid: "u1", gold: 0, silver: 0, bronze: 0)
+        XCTAssertEqual(entry.points, 0, "Zero medals should result in zero points")
+    }
+    
+    func testPointsCalculation_OnlyGold() {
+        let entry = makeEntry(uid: "u1", gold: 2, silver: 0, bronze: 0)
+        XCTAssertEqual(entry.points, 200, "Only gold medals: 2*100 = 200")
+    }
