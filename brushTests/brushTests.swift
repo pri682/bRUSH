@@ -122,3 +122,19 @@ final class LeaderboardTests: XCTestCase {
         XCTAssertEqual(entries.map { $0.uid }, ["high", "mid", "low"],
                       "Entries should be sorted by points descending")
     }
+   
+    // Test: Tie-breaking by submittedAt (earlier date wins)
+    func testSorting_TieBreakByEarlierDate() {
+        let baseDate = Date(timeIntervalSince1970: 1700000000)
+        let earlier = makeEntry(uid: "earlier", gold: 2, silver: 0, bronze: 0, submittedAt: baseDate)
+        let later = makeEntry(uid: "later", gold: 2, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(60))
+        
+        var entries = [later, earlier]
+        entries.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(entries.map { $0.uid }, ["earlier", "later"],
+                      "When points are equal, earlier submittedAt should rank higher")
+    }
