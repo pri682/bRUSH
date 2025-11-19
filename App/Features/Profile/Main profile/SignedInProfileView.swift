@@ -3,6 +3,7 @@ import SwiftUI
 struct SignedInProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingEditProfile = false
+    @State private var showingShareCard = false // 🔥 NEW: State for presenting the Share Card
     @State private var lastMedalUpdate: Date? = nil
     @State private var isRefreshingMedals = false
     @State private var lastRefreshAttempt: Date? = nil
@@ -11,6 +12,7 @@ struct SignedInProfileView: View {
         viewModel.profile != nil
     }
     
+    // Helper function to format time display
     private func timeDisplayString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
@@ -18,23 +20,26 @@ struct SignedInProfileView: View {
         return formatter.string(from: date)
     }
     
+    // Helper function to check if update is needed (more than 30 minutes ago)
     private func needsUpdate(from date: Date) -> Bool {
         let now = Date()
         let timeInterval = now.timeIntervalSince(date)
-        return timeInterval > 600
+        return timeInterval > 600 // 10 minutes = 600 seconds
     }
     
+    // Helper function to check if refresh button can be clicked (1 minute cooldown)
     private func canRefresh() -> Bool {
         guard let lastAttempt = lastRefreshAttempt else { return true }
         let now = Date()
         let timeInterval = now.timeIntervalSince(lastAttempt)
-        return timeInterval > 60
+        return timeInterval > 60 // 1 minute = 60 seconds
     }
     
+    // Function to refresh medal data
     private func refreshMedalData() {
-        guard canRefresh() else { return }
+        guard canRefresh() else { return } // Prevent overuse
         
-        lastRefreshAttempt = Date()
+        lastRefreshAttempt = Date() // Track this attempt
         isRefreshingMedals = true
         Task {
             await viewModel.refreshProfile()
@@ -51,25 +56,28 @@ struct SignedInProfileView: View {
             let standardPadding = screenWidth * 0.05
             let contentWidth = screenWidth - (standardPadding * 2)
             
-            let headerHeight = screenHeight * 0.30
-            let containerTopSpacing = screenHeight * 0.08
-            let cardHeight: CGFloat = screenHeight * 0.52
+            let headerHeight = screenHeight * 0.30 // Increased height for more background
+            let containerTopSpacing = screenHeight * 0.08 // More spacing from top
+            let cardHeight: CGFloat = screenHeight * 0.52 // ⬆ slightly taller visually
             
             let largeMedalSize = contentWidth * 0.16
             let cardStackHorizontalPadding = screenWidth * 0.10
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
 
+            // MARK: - Dynamic Color Calculation
+            // 💡 Call the external calculator to get the color and shadow
             let (avatarTextColor, avatarTextShadowColor): (Color, Color) = {
                 if let background = viewModel.profile?.avatarBackground {
                     return ProfileElementsColorCalculation.calculateContrastingTextColor(for: background)
                 }
+                // Default colors: White text with black shadow
                 return (.white, .black)
             }()
             
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
+                    // MARK: Header
                     ZStack(alignment: .bottomLeading) {
-                        // Avatar/Header Background
                         if let profile = viewModel.profile,
                            let background = profile.avatarBackground {
                             AvatarView(
@@ -80,7 +88,7 @@ struct SignedInProfileView: View {
                                 eyes: profile.avatarEyes,
                                 mouth: profile.avatarMouth,
                                 hair: profile.avatarHair,
-                                facialHair: profile.avatarFacialHair
+                                facialHair: profile.avatarFacialHair // CORRECTED: Now includes the new argument
                             )
                             .frame(maxWidth: .infinity)
                             .frame(height: headerHeight + 40)
@@ -96,11 +104,24 @@ struct SignedInProfileView: View {
                                 .stretchy()
                         }
                         
-                        if isProfileLoaded {
+                        if viewModel.profile != nil {
                             VStack {
                                 Spacer()
                                 HStack {
                                     Spacer()
+                                    
+                                    // 🔥 NEW: Share Button
+                                    Button {
+                                        showingShareCard = true
+                                    } label: {
+                                        Image(systemName: "square.and.arrow.up.fill")
+                                            .font(.system(size: 24, weight: .medium))
+                                            .foregroundColor(avatarTextColor.opacity(0.85))
+                                            .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                    }
+                                    .padding(.trailing, standardPadding * 0.25) // Adjust padding to separate buttons
+                                    
+                                    // Existing Gear button
                                     Button {
                                         showingEditProfile = true
                                     } label: {
@@ -110,7 +131,7 @@ struct SignedInProfileView: View {
                                             .foregroundColor(avatarTextColor.opacity(0.85))
                                             // 💡 FIX: Use dynamic shadow color
                                             .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
-                                    }
+                                        }
                                     .padding(.trailing, standardPadding * 0.75)
                                     .padding(.bottom, screenHeight * 0.02)
                                 }
@@ -121,11 +142,14 @@ struct SignedInProfileView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(viewModel.profile?.firstName ?? "Placeholder")
                                 .font(.system(size: screenWidth * 0.08, weight: .bold))
+                                // 💡 Use dynamic contrasting color
                                 .foregroundColor(avatarTextColor)
+                                // 💡 Use dynamic shadow color
                                 .shadow(color: avatarTextShadowColor, radius: 0, x: 0.9, y: 0.9)
                             
                             Text("@\(viewModel.profile?.displayName ?? "placeholder")")
                                 .font(.system(size: screenWidth * 0.03, weight: .semibold))
+                                // 💡 Use dynamic contrasting color
                                 .foregroundColor(avatarTextColor.opacity(0.85))
                         }
                         .padding(.leading, standardPadding * 0.55)
@@ -134,43 +158,44 @@ struct SignedInProfileView: View {
                     .frame(height: headerHeight)
                     .padding(.bottom, containerTopSpacing * 0.5)
                     
-                    VStack(spacing: screenHeight * 0.03) {
-                        CardStackView(cards: [
-                            CardItem(content: AnyView(
-                                AwardsStackCardView(
-                                    cardTypeTitle: "Awards Accumulated",
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? 0,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? 0,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? 0,
-                                    medalIconSize: largeMedalSize,
-                                    isCurrentUser: true
-                                )
-                            )),
-                            CardItem(content: AnyView(
-                                AwardsStackCardView(
-                                    cardTypeTitle: "Awarded to Friends",
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? 0,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? 0,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? 0,
-                                    medalIconSize: largeMedalSize,
-                                    isCurrentUser: true
-                                )
-                            )),
-                            CardItem(content: AnyView(
-                                StreakCardView(
-                                    streakCount: viewModel.profile?.streakCount ?? 0,
-                                    totalDrawings: viewModel.profile?.totalDrawingCount ?? 0,
-                                    memberSince: viewModel.profile?.memberSince ?? Date(),
-                                    iconSize: largeMedalSize
-                                )
-                            ))
-                        ])
+                            VStack(spacing: screenHeight * 0.03) {
+                                CardStackView(cards: [
+                                    CardItem(content: AnyView(
+                                        AwardsStackCardView(
+                                            cardTypeTitle: "Awards Accumulated",
+                                            firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? -1,
+                                            secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? -1,
+                                            thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? -1,
+                                            medalIconSize: largeMedalSize,
+                                            isCurrentUser: true
+                                        )
+                                    )),
+                                    CardItem(content: AnyView(
+                                        AwardsStackCardView(
+                                            cardTypeTitle: "Awarded to Friends",
+                                            firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? -1,
+                                            secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? -1,
+                                            thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? -1,
+                                            medalIconSize: largeMedalSize,
+                                            isCurrentUser: true
+                                        )
+                                    )),
+                                    CardItem(content: AnyView(
+                                        StreakCardView(
+                                            streakCount: viewModel.profile?.streakCount ?? 0,
+                                            totalDrawings: viewModel.profile?.totalDrawingCount ?? 0,
+                                            memberSince: viewModel.profile?.memberSince ?? Date(),
+                                            iconSize: largeMedalSize
+                                        )
+                                    ))
+                                ])
                         .frame(height: cardHeight)
                         .padding(.horizontal, cardStackHorizontalPadding)
-                        .padding(.top, isIpad ? 60 : 40)
-                        .scaleEffect(isIpad ? 1.12 : 1.05)
+                        .padding(.top, isIpad ? 60 : 40) // ✅ gives more space below header
+                        .scaleEffect(isIpad ? 1.12 : 1.05) // ✅ slightly bigger visually
                         .animation(.easeInOut(duration: 0.4), value: isIpad)
                         
+                        // Last Updated text
                         HStack {
                             Spacer()
                             Button {
@@ -242,11 +267,19 @@ struct SignedInProfileView: View {
                     EditProfileView(userProfile: $viewModel.profile, profileViewModel: viewModel)
                 }
             }
+            // 🔥 NEW: Share Card Sheet
+            .sheet(isPresented: $showingShareCard) {
+                if let profile = viewModel.profile {
+                    ShareCardGeneratorView(userProfile: profile)
+                }
+            }
         }
     }
 }
 
 extension View {
+    /// Applies a stretchy header effect to a view, typically an Image,
+    /// at the top of a ScrollView.
     func stretchy() -> some View {
         visualEffect { effect, geometry in
             let currentHeight = geometry.size.height
