@@ -73,13 +73,7 @@ struct FriendProfileSheet: View {
                                     titleVisibility: .visible
                                 ) {
                                     Button("Remove", role: .destructive) {
-                                        let friendToRemove = Friend(
-                                            uid: profile.uid,
-                                            name: profile.displayName,
-                                            handle: profile.displayName,
-                                            profileImageURL: profile.avatarBackground ?? ""
-                                        )
-                                        vm.remove(friend: friendToRemove)
+                                        vm.remove(friendProfile: profile)
                                         dismiss()
                                     }
                                     Button("Cancel", role: .cancel) {}
@@ -140,8 +134,10 @@ struct FriendProfileSheet: View {
                         ))
                     ])
                     .aspectRatio(0.9, contentMode: .fit)
+                    .frame(maxHeight: 400)
                     .padding(.horizontal, cardStackHorizontalPadding)
                     .padding(.top, 20)
+                    .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 140 : 0)
                 }
             }
             .presentationDetents([.large])

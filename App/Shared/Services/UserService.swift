@@ -2,7 +2,7 @@ import Foundation
 import FirebaseFirestore
 import Combine
 
-public struct UserProfile: Codable, Equatable {
+public struct UserProfile: Codable, Equatable, Hashable {
     let uid: String
     var firstName: String
     let lastName: String
@@ -11,6 +11,7 @@ public struct UserProfile: Codable, Equatable {
     var avatarType: String // "fun" or "personal"
     var avatarBackground: String?
     var avatarBody: String?
+    var avatarFace: String?
     var avatarShirt: String?
     var avatarEyes: String?
     var avatarMouth: String?
@@ -36,7 +37,6 @@ final class UserService {
     private let usersCollection = "users"
 
     private init() {}
-    
     
     // -------------------------------------------------------
     // UPDATE STREAK + DRAW COUNT
@@ -91,7 +91,6 @@ final class UserService {
         return newStreakCount
     }
     
-    
     // -------------------------------------------------------
     // CREATE PROFILE
     // -------------------------------------------------------
@@ -120,31 +119,17 @@ final class UserService {
         ]
         
         // Add avatar fields if they exist
-        if let background = userProfile.avatarBackground {
-            profileData["avatarBackground"] = background
-        }
-        if let body = userProfile.avatarBody {
-            profileData["avatarBody"] = body
-        }
-        if let shirt = userProfile.avatarShirt {
-            profileData["avatarShirt"] = shirt
-        }
-        if let eyes = userProfile.avatarEyes {
-            profileData["avatarEyes"] = eyes
-        }
-        if let mouth = userProfile.avatarMouth {
-            profileData["avatarMouth"] = mouth
-        }
-        if let hair = userProfile.avatarHair {
-            profileData["avatarHair"] = hair
-        }
-        if let facialHair = userProfile.avatarFacialHair {
-            profileData["avatarFacialHair"] = facialHair
-        }
+        if let background = userProfile.avatarBackground { profileData["avatarBackground"] = background }
+        if let body = userProfile.avatarBody { profileData["avatarBody"] = body }
+        if let face = userProfile.avatarFace { profileData["avatarFace"] = face }
+        if let shirt = userProfile.avatarShirt { profileData["avatarShirt"] = shirt }
+        if let eyes = userProfile.avatarEyes { profileData["avatarEyes"] = eyes }
+        if let mouth = userProfile.avatarMouth { profileData["avatarMouth"] = mouth }
+        if let hair = userProfile.avatarHair { profileData["avatarHair"] = hair }
+        if let facialHair = userProfile.avatarFacialHair { profileData["avatarFacialHair"] = facialHair }
         
         try await userRef.setData(profileData)
     }
-    
     
     // -------------------------------------------------------
     // DELETE PROFILE
@@ -153,9 +138,8 @@ final class UserService {
         try await db.collection(usersCollection).document(uid).delete()
     }
     
-    
     // -------------------------------------------------------
-    // FETCH PROFILE  (FIXED)
+    // FETCH PROFILE
     // -------------------------------------------------------
     func fetchProfile(uid: String) async throws -> UserProfile {
         let doc = try await db.collection(usersCollection).document(uid).getDocument()
@@ -164,7 +148,10 @@ final class UserService {
             throw AuthError.backend("Profile not found.")
         }
         
-        let uid = data["uid"] as? String ?? ""
+        return try mapDataToProfile(data: data, uid: uid)
+    }
+    
+    func mapDataToProfile(data: [String: Any], uid: String) throws -> UserProfile {
         let firstName = data["firstName"] as? String ?? ""
         let lastName = data["lastName"] as? String ?? ""
         let displayName = data["displayName"] as? String ?? ""
@@ -173,6 +160,7 @@ final class UserService {
         let avatarType = data["avatarType"] as? String ?? "personal"
         let avatarBackground = data["avatarBackground"] as? String
         let avatarBody = data["avatarBody"] as? String
+        let avatarFace = data["avatarFace"] as? String
         let avatarShirt = data["avatarShirt"] as? String
         let avatarEyes = data["avatarEyes"] as? String
         let avatarMouth = data["avatarMouth"] as? String
@@ -202,6 +190,7 @@ final class UserService {
             avatarType: avatarType,
             avatarBackground: avatarBackground,
             avatarBody: avatarBody,
+            avatarFace: avatarFace,
             avatarShirt: avatarShirt,
             avatarEyes: avatarEyes,
             avatarMouth: avatarMouth,
@@ -220,14 +209,12 @@ final class UserService {
         )
     }
     
-    
     // -------------------------------------------------------
     // UPDATE ANY FIELD
     // -------------------------------------------------------
     func updateProfile(uid: String, data: [String: Any]) async throws {
         try await db.collection(usersCollection).document(uid).updateData(data)
     }
-    
     
     // -------------------------------------------------------
     // DATE FORMAT HELPER

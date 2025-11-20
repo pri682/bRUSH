@@ -50,8 +50,8 @@ struct FriendsView: View {
                             }
                         }
                         
-                        ForEach(vm.filteredFriends) { friend in
-                            friendRow(friend)
+                        ForEach(vm.filteredFriends, id: \.uid) { profile in
+                            friendRow(profile)
                         }
                         .onDelete(perform: deleteFriends)
                         
@@ -86,7 +86,6 @@ struct FriendsView: View {
                 vm.loadMyProfileData()
                 vm.refreshFriends()
                 vm.refreshIncoming()
-                vm.loadLeaderboard()
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     isInitiallyLoading = false
@@ -97,6 +96,7 @@ struct FriendsView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        vm.loadLeaderboard() // Ensure fresh sort based on current data
                         withAnimation { showLeaderboard.toggle() }
                     } label: {
                         Image(systemName: "trophy")
@@ -118,7 +118,10 @@ struct FriendsView: View {
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
-            .sheet(isPresented: $vm.showingProfile) {
+            .sheet(isPresented: Binding(
+                get: { vm.showingProfile && !showLeaderboard },
+                set: { vm.showingProfile = $0 }
+            )) {
                 if let p = vm.selectedProfile {
                     FriendProfileSheet(vm: vm, profile: p)
                 } else {
@@ -137,17 +140,36 @@ struct FriendsView: View {
     }
     
     @ViewBuilder
-    private func friendRow(_ friend: Friend) -> some View {
-        HStack {
+    private func friendRow(_ profile: UserProfile) -> some View {
+        HStack(spacing: 12) {
+            AvatarView(
+                avatarType: AvatarType(rawValue: profile.avatarType) ?? .personal,
+                background: profile.avatarBackground ?? "background_1",
+                avatarBody: profile.avatarBody,
+                shirt: profile.avatarShirt,
+                eyes: profile.avatarEyes,
+                mouth: profile.avatarMouth,
+                hair: profile.avatarHair,
+                facialHair: profile.avatarFacialHair,
+                includeSpacer: false
+            )
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1))
+            
             VStack(alignment: .leading, spacing: 2) {
-                Text(friend.name).font(.headline)
-                Text(friend.handle).foregroundStyle(.secondary).font(.caption)
+                let name = [profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                Text(name.isEmpty ? profile.displayName : name)
+                    .font(.headline)
+                Text("@\(profile.displayName)")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
             }
             Spacer()
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
-        .onTapGesture { vm.openProfile(for: friend) }
+        .onTapGesture { vm.openProfile(for: profile) }
     }
     
     @ViewBuilder
@@ -175,9 +197,10 @@ struct FriendsView: View {
     }
     
     private func deleteFriends(at offsets: IndexSet) {
-        let uids = offsets.compactMap { idx in
-            vm.filteredFriends[safe: idx]?.uid
+        let profilesToDelete = offsets.compactMap { idx in
+            vm.filteredFriends[safe: idx]
         }
+        let uids = profilesToDelete.map { $0.uid }
         vm.removeLocally(uids: uids)
         Task { await vm.removeRemote(uids: uids) }
     }
