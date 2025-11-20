@@ -134,8 +134,10 @@ struct FriendProfileSheet: View {
                         ))
                     ])
                     .aspectRatio(0.9, contentMode: .fit)
+                    .frame(maxHeight: 400)
                     .padding(.horizontal, cardStackHorizontalPadding)
                     .padding(.top, 20)
+                    .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 140 : 0)
                 }
             }
             .presentationDetents([.large])

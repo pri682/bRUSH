@@ -15,7 +15,7 @@ struct LeaderboardSheet: View {
                     VStack(spacing: 0) {
                         podiumSection
                             .zIndex(1)
-                            .padding(.top, 20)
+                            .padding(.top, 40)
 
                         listSection(minHeight: max(geo.size.height - 220, 300))
                     }
@@ -238,17 +238,23 @@ private struct PodiumEntryView: View {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(baseColor)
-                    .padding(.bottom, -14)
                     .zIndex(2)
             }
             
             // Avatar + Badge
             ZStack(alignment: .bottom) {
-                if let entry = entry {
-                    LeaderboardAvatarView(entry: entry, size: avatarSize, borderColor: baseColor)
-                } else {
-                    PlaceholderAvatarView(size: avatarSize, borderColor: baseColor, bgColor: placeholderBg)
+                ZStack {
+                    if let entry = entry {
+                        PoppingPodiumAvatarView(
+                            profile: entry.profile,
+                            size: avatarSize,
+                            borderColor: baseColor
+                        )
+                    } else {
+                        PlaceholderAvatarView(size: avatarSize, borderColor: baseColor, bgColor: placeholderBg)
+                    }
                 }
+                .offset(y: -10)
                 
                 Circle()
                     .fill(baseColor)
@@ -290,6 +296,46 @@ private struct PodiumEntryView: View {
     }
 }
 
+private struct PoppingPodiumAvatarView: View {
+    let profile: UserProfile
+    let size: CGFloat
+    let borderColor: Color
+    
+    private var avatarFrameSize: CGFloat { size * 1.25 }
+    private var popAmount: CGFloat { size * 0.3 }
+    private var isWinner: Bool { size > 90 }
+    
+    private var bodyClip: some Shape {
+        Ellipse()
+            .scale(x: 0.90, y: 1.0, anchor: .center)
+    }
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            let bgClip = Circle()
+            
+            Image(profile.avatarBackground ?? "background_1")
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(bgClip)
+                
+            PoppingAvatarView(profile: profile, layer: .body)
+                .frame(width: avatarFrameSize, height: avatarFrameSize, alignment: .bottom)
+                .clipShape(bodyClip)
+            
+            Circle()
+                .stroke(borderColor, lineWidth: 3)
+                .frame(width: size, height: size)
+
+            PoppingAvatarView(profile: profile, layer: .head)
+                .frame(width: avatarFrameSize, height: avatarFrameSize, alignment: .bottom)
+                .offset(y: isWinner ? -popAmount*2 : -popAmount*2.8)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 private struct LeaderboardListRow: View {
     let rank: Int
     let entry: LeaderboardEntry
@@ -325,7 +371,7 @@ private struct LeaderboardListRow: View {
             }
 
             HStack(spacing: 10) {
-                LeaderboardAvatarView(entry: entry, size: 44, borderColor: isCurrentUser ? highlightBg : Color(.secondarySystemGroupedBackground))
+                LeaderboardAvatarView(entry: entry, size: 44, borderColor: isCurrentUser ? highlightBg : Color(.clear))
                 
                 // Name
                 Text(isCurrentUser ? "You" : entry.fullName)
@@ -384,10 +430,7 @@ private struct LeaderboardAvatarView: View {
                     facialHair: entry.avatarFacialHair,
                     includeSpacer: false
                 )
-                .frame(width: size * 1.3, height: size * 1.3)
-                .offset(y: -size * 0.05)
                 .frame(width: size, height: size)
-                .clipped()
             } else {
                 avatarFallback
             }
