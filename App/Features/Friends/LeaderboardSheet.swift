@@ -7,51 +7,45 @@ struct LeaderboardSheet: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    podiumSection
-                    listSection
-                }
-            }
-            .navigationTitle("Leaderboard")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.secondary)
+            GeometryReader { geo in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        podiumSection
+                            .zIndex(1)
+                            .padding(.top, 40)
+
+                        listSection(minHeight: max(geo.size.height - 220, 300))
                     }
                 }
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Text("Leaderboard")
-                            .font(.headline)
+                .navigationTitle("Leaderboard")
+                .navigationBarTitleDisplayMode(.automatic)
+                .toolbar {
+                    ToolbarItem {
                         Button(action: { showScoringInfo = true }) {
                             Image(systemName: "info.circle")
-                                .font(.system(size: 15))
-                                .foregroundStyle(.secondary)
                                 .accessibilityLabel("Score calculation info")
+                        }
+                        .popover(isPresented: $showScoringInfo, attachmentAnchor: .point(.bottom), arrowEdge: .top) {
+                            ScoringInfoView()
+                                .presentationCompactAdaptation(.popover)
+                        }
+                    }
+                    ToolbarItem {
+                        Button(action: { vm.loadLeaderboard() }) {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                    }
+                    ToolbarItem {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
                         }
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { vm.loadLeaderboard() }) {
-                        Image(systemName: "arrow.clockwise")
-                    }
+                .onAppear {
+                    vm.loadLeaderboard()
                 }
             }
-            .alert("How Scores Are Calculated", isPresented: $showScoringInfo) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Points are based on medals earned:\n\n🥇 Gold = 100 pts\n🥈 Silver = 25 pts\n🥉 Bronze = 10 pts\n\nEarn medals in challenges to climb the leaderboard.")
-            }
-            .onAppear {
-                vm.refreshFriends()
-                vm.loadLeaderboard()
-            }
-            .onChange(of: vm.friendIds) { vm.loadLeaderboard() }
         }
-        // Profile sheet presentation
         .sheet(isPresented: $vm.showingProfile) {
             if let profile = vm.selectedProfile {
                 FriendProfileSheet(vm: vm, profile: profile)
@@ -61,12 +55,42 @@ struct LeaderboardSheet: View {
         .presentationBackground(Color(.systemBackground))
     }
     
+    private struct ScoringInfoView: View {
+        var body: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How Scores Are Calculated")
+                    .font(.headline)
+                
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Points are based on medals earned:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    HStack { Text("\u{1F947} Gold"); Spacer(); Text("100 pts").bold() }
+                    HStack { Text("\u{1F948} Silver"); Spacer(); Text("25 pts").bold() }
+                    HStack { Text("\u{1F949} Bronze"); Spacer(); Text("10 pts").bold() }
+                }
+                .font(.subheadline)
+                
+                Divider()
+                
+                Text("Earn medals in challenges to climb the leaderboard.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .frame(width: 280)
+        }
+    }
+    
     @ViewBuilder
     private var podiumSection: some View {
         if vm.isLoadingLeaderboard {
             VStack {
                 ProgressView()
-                Text("Loading leaderboard…")
+                Text("Updating leaderboard…")
             }
             .frame(height: 280)
         } else if let err = vm.leaderboardError {
@@ -75,37 +99,42 @@ struct LeaderboardSheet: View {
                 .frame(height: 280)
         } else {
             PodiumView(entries: Array(vm.leaderboard.prefix(3)), meUid: vm.meUid) { entry in
-                let friend = Friend(uid: entry.uid, name: entry.fullName, handle: entry.handle, profileImageURL: entry.profileImageURL)
-                vm.openProfile(for: friend)
+                vm.openProfile(for: entry.profile)
             }
         }
     }
 
     @ViewBuilder
-    private var listSection: some View {
+    private func listSection(minHeight: CGFloat) -> some View {
         let count = vm.leaderboard.count
-        if count > 3 {
-            let rest = Array(vm.leaderboard.dropFirst(3))
-            ZStack(alignment: .top) {
-                // Clear container background per latest design request
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.clear)
-                
-                VStack(spacing: 12) {
-                    Spacer().frame(height: 16)
+        let rest = count > 3 ? Array(vm.leaderboard.dropFirst(3)) : []
+
+        VStack(spacing: 0) {
+            Spacer().frame(height: 12)
+
+            VStack(spacing: 12) {
+                if !rest.isEmpty {
                     LeaderboardRows(rest: rest, meUid: vm.meUid) { entry in
-                        let friend = Friend(uid: entry.uid, name: entry.fullName, handle: entry.handle, profileImageURL: entry.profileImageURL)
-                        vm.openProfile(for: friend)
+                        vm.openProfile(for: entry.profile)
                     }
-                    Spacer(minLength: 24)
+                } else {
+                    Spacer().frame(height: 20)
                 }
-                .padding(.horizontal, 12)
+
+                Spacer()
             }
-            .padding(.horizontal, 8)
-            .padding(.top, 20)
+            .padding(.horizontal, 18)
+            .frame(minHeight: minHeight, alignment: .top)
         }
+        .padding(.top, 8)
+        .background(
+            Color.accentColor.opacity(0.15)
+                .frame(height: 2000)
+                .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
+                , alignment: .top
+        )
     }
-    
+
     private struct LeaderboardRows: View {
         let rest: [LeaderboardEntry]
         let meUid: String?
@@ -125,201 +154,138 @@ struct LeaderboardSheet: View {
         }
     }
 }
-// MARK: - Previews
-struct LeaderboardSheet_Previews: PreviewProvider {
-    static var sampleEntries: [LeaderboardEntry] {
-        [
-            LeaderboardEntry(uid: "u1", fullName: "Bryan Wolf", handle: "@bryan", gold: 0, silver: 0, bronze: 43, profileImageURL: "https://i.pravatar.cc/150?img=12"),
-            LeaderboardEntry(uid: "u2", fullName: "Meghan Jess", handle: "@meghan", gold: 0, silver: 0, bronze: 40, profileImageURL: "https://i.pravatar.cc/150?img=15"),
-            LeaderboardEntry(uid: "u3", fullName: "Alex Turner", handle: "@alex", gold: 0, silver: 0, bronze: 38, profileImageURL: "https://i.pravatar.cc/150?img=18"),
-            LeaderboardEntry(uid: "u4", fullName: "Marsha Fisher", handle: "@marsha", gold: 0, silver: 0, bronze: 36, profileImageURL: "https://i.pravatar.cc/150?img=20"),
-            LeaderboardEntry(uid: "u5", fullName: "Juanita Cormier", handle: "@juanita", gold: 0, silver: 0, bronze: 35, profileImageURL: "https://i.pravatar.cc/150?img=21"),
-            LeaderboardEntry(uid: "me", fullName: "You", handle: "@me", gold: 0, silver: 0, bronze: 34, profileImageURL: "https://i.pravatar.cc/150?img=32"),
-            LeaderboardEntry(uid: "u7", fullName: "Tamara Schmidt", handle: "@tamara", gold: 0, silver: 0, bronze: 33, profileImageURL: "https://i.pravatar.cc/150?img=33")
-        ]
-    }
 
-    static var previews: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                PodiumView(entries: Array(sampleEntries.prefix(3)), meUid: "me") { _ in }
-
-                VStack(spacing: 12) {
-                    ForEach(Array(sampleEntries.enumerated()), id: \.element.id) { offset, element in
-                        if offset >= 3 {
-                            LeaderboardListRow(rank: offset + 1, entry: element, isCurrentUser: element.uid == "me")
-                        }
-                    }
-                }
-                .padding()
-            }
-        }
-        .previewLayout(.sizeThatFits)
-    }
-}
-
-// MARK: - Podium View (Top 3)
 private struct PodiumView: View {
     let entries: [LeaderboardEntry]
     let meUid: String?
     let onSelect: (LeaderboardEntry) -> Void
 
-    private let gold = Color(red: 245/255, green: 182/255, blue: 51/255) // #F5B633
-    private let placeholderBg = Color(red: 255/255, green: 245/255, blue: 217/255) // #FFF5D9
-    private let darkGray = Color(red: 51/255, green: 51/255, blue: 51/255) // #333333
-
+    private let gold = Color(red: 245/255, green: 182/255, blue: 51/255)
+    private let placeholderBg = Color(red: 255/255, green: 245/255, blue: 217/255)
+    
     private func safeEntry(_ index: Int) -> LeaderboardEntry? {
         guard entries.indices.contains(index) else { return nil }
         return entries[index]
     }
     
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 12) {
+            // 2nd Place (Left)
+            PodiumEntryView(
+                entry: safeEntry(1),
+                rank: 2,
+                meUid: meUid,
+                baseColor: gold,
+                placeholderBg: placeholderBg,
+                onSelect: onSelect
+            )
+            
+            // 1st Place (Center - Elevated)
+            PodiumEntryView(
+                entry: safeEntry(0),
+                rank: 1,
+                meUid: meUid,
+                baseColor: gold,
+                placeholderBg: placeholderBg,
+                onSelect: onSelect
+            )
+            .offset(y: -25)
+            .zIndex(1)
+
+            // 3rd Place (Right)
+            PodiumEntryView(
+                entry: safeEntry(2),
+                rank: 3,
+                meUid: meUid,
+                baseColor: gold,
+                placeholderBg: placeholderBg,
+                onSelect: onSelect
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 24)
+    }
+}
+
+private struct PodiumEntryView: View {
+    let entry: LeaderboardEntry?
+    let rank: Int
+    let meUid: String?
+    let baseColor: Color
+    let placeholderBg: Color
+    let onSelect: (LeaderboardEntry) -> Void
+    
+    private var isWinner: Bool { rank == 1 }
+    private var avatarSize: CGFloat { isWinner ? 100 : 72 }
+    private var badgeSize: CGFloat { isWinner ? 32 : 28 }
+    private var nameFont: Font { isWinner ? .system(size: 15, weight: .bold) : .system(size: 13, weight: .semibold) }
+    private var darkGray: Color { Color(red: 51/255, green: 51/255, blue: 51/255) }
+
     private func formatPoints(_ points: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.groupingSeparator = ","
         return formatter.string(from: NSNumber(value: points)) ?? "\(points)"
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Avatar section with badges aligned horizontally
-            HStack(alignment: .center, spacing: 12) {
-                // 2nd Place (Left)
-                ZStack(alignment: .bottom) {
-                    if let entry = safeEntry(1) {
-                        LeaderboardAvatarView(entry: entry, size: 72, borderColor: gold)
-                            .onTapGesture { onSelect(entry) }
-                    } else {
-                        PlaceholderAvatarView(size: 72, borderColor: gold, bgColor: placeholderBg)
-                    }
-                    Circle()
-                        .fill(gold)
-                        .frame(width: 28, height: 28)
-                        .overlay(Text("2").font(.system(size: 12, weight: .bold)).foregroundColor(.white))
-                        .offset(y: 14)
-                }
-                .frame(height: 86)
-                
-                // 1st Place (Center) - PROMINENT & ELEVATED
-                VStack(spacing: 0) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(gold)
-                        .offset(y: -8)
-                    
-                    ZStack(alignment: .bottom) {
-                        if let entry = safeEntry(0) {
-                            LeaderboardAvatarView(entry: entry, size: 100, borderColor: gold)
-                                .onTapGesture { onSelect(entry) }
-                        } else {
-                            PlaceholderAvatarView(size: 100, borderColor: gold, bgColor: placeholderBg)
-                        }
-                        Circle()
-                            .fill(gold)
-                            .frame(width: 32, height: 32)
-                            .overlay(Text("1").font(.system(size: 14, weight: .bold)).foregroundColor(.white))
-                            .offset(y: 16)
-                    }
-                    .frame(height: 116)
-                }
-                .padding(.top, -16)
-                
-                // 3rd Place (Right)
-                ZStack(alignment: .bottom) {
-                    if let entry = safeEntry(2) {
-                        LeaderboardAvatarView(entry: entry, size: 72, borderColor: gold)
-                            .onTapGesture { onSelect(entry) }
-                    } else {
-                        PlaceholderAvatarView(size: 72, borderColor: gold, bgColor: placeholderBg)
-                    }
-                    Circle()
-                        .fill(gold)
-                        .frame(width: 28, height: 28)
-                        .overlay(Text("3").font(.system(size: 12, weight: .bold)).foregroundColor(.white))
-                        .offset(y: 14)
-                }
-                .frame(height: 86)
+        VStack(spacing: 8) {
+            // Crown for Winner
+            if isWinner {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(baseColor)
+                    .padding(.bottom, -14)
+                    .zIndex(2)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 16)
             
-            // Names and Points Baseline (all three aligned horizontally)
-            HStack(alignment: .top, spacing: 12) {
-                // 2nd Place
-                VStack(spacing: 2) {
-                    if entries.indices.contains(1) {
-                        Text(entries[1].fullName)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(darkGray)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        
-                        HStack(spacing: 3) {
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(gold)
-                            Text("\(formatPoints(entries[1].points)) pts")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(darkGray)
-                        }
-                    }
+            // Avatar + Badge
+            ZStack(alignment: .bottom) {
+                if let entry = entry {
+                    LeaderboardAvatarView(entry: entry, size: avatarSize, borderColor: baseColor)
+                } else {
+                    PlaceholderAvatarView(size: avatarSize, borderColor: baseColor, bgColor: placeholderBg)
                 }
-                .onTapGesture { if let e = safeEntry(1) { onSelect(e) } }
-                .frame(maxWidth: .infinity)
-                .multilineTextAlignment(.center)
                 
-                // 1st Place (larger)
-                VStack(spacing: 2) {
-                    if !entries.isEmpty {
-                        Text(entries[0].fullName)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(darkGray)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        
-                        HStack(spacing: 3) {
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(gold)
-                            Text("\(formatPoints(entries[0].points)) pts")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(darkGray)
-                        }
-                    }
-                }
-                .onTapGesture { if let e = safeEntry(0) { onSelect(e) } }
-                .frame(maxWidth: .infinity)
-                .multilineTextAlignment(.center)
-                
-                // 3rd Place
-                VStack(spacing: 2) {
-                    if entries.indices.contains(2) {
-                        Text(entries[2].fullName)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(darkGray)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        
-                        HStack(spacing: 3) {
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(gold)
-                            Text("\(formatPoints(entries[2].points)) pts")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(darkGray)
-                        }
-                    }
-                }
-                .onTapGesture { if let e = safeEntry(2) { onSelect(e) } }
-                .frame(maxWidth: .infinity)
-                .multilineTextAlignment(.center)
+                Circle()
+                    .fill(baseColor)
+                    .frame(width: badgeSize, height: badgeSize)
+                    .overlay(Text("\(rank)").font(.system(size: isWinner ? 14 : 12, weight: .bold)).foregroundColor(.white))
+                    .offset(y: badgeSize / 2)
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
+            .frame(height: avatarSize + (badgeSize / 2))
+            .padding(.bottom, 4)
+
+            // Name and Points
+            if let entry = entry {
+                VStack(spacing: 2) {
+                    Text(entry.uid == meUid ? "You" : entry.fullName)
+                        .font(nameFont)
+                        .foregroundColor(darkGray)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    
+                    HStack(spacing: 3) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: isWinner ? 11 : 10, weight: .semibold))
+                            .foregroundColor(baseColor)
+                        Text("\(formatPoints(entry.points)) pts")
+                            .font(.system(size: isWinner ? 12 : 11, weight: .semibold))
+                            .foregroundColor(darkGray)
+                    }
+                }
+            } else {
+                Text(" ").font(nameFont)
+                Text(" ").font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let e = entry { onSelect(e) }
         }
     }
 }
-// MARK: - List Row View (Rank 4+)
+
 private struct LeaderboardListRow: View {
     let rank: Int
     let entry: LeaderboardEntry
@@ -334,13 +300,12 @@ private struct LeaderboardListRow: View {
         return formatter.string(from: NSNumber(value: points)) ?? "\(points)"
     }
 
-    // soft gold used for highlights and icons
     private let softGold = Color(red: 245/255, green: 182/255, blue: 51/255)
     private let highlightBg = Color(red: 1.0, green: 0.95, blue: 0.70)
 
     var body: some View {
         HStack(spacing: 12) {
-            // left rank circle (white inside pill)
+            // Rank
             ZStack {
                 Circle()
                     .fill(Color.white)
@@ -350,24 +315,19 @@ private struct LeaderboardListRow: View {
                     .font(.subheadline).bold()
             }
 
-            // Avatar and Name grouped together
             HStack(spacing: 10) {
                 LeaderboardAvatarView(entry: entry, size: 44, borderColor: Color.white)
                 
-                VStack(alignment: .leading, spacing: 2) {
+                // Name ONLY (Username removed)
                 Text(isCurrentUser ? "You" : entry.fullName)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.primary)
-
-                    Text(entry.handle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                    .lineLimit(1)
             }
 
             Spacer()
 
-            // Points with bolt (muted gold)
+            // Points
             HStack(spacing: 6) {
                 Image(systemName: "bolt.fill")
                     .font(.caption)
@@ -394,54 +354,31 @@ private struct LeaderboardListRow: View {
         .onTapGesture { onSelect?() }
     }
 }
-// MARK: - Profile Image View (Async loading)
-// Avatar view for leaderboard that supports either uploaded image URL OR generated avatar parts OR initials fallback
+
 private struct LeaderboardAvatarView: View {
     let entry: LeaderboardEntry
     let size: CGFloat
     let borderColor: Color
+    
     var body: some View {
         ZStack {
             Circle().fill(Color.white)
-            if let url = entry.profileImageURL, !url.isEmpty, let imageURL = URL(string: url) {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView().frame(width: size, height: size)
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .failure:
-                        avatarFallback
-                    @unknown default:
-                        avatarFallback
-                    }
-                }
-            } else if let type = entry.avatarType, let bg = entry.avatarBackground {
-                // Render composite avatar if we have at least one valid foreground layer
-                let foregroundParts = [entry.avatarBody, entry.avatarShirt, entry.avatarEyes, entry.avatarMouth, entry.avatarHair, entry.avatarFacialHair]
-                    .compactMap { $0 }
-                    .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                
-                if !foregroundParts.isEmpty {
-                    // Render avatar larger and centered to show the face clearly
-                    AvatarView(
-                        avatarType: type == "fun" ? .fun : .personal,
-                        background: bg,
-                        avatarBody: entry.avatarBody,
-                        shirt: entry.avatarShirt,
-                        eyes: entry.avatarEyes,
-                        mouth: entry.avatarMouth,
-                        hair: entry.avatarHair,
-                        facialHair: entry.avatarFacialHair,
-                        includeSpacer: false
-                    )
-                    .frame(width: size * 1.3, height: size * 1.3)
-                    .offset(y: -size * 0.05)
-                    .frame(width: size, height: size)
-                    .clipped()
-                } else {
-                    avatarFallback
-                }
+            if let bg = entry.avatarBackground {
+                AvatarView(
+                    avatarType: AvatarType(rawValue: entry.avatarType) ?? .personal,
+                    background: bg,
+                    avatarBody: entry.avatarBody,
+                    shirt: entry.avatarShirt,
+                    eyes: entry.avatarEyes,
+                    mouth: entry.avatarMouth,
+                    hair: entry.avatarHair,
+                    facialHair: entry.avatarFacialHair,
+                    includeSpacer: false
+                )
+                .frame(width: size * 1.3, height: size * 1.3)
+                .offset(y: -size * 0.05)
+                .frame(width: size, height: size)
+                .clipped()
             } else {
                 avatarFallback
             }
@@ -452,11 +389,9 @@ private struct LeaderboardAvatarView: View {
     }
     private var avatarFallback: some View {
         let initials = entry.fullName.split(separator: " ").prefix(2).compactMap { $0.first }.map(String.init).joined()
-        return Text(initials)
+        return Text(initials.isEmpty ? "?" : initials)
             .font(.system(size: size * 0.4, weight: .bold))
             .foregroundStyle(.primary)
             .frame(width: size, height: size)
     }
 }
-
-    
