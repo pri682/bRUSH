@@ -5,6 +5,8 @@ struct ShareCardPreviewView: View {
     @Binding var cardColor: Color
     @Binding var cardText: String
     @Binding var textColor: Color
+    @Binding var showUsername: Bool
+    @Binding var showAvatar: Bool
     
     var userProfile: UserProfile?
     
@@ -26,7 +28,9 @@ struct ShareCardPreviewView: View {
                         cardColor: cardColor,
                         cardText: cardText,
                         textColor: textColor,
-                        cardIcon: .user
+                        cardIcon: .user,
+                        showUsername: showUsername,
+                        showAvatar: showAvatar
                     )
                 },
                 set: { _ in }

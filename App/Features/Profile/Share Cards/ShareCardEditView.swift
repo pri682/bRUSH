@@ -5,8 +5,10 @@ struct ShareCardEditView: View {
     @Binding var cardColor: Color
     @Binding var cardText: String
     @Binding var textColor: Color
+    @Binding var showUsername: Bool
+    @Binding var showAvatar: Bool
     
-    let categories = ["Message", "Text Color", "Card Color", "Background"]
+    let categories = ["Message", "Background", "Options"]
     @State private var selectedCategoryIndex = 0
     
     let presetColors: [Color] = [
@@ -25,6 +27,8 @@ struct ShareCardEditView: View {
                         cardColor: $cardColor,
                         cardText: $cardText,
                         textColor: $textColor,
+                        showUsername: $showUsername,
+                        showAvatar: $showAvatar,
                         showActions: false // <--- Hides controls
                     )
                     .scaleEffect(0.65)
@@ -73,12 +77,10 @@ struct ShareCardEditView: View {
                         switch selectedCategoryIndex {
                         case 0: // Message
                             messageInstructionControl
-                        case 1: // Text Color
-                            colorGridControl(binding: $textColor)
-                        case 2: // Card Color
-                            colorGridControl(binding: $cardColor)
-                        case 3: // Background
+                        case 1: // Background
                             colorGridControl(binding: $backgroundColor)
+                        case 2: // Options
+                            optionsControl
                         default:
                             EmptyView()
                         }
@@ -153,6 +155,21 @@ struct ShareCardEditView: View {
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
                 }
             }
+        }
+        .padding(.top, 20)
+    }
+
+    var optionsControl: some View {
+        VStack(spacing: 20) {
+            Toggle("Show Username", isOn: $showUsername)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+            
+            Toggle("Show Avatar", isOn: $showAvatar)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
         }
         .padding(.top, 20)
     }

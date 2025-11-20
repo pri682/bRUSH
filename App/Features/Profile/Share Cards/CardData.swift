@@ -42,6 +42,8 @@ struct CardCustomization: Equatable {
     var cardText: String
     var textColor: Color
     var cardIcon: CardIcon
+    var showUsername: Bool = true
+    var showAvatar: Bool = true
 }
 
 // MARK: - Card Template Metadata

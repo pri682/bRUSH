@@ -34,7 +34,7 @@ struct CardTemplateOneView: View {
                         .clipped()
                     
                     // 2. AVATAR (Moved up 20%)
-                    if let profile = userProfile {
+                    if customization.showAvatar, let profile = userProfile {
                         VStack {
                             Spacer()
                             
@@ -58,23 +58,24 @@ struct CardTemplateOneView: View {
                     }
                     
                     // 3. TEXT LAYER
-                    VStack(spacing: 10) {
+                    VStack {
                         Spacer()
                         
-                        // Main Text
-                        Text(customization.cardText.uppercased())
-                            .font(.system(size: 60, weight: .black))
-                            .italic()
-                            .foregroundColor(customization.textColor)
-                            .multilineTextAlignment(.center)
-                            .shadow(color: .black.opacity(0.2), radius: 2, x: 2, y: 2)
-                            // Padding adjusted relative to card height
-                            .padding(.bottom, cardHeight * 0.42)
-                            .minimumScaleFactor(0.4)
-                        
-                        Spacer()
+                        HStack {
+                            if customization.showUsername, let profile = userProfile {
+                                Text("@\(profile.displayName)")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .padding(.leading, 50) // Shifted right
+                                    .padding(.bottom, cardHeight * 0.25) // 25% from bottom = 75% from top
+                                    .frame(maxWidth: cardWidth * 0.8, alignment: .leading)
+                            }
+                            Spacer()
+                        }
                     }
-                    .padding()
                 }
                 .frame(width: cardWidth, height: cardHeight)
                 .mask(RoundedRectangle(cornerRadius: 30, style: .continuous))

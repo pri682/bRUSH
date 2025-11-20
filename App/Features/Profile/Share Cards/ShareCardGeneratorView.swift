@@ -11,6 +11,8 @@ struct ShareCardGeneratorView: View {
     @State private var cardColor: Color = Color(hex: "#FFD700") ?? .yellow
     @State private var cardText: String = "BRUSH"
     @State private var textColor: Color = Color(hex: "#8B4513") ?? .brown
+    @State private var showUsername: Bool = true
+    @State private var showAvatar: Bool = true
     
     let tabs = ["Preview", "Edit"]
     @Namespace private var animation
@@ -31,6 +33,8 @@ struct ShareCardGeneratorView: View {
                         cardColor: $cardColor,
                         cardText: $cardText,
                         textColor: $textColor,
+                        showUsername: $showUsername,
+                        showAvatar: $showAvatar,
                         userProfile: userProfile // Pass profile
                     )
                     .transition(.opacity)
@@ -40,7 +44,9 @@ struct ShareCardGeneratorView: View {
                         backgroundColor: $backgroundColor,
                         cardColor: $cardColor,
                         cardText: $cardText,
-                        textColor: $textColor
+                        textColor: $textColor,
+                        showUsername: $showUsername,
+                        showAvatar: $showAvatar
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
