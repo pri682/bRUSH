@@ -5,14 +5,17 @@ struct LeaderboardSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showScoringInfo = false
     
+    private let listBgOpacity: CGFloat = 0.15
+    private let currentUserRowOpacity: CGFloat = 0.25
+    
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 0) {
                         podiumSection
                             .zIndex(1)
-                            .padding(.top, 40)
+                            .padding(.top, 20)
 
                         listSection(minHeight: max(geo.size.height - 220, 300))
                     }
@@ -114,7 +117,7 @@ struct LeaderboardSheet: View {
 
             VStack(spacing: 12) {
                 if !rest.isEmpty {
-                    LeaderboardRows(rest: rest, meUid: vm.meUid) { entry in
+                    LeaderboardRows(rest: rest, meUid: vm.meUid, rowOpacity: currentUserRowOpacity) { entry in
                         vm.openProfile(for: entry.profile)
                     }
                 } else {
@@ -128,7 +131,7 @@ struct LeaderboardSheet: View {
         }
         .padding(.top, 8)
         .background(
-            Color.accentColor.opacity(0.15)
+            Color.accentColor.opacity(listBgOpacity)
                 .frame(height: 2000)
                 .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
                 , alignment: .top
@@ -138,6 +141,7 @@ struct LeaderboardSheet: View {
     private struct LeaderboardRows: View {
         let rest: [LeaderboardEntry]
         let meUid: String?
+        let rowOpacity: CGFloat
         let onSelect: (LeaderboardEntry) -> Void
         
         var body: some View {
@@ -147,6 +151,7 @@ struct LeaderboardSheet: View {
                     rank: index + 4,
                     entry: element,
                     isCurrentUser: element.uid == meUid,
+                    rowOpacity: rowOpacity,
                     showDivider: false,
                     onSelect: { onSelect(element) }
                 )
@@ -159,9 +164,9 @@ private struct PodiumView: View {
     let entries: [LeaderboardEntry]
     let meUid: String?
     let onSelect: (LeaderboardEntry) -> Void
-
-    private let gold = Color(red: 245/255, green: 182/255, blue: 51/255)
-    private let placeholderBg = Color(red: 255/255, green: 245/255, blue: 217/255)
+    
+    private let baseColor = Color.accentColor
+    private let placeholderBg = Color.accentColor.opacity(0.15)
     
     private func safeEntry(_ index: Int) -> LeaderboardEntry? {
         guard entries.indices.contains(index) else { return nil }
@@ -170,34 +175,34 @@ private struct PodiumView: View {
     
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
-            // 2nd Place (Left)
+            // 2nd Place
             PodiumEntryView(
                 entry: safeEntry(1),
                 rank: 2,
                 meUid: meUid,
-                baseColor: gold,
+                baseColor: baseColor,
                 placeholderBg: placeholderBg,
                 onSelect: onSelect
             )
             
-            // 1st Place (Center - Elevated)
+            // 1st Place
             PodiumEntryView(
                 entry: safeEntry(0),
                 rank: 1,
                 meUid: meUid,
-                baseColor: gold,
+                baseColor: baseColor,
                 placeholderBg: placeholderBg,
                 onSelect: onSelect
             )
             .offset(y: -25)
             .zIndex(1)
 
-            // 3rd Place (Right)
+            // 3rd Place
             PodiumEntryView(
                 entry: safeEntry(2),
                 rank: 3,
                 meUid: meUid,
-                baseColor: gold,
+                baseColor: baseColor,
                 placeholderBg: placeholderBg,
                 onSelect: onSelect
             )
@@ -219,8 +224,7 @@ private struct PodiumEntryView: View {
     private var avatarSize: CGFloat { isWinner ? 100 : 72 }
     private var badgeSize: CGFloat { isWinner ? 32 : 28 }
     private var nameFont: Font { isWinner ? .system(size: 15, weight: .bold) : .system(size: 13, weight: .semibold) }
-    private var darkGray: Color { Color(red: 51/255, green: 51/255, blue: 51/255) }
-
+    
     private func formatPoints(_ points: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -260,7 +264,7 @@ private struct PodiumEntryView: View {
                 VStack(spacing: 2) {
                     Text(entry.uid == meUid ? "You" : entry.fullName)
                         .font(nameFont)
-                        .foregroundColor(darkGray)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     
@@ -270,7 +274,7 @@ private struct PodiumEntryView: View {
                             .foregroundColor(baseColor)
                         Text("\(formatPoints(entry.points)) pts")
                             .font(.system(size: isWinner ? 12 : 11, weight: .semibold))
-                            .foregroundColor(darkGray)
+                            .foregroundStyle(.primary)
                     }
                 }
             } else {
@@ -290,6 +294,7 @@ private struct LeaderboardListRow: View {
     let rank: Int
     let entry: LeaderboardEntry
     let isCurrentUser: Bool
+    let rowOpacity: CGFloat
     var showDivider: Bool = true
     var onSelect: (() -> Void)? = nil
     
@@ -300,28 +305,32 @@ private struct LeaderboardListRow: View {
         return formatter.string(from: NSNumber(value: points)) ?? "\(points)"
     }
 
-    private let softGold = Color(red: 245/255, green: 182/255, blue: 51/255)
-    private let highlightBg = Color(red: 1.0, green: 0.95, blue: 0.70)
+    // Highlight Color using accent
+    private var highlightBg: Color {
+        Color.accentColor.opacity(rowOpacity)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
             // Rank
             ZStack {
                 Circle()
-                    .fill(Color.white)
+                    .fill(isCurrentUser ? highlightBg : Color(.secondarySystemGroupedBackground))
                     .frame(width: 36, height: 36)
-                    .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+                    .shadow(color: Color.black.opacity(isCurrentUser ? 0 : 0.06), radius: 2, x: 0, y: 1)
+                
                 Text("\(rank)")
                     .font(.subheadline).bold()
+                    .foregroundStyle(.primary)
             }
 
             HStack(spacing: 10) {
-                LeaderboardAvatarView(entry: entry, size: 44, borderColor: Color.white)
+                LeaderboardAvatarView(entry: entry, size: 44, borderColor: isCurrentUser ? highlightBg : Color(.secondarySystemGroupedBackground))
                 
-                // Name ONLY (Username removed)
+                // Name
                 Text(isCurrentUser ? "You" : entry.fullName)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
             }
 
@@ -331,15 +340,15 @@ private struct LeaderboardListRow: View {
             HStack(spacing: 6) {
                 Image(systemName: "bolt.fill")
                     .font(.caption)
-                    .foregroundColor(softGold)
+                    .foregroundColor(Color.accentColor)
                 Text("\(formattedPoints(entry.points)) pts")
                     .font(.subheadline).bold()
-                    .foregroundColor(Color(.secondaryLabel))
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(isCurrentUser ? highlightBg : Color.white)
+        .background(isCurrentUser ? highlightBg : Color(.secondarySystemGroupedBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.03), radius: 2, x: 0, y: 1)
         .overlay(alignment: .bottom) {
