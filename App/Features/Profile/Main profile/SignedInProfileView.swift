@@ -132,7 +132,7 @@ struct SignedInProfileView: View {
                         .padding(.bottom, screenHeight * 0.04)
                     }
                     .frame(height: headerHeight)
-                    .padding(.bottom, containerTopSpacing)
+                    .padding(.bottom, containerTopSpacing * 0.5)
                     
                     VStack(spacing: screenHeight * 0.03) {
                         CardStackView(cards: [
@@ -225,6 +225,11 @@ struct SignedInProfileView: View {
                         Spacer(minLength: 100)
                     }
                     .padding(.top, isIpad ? -60 : 8)
+                    .padding(.bottom, 20)
+                    .background(
+                        Color.accentColor.opacity(0.15)
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                    )
                 }
                 .frame(maxWidth: .infinity)
                 .redacted(reason: isProfileLoaded ? [] : .placeholder)
