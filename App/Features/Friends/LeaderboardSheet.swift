@@ -38,6 +38,9 @@ struct LeaderboardSheet: View {
                             Image(systemName: "arrow.clockwise")
                         }
                     }
+                    
+                    ToolbarSpacer()
+                    
                     ToolbarItem {
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark")
@@ -110,32 +113,35 @@ struct LeaderboardSheet: View {
     @ViewBuilder
     private func listSection(minHeight: CGFloat) -> some View {
         let count = vm.leaderboard.count
-        let rest = count > 3 ? Array(vm.leaderboard.dropFirst(3)) : []
+        
+        if count > 3 {
+            let rest = Array(vm.leaderboard.dropFirst(3))
 
-        VStack(spacing: 0) {
-            Spacer().frame(height: 12)
+            VStack(spacing: 0) {
+                Spacer().frame(height: 12)
 
-            VStack(spacing: 12) {
-                if !rest.isEmpty {
-                    LeaderboardRows(rest: rest, meUid: vm.meUid, rowOpacity: currentUserRowOpacity) { entry in
-                        vm.openProfile(for: entry.profile)
+                VStack(spacing: 12) {
+                    if !rest.isEmpty {
+                        LeaderboardRows(rest: rest, meUid: vm.meUid, rowOpacity: currentUserRowOpacity) { entry in
+                            vm.openProfile(for: entry.profile)
+                        }
+                    } else {
+                        Spacer().frame(height: 20)
                     }
-                } else {
-                    Spacer().frame(height: 20)
-                }
 
-                Spacer()
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .frame(minHeight: minHeight, alignment: .top)
             }
-            .padding(.horizontal, 18)
-            .frame(minHeight: minHeight, alignment: .top)
+            .padding(.top, 8)
+            .background(
+                Color.accentColor.opacity(listBgOpacity)
+                    .frame(height: 2000)
+                    .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
+                    , alignment: .top
+            )
         }
-        .padding(.top, 8)
-        .background(
-            Color.accentColor.opacity(listBgOpacity)
-                .frame(height: 2000)
-                .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
-                , alignment: .top
-        )
     }
 
     private struct LeaderboardRows: View {
