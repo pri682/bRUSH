@@ -23,14 +23,21 @@ struct FriendsView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("View", selection: $selectedTab) {
-                    ForEach(FriendsTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
+                // Header section with background
+                VStack(spacing: 12) {
+                    Picker("View", selection: $selectedTab) {
+                        ForEach(FriendsTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
                     }
+                    .pickerStyle(SegmentedPickerStyle())
                 }
-                .pickerStyle(SegmentedPickerStyle())
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(.vertical, 12)
+                .background(
+                    Color.accentColor.opacity(0.15)
+                        .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
+                )
 
                 List {
                     if selectedTab == .friends {
@@ -78,6 +85,11 @@ struct FriendsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .background(
+                    Color.accentColor.opacity(0.15)
+                        .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
+                )
             }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
@@ -167,7 +179,10 @@ struct FriendsView: View {
             }
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .cornerRadius(12)
         .contentShape(Rectangle())
         .onTapGesture { vm.openProfile(for: profile) }
     }
@@ -193,7 +208,10 @@ struct FriendsView: View {
                     .buttonStyle(.glass)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .cornerRadius(12)
     }
     
     private func deleteFriends(at offsets: IndexSet) {
