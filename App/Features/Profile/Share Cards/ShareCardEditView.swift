@@ -7,6 +7,8 @@ struct ShareCardEditView: View {
     @Binding var textColor: Color
     @Binding var showUsername: Bool
     @Binding var showAvatar: Bool
+    var selectedTemplateIndex: Int
+    var userProfile: UserProfile?
     
     let categories = ["Message", "Background", "Options"]
     @State private var selectedCategoryIndex = 0
@@ -22,17 +24,34 @@ struct ShareCardEditView: View {
             GeometryReader { geo in
                 ZStack(alignment: .center) {
                     // Pass showActions: false to hide the buttons/dots here
-                    ShareCardPreviewView(
-                        backgroundColor: .constant(.clear),
-                        cardColor: $cardColor,
-                        cardText: $cardText,
-                        textColor: $textColor,
-                        showUsername: $showUsername,
-                        showAvatar: $showAvatar,
-                        showActions: false // <--- Hides controls
+                    // Render specific template based on selection
+                    let customizationBinding = Binding<CardCustomization>(
+                        get: {
+                            CardCustomization(
+                                backgroundColor: backgroundColor,
+                                cardColor: cardColor,
+                                cardText: cardText,
+                                textColor: textColor,
+                                cardIcon: .user,
+                                showUsername: showUsername,
+                                showAvatar: showAvatar
+                            )
+                        },
+                        set: { _ in }
                     )
-                    .scaleEffect(0.65)
-                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.7)
+                    
+                    Group {
+                        switch selectedTemplateIndex {
+                        case 0:
+                            CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
+                        case 1:
+                            CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
+                        default:
+                            CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
+                        }
+                    }
+                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height) // Force full screen size
+                    .scaleEffect(0.45) // Scale down to fit
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
             }

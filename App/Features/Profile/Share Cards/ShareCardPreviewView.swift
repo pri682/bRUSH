@@ -14,7 +14,7 @@ struct ShareCardPreviewView: View {
     var showActions: Bool = true
     
     // Track current page for custom dots
-    @State private var currentPage = 0
+    @Binding var currentPage: Int
     
     var body: some View {
         GeometryReader { geometry in

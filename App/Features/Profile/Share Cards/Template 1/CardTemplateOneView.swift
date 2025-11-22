@@ -64,7 +64,7 @@ struct CardTemplateOneView: View {
                         HStack {
                             if customization.showUsername, let profile = userProfile {
                                 Text("@\(profile.displayName)")
-                                    .font(.system(size: 24, weight: .semibold))
+                                    .font(.system(size: 28, weight: .black))
                                     .foregroundColor(.white)
                                     .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
                                     .lineLimit(1)

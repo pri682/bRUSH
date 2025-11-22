@@ -4,7 +4,9 @@ struct ShareCardGeneratorView: View {
     let userProfile: UserProfile
     
     // MARK: - State
+    // MARK: - State
     @State private var currentTab: String = "Preview"
+    @State private var selectedTemplateIndex: Int = 0
     
     // Customization State
     @State private var backgroundColor: Color = Color(hex: "#FFA500") ?? .orange
@@ -35,7 +37,8 @@ struct ShareCardGeneratorView: View {
                         textColor: $textColor,
                         showUsername: $showUsername,
                         showAvatar: $showAvatar,
-                        userProfile: userProfile // Pass profile
+                        userProfile: userProfile, // Pass profile
+                        currentPage: $selectedTemplateIndex // Binding to sync
                     )
                     .transition(.opacity)
                 } else {
@@ -46,7 +49,9 @@ struct ShareCardGeneratorView: View {
                         cardText: $cardText,
                         textColor: $textColor,
                         showUsername: $showUsername,
-                        showAvatar: $showAvatar
+                        showAvatar: $showAvatar,
+                        selectedTemplateIndex: selectedTemplateIndex, // Pass selected index
+                        userProfile: userProfile
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
