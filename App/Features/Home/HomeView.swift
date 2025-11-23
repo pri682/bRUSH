@@ -29,7 +29,6 @@ struct HomeView: View {
     @EnvironmentObject var dataModel: DataModel
     @State private var currentFeedIndex: Int = 0
     @State private var currentItemID: Int? = 0
-    @Namespace private var transition
     
     @AppStorage("dailyGoldAwarded") private var dailyGoldAwarded: Bool = false
     @AppStorage("dailySilverAwarded") private var dailySilverAwarded: Bool = false
@@ -39,6 +38,8 @@ struct HomeView: View {
     @State private var actuallyShowStreakView: Bool = false
     
     @State private var isReloadingWithOverlay: Bool = false
+    
+    @State private var hasUnreadNotifications: Bool = false
     
     private var safeAreaInsets: UIEdgeInsets {
         let keyWindow = UIApplication.shared.connectedScenes
@@ -62,6 +63,10 @@ struct HomeView: View {
                 isReloadingWithOverlay = false
             }
         }
+    }
+    
+    private func updateNotificationStatus() {
+        hasUnreadNotifications = !NotificationManager.shared.getNotificationHistory().isEmpty
     }
 
     var body: some View {
@@ -249,10 +254,10 @@ struct HomeView: View {
                             VStack(spacing: 16) {
                                 Image(systemName: "scribble.variable")
                                     .font(.system(size: 44, weight: .bold))
-                                    .foregroundColor(Color.gray.opacity(0.6))
+                                    .foregroundColor(Color.black.opacity(0.4))
                                 Text("Be the first one to draw today!")
                                     .font(.headline)
-                                    .foregroundColor(Color.gray.opacity(0.6))
+                                    .foregroundColor(Color.black.opacity(0.4))
                                 Button {
                                     isPresentingCreate = true
                                 } label: {
@@ -283,9 +288,14 @@ struct HomeView: View {
                                     .imageScale(.large)
                                     .foregroundStyle(.accent)
                                     .overlay(alignment: .topTrailing) {
-                                        if !NotificationManager.shared.getNotificationHistory().isEmpty {
+                                        if hasUnreadNotifications {
                                             ZStack {
-                                                Circle().fill(Color(uiColor: .systemBackground))
+                                                Circle()
+                                                    .fill(Color(uiColor: UIColor { trait in
+                                                        trait.userInterfaceStyle == .dark
+                                                            ? UIColor.secondarySystemBackground
+                                                            : UIColor.systemBackground
+                                                    }))
                                                 Circle().fill(Color(red: 1.0, green: 0.0, blue: 0.0))
                                                     .frame(width: 7, height: 7)
                                             }
@@ -294,10 +304,8 @@ struct HomeView: View {
                                         }
                                     }
                             }
-                            .matchedTransitionSource(id: "notifications", in: transition)
                             .popover(isPresented: $showingNotifications) {
                                 NotificationsDropdown()
-                                    .navigationTransition(.zoom(sourceID: "notifications", in: transition))
                                     .presentationCompactAdaptation(.popover)
                             }
                         }
@@ -311,6 +319,8 @@ struct HomeView: View {
                         }
                         
                         checkDailyPostStatus()
+                        updateNotificationStatus()
+                        
                         isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
                         
                         if hasInitialLoadCompleted && !isRefreshing {
@@ -326,6 +336,11 @@ struct HomeView: View {
                                     }
                                 }
                             }
+                        }
+                    }
+                    .onChange(of: showingNotifications) { _, isShowing in
+                        if !isShowing {
+                            updateNotificationStatus()
                         }
                     }
                     .onChange(of: hasCompletedOnboarding) {

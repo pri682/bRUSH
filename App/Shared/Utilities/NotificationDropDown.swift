@@ -5,74 +5,105 @@ struct NotificationsDropdown: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                UnevenRoundedRectangle(
-                        topLeadingRadius: 14,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 14,
-                    )
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(height: 50)
-                    .ignoresSafeArea(edges: .horizontal)
+            HStack {
+                Text("Notifications")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                 
-                HStack {
-                    Text("Notifications")
-                        .font(.headline)
-                    Spacer()
-                    Button("Clear All") {
-                        clearAllNotifications()
+                Spacer()
+                
+                if !notifications.isEmpty {
+                    Button(action: {
+                        withAnimation {
+                            clearAllNotifications()
+                        }
+                    }) {
+                        Text("Clear All")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.red)
                     }
-                    .font(.caption)
-                    .foregroundColor(.red)
+                    .buttonStyle(.glassProminent)
+                    .tint(Color.red.opacity(0.1))
                 }
-                .padding(.horizontal)
             }
+            .padding()
+            .background(Color.accentColor.opacity(0.15))
             
             Divider()
             
             if notifications.isEmpty {
-                Text("No notifications yet")
-                    .foregroundColor(.secondary)
-                    .padding()
+                VStack(spacing: 12) {
+                    Image(systemName: "bell.slash")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    Text("No notifications yet")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 140)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(notifications.indices, id: \.self) { index in
                             let note = notifications[index]
                             
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: "bell.fill")
-                                    .font(.title3)
+                            HStack(alignment: .top, spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.accentColor.opacity(0.1))
+                                        .frame(width: 38, height: 38)
+                                    Image(systemName: "bell.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(Color.accentColor)
+                                }
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(note["title"] ?? "Notification")
-                                        .font(.subheadline).bold()
-                                    Text(note["body"] ?? "")
-                                        .font(.footnote)
-                                        .foregroundColor(.secondary)
-                                    Text(note["time"] ?? "")
-                                        .font(.caption2)
-                                        .foregroundColor(.gray)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                    
+                                    if let body = note["body"], !body.isEmpty {
+                                        Text(body)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(2)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    
+                                    if let time = note["time"] {
+                                        Text(time)
+                                            .font(.caption2)
+                                            .foregroundStyle(.gray)
+                                            .padding(.top, 2)
+                                    }
                                 }
-                                Spacer()
+                                
+                                Spacer(minLength: 8)
                                 
                                 Button(action: {
-                                    removeNotification(at: index)
+                                    withAnimation {
+                                        removeNotification(at: index)
+                                    }
                                 }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.gray)
+                                    Image(systemName: "xmark")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(.secondary)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.glass)
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                             
-                            Divider()
+                            if index < notifications.count - 1 {
+                                Divider()
+                                    .padding(.leading, 68)
+                            }
                         }
                     }
                 }
-                .frame(height: 200)
+                .frame(maxHeight: 400)
             }
         }
         .onAppear {
@@ -83,8 +114,7 @@ struct NotificationsDropdown: View {
                 }
             }
         }
-        .frame(width: 320)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+        .frame(width: 340)
     }
     
     // MARK: - Delete helpers
