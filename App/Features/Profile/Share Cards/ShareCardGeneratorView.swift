@@ -19,11 +19,45 @@ struct ShareCardGeneratorView: View {
     
     @Environment(\.dismiss) var dismiss
     
+    // MARK: - Background Gradient Colors for Each Template
+    // Based on dominant colors from each card background
+    private func gradientColors(for templateIndex: Int) -> [Color] {
+        switch templateIndex {
+        case 0: // Streak Card - Fire/Orange theme
+            return [
+                Color(hex: "#FF6B35") ?? .orange,
+                Color(hex: "#FF8C42") ?? .orange,
+                Color(hex: "#FFAA5A") ?? .orange
+            ]
+        case 1: // Medals Card - Pink/Purple theme
+            return [
+                Color(hex: "#E91E8C") ?? .pink,
+                Color(hex: "#C71585") ?? .purple,
+                Color(hex: "#9B4F96") ?? .purple
+            ]
+        case 2: // Total Drawings - Blue theme
+            return [
+                Color(hex: "#2C5F7C") ?? .blue,
+                Color(hex: "#4A90A4") ?? .blue,
+                Color(hex: "#76C1D4") ?? .cyan
+            ]
+        case 3: // Member Since - Maroon/Deep Red theme
+            return [
+                Color(hex: "#8B2635") ?? .red,
+                Color(hex: "#A63446") ?? .red,
+                Color(hex: "#C85A54") ?? .orange
+            ]
+        default:
+            return [.orange, .yellow, .red]
+        }
+    }
+    
     var body: some View {
         ZStack(alignment: .top) {
-            // Global Background
-            backgroundColor
+            // MARK: - Animated Background Gradient
+            AnimatedGradientBackground(colors: gradientColors(for: selectedTemplateIndex))
                 .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.8), value: selectedTemplateIndex)
             
             // MARK: - Main Content
             ZStack {
@@ -97,6 +131,25 @@ struct ShareCardGeneratorView: View {
                 .padding(.top, 10)
                 
                 Spacer()
+            }
+        }
+    }
+}
+
+// MARK: - Animated Gradient Background
+struct AnimatedGradientBackground: View {
+    let colors: [Color]
+    @State private var animateGradient = false
+    
+    var body: some View {
+        LinearGradient(
+            colors: colors,
+            startPoint: animateGradient ? .topLeading : .bottomLeading,
+            endPoint: animateGradient ? .bottomTrailing : .topTrailing
+        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                animateGradient.toggle()
             }
         }
     }
