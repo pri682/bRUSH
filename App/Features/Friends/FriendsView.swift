@@ -36,7 +36,7 @@ struct FriendsView: View {
                 .padding(.vertical, 12)
                 .background(
                     Color.accentColor.opacity(0.15)
-                        .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
+                    .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
                 )
 
                 List {
@@ -88,17 +88,18 @@ struct FriendsView: View {
                 .scrollContentBackground(.hidden)
                 .background(
                     Color.accentColor.opacity(0.15)
-                        .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
+                    .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
                 )
             }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 guard isInitiallyLoading else { return }
-                
+
                 vm.loadMyProfileData()
                 vm.refreshFriends()
+                // ⚠️ FIX: Use the correct function name: refreshIncoming()
                 vm.refreshIncoming()
-                
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     isInitiallyLoading = false
                 }

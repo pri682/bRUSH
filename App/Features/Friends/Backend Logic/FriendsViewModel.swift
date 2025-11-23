@@ -27,6 +27,7 @@ class FriendsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
+    private let notificationManager = NotificationManager.shared // New: Shared instance for notifications
     var meUid: String? { AuthService.shared.user?.id }
     
     private var myHandle: String { currentUser?.displayName ?? AuthService.shared.user?.displayName ?? "unknown" }
@@ -35,6 +36,11 @@ class FriendsViewModel: ObservableObject {
         return [user.firstName, user.lastName].filter { !$0.isEmpty }.joined(separator: " ")
     }
     private let userService = UserService.shared
+    
+    // New: Deinit to clean up the listener
+    deinit {
+        requestService.stopListeningForIncoming()
+    }
     
     private func hydrateFriendsFromIds() {
         self.friends = []
@@ -302,29 +308,33 @@ class FriendsViewModel: ObservableObject {
         }
     }
     
+    // 💡 FIX: Replaced one-time fetch with a real-time listener that triggers notifications
     func refreshIncoming() {
         guard let me = meUid else {
+            requestService.stopListeningForIncoming()
             self.requests = []
             return
         }
         
-        Task {
-            do {
-                // 1. Fetch raw DTOs
-                let dtos = try await requestService.fetchIncoming(forUid: me)
+        // Start the real-time listener
+        requestService.startListeningForIncoming(forUid: me) { [weak self] dtos in
+            Task { @MainActor in
+                guard let self = self else { return }
                 
-                // 2. Hydrate profiles in parallel using TaskGroup
                 var hydratedRequests: [FriendRequest] = []
                 
+                // Track UIDs for requests currently known to the ViewModel (before this update)
+                let existingRequestUids = Set(self.requests.map { $0.fromUid })
+                var newRequestProfiles: [FriendRequest] = [] // Requests found in this snapshot that were NOT in the last one
+
+                // 2. Hydrate profiles in parallel using TaskGroup
                 await withTaskGroup(of: FriendRequest?.self) { group in
                     for dto in dtos {
                         group.addTask {
-                            // Clean the UID to avoid "not found" errors due to whitespace
                             let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
                             guard !cleanUid.isEmpty else { return nil }
                             
                             do {
-                                // Try to fetch the fresh profile
                                 let profile = try await self.userService.fetchProfile(uid: cleanUid)
                                 
                                 let fullName = [profile.firstName, profile.lastName]
@@ -334,11 +344,20 @@ class FriendsViewModel: ObservableObject {
                                 let finalName = fullName.isEmpty ? profile.displayName : fullName
                                 let finalHandle = "@\(profile.displayName)"
                                 
-                                return FriendRequest(
+                                let request = FriendRequest(
                                     fromUid: cleanUid,
                                     fromName: finalName.isEmpty ? "Unknown" : finalName,
                                     handle: finalHandle.isEmpty ? "@unknown" : finalHandle
                                 )
+                                
+                                // NOTIFICATION LOGIC: Check if this request is new to the ViewModel
+                                if !existingRequestUids.contains(cleanUid) {
+                                    await MainActor.run {
+                                        newRequestProfiles.append(request)
+                                    }
+                                }
+                                
+                                return request
                             } catch {
                                 // Fallback to DTO data if fetch fails
                                 print("Failed to hydrate request for \(cleanUid): \(error.localizedDescription)")
@@ -359,14 +378,19 @@ class FriendsViewModel: ObservableObject {
                     }
                 }
                 
-                // 3. Update UI on MainActor
-                await MainActor.run {
-                    self.requests = hydratedRequests
+                // 3. Update UI
+                self.requests = hydratedRequests.sorted { $0.fromName.localizedCaseInsensitiveCompare($1.fromName) == .orderedAscending }
+                
+                // 4. Trigger notifications for newly detected requests
+                for newReq in newRequestProfiles {
+                    self.notificationManager.scheduleFriendRequestNotification(
+                        from: newReq.fromName,
+                        handle: newReq.handle
+                    )
                 }
-            } catch {
-                await MainActor.run {
-                    self.addError = "Failed to load friend requests."
-                }
+
+                // Clear any lingering error since a new successful snapshot arrived
+                self.addError = nil
             }
         }
     }
@@ -449,5 +473,6 @@ class FriendsViewModel: ObservableObject {
         pendingOutgoing = []
         addResults = []
         addQuery = ""
+        requestService.stopListeningForIncoming()
     }
 }
