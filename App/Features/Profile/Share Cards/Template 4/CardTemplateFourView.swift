@@ -33,9 +33,35 @@ struct CardTemplateFourView: View {
                         .frame(width: cardWidth, height: cardHeight)
                         .clipped()
                     
-
-                    
-
+                    // 2. MEMBER SINCE DATA
+                    if let profile = userProfile {
+                        let memberYear = UserService.formatMemberSinceDate(profile.memberSince).year
+                        
+                        VStack(spacing: 20) {
+                            // "Member Since:" label - smaller and offset more
+                            Text("Member Since:")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
+                                .offset(x: 30, y: 20) // More to the right and down
+                            
+                            // Large year text with gold gradient for contrast
+                            Text(memberYear)
+                                .font(.system(size: 120, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Color(hex: "#FFD700") ?? .yellow, Color(hex: "#FFA500") ?? .orange],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                                .minimumScaleFactor(0.5)
+                                .lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, cardHeight * 0.40) // Lower positioning (was 0.30)
+                    }
                 }
                 .frame(width: cardWidth, height: cardHeight)
                 .mask(RoundedRectangle(cornerRadius: 30, style: .continuous))
