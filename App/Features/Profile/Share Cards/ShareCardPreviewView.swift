@@ -5,8 +5,6 @@ struct ShareCardPreviewView: View {
     @Binding var cardColor: Color
     @Binding var cardText: String
     @Binding var textColor: Color
-    @Binding var showUsername: Bool
-    @Binding var showAvatar: Bool
     
     var userProfile: UserProfile?
     
@@ -28,9 +26,7 @@ struct ShareCardPreviewView: View {
                         cardColor: cardColor,
                         cardText: cardText,
                         textColor: textColor,
-                        cardIcon: .user,
-                        showUsername: showUsername,
-                        showAvatar: showAvatar
+                        cardIcon: .user
                     )
                 },
                 set: { _ in }
@@ -44,6 +40,12 @@ struct ShareCardPreviewView: View {
                     
                     CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
                         .tag(1)
+                        
+                    CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
+                        .tag(2)
+                        
+                    CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
+                        .tag(3)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // Hide default dots
                 
@@ -54,7 +56,7 @@ struct ShareCardPreviewView: View {
                         
                         // Custom Dots - Positioned closer to the card bottom
                         HStack(spacing: 8) {
-                            ForEach(0..<2) { index in
+                            ForEach(0..<4) { index in
                                 Circle()
                                     .fill(currentPage == index ? Color.white : Color.white.opacity(0.4))
                                     .frame(width: 8, height: 8)
@@ -71,12 +73,17 @@ struct ShareCardPreviewView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "square.and.arrow.up")
                                     .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.black)
                                 Text("Share Card")
                                     .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(20)
                         }
                         .padding(.bottom, height * 0.05) // Bottom padding relative to screen height
-                        .buttonStyle(.glass) // Frosted glass background
                     }
                 }
             }

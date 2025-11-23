@@ -5,16 +5,21 @@ struct ShareCardEditView: View {
     @Binding var cardColor: Color
     @Binding var cardText: String
     @Binding var textColor: Color
-    @Binding var showUsername: Bool
-    @Binding var showAvatar: Bool
     var selectedTemplateIndex: Int
     var userProfile: UserProfile?
     
-    let categories = ["Message", "Background", "Options"]
+    let categories = ["Message", "Background"]
     @State private var selectedCategoryIndex = 0
     
     let presetColors: [Color] = [
         .white, .black, .red, .orange, .yellow, .green, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink, .brown
+    ]
+    
+    let cardImages = [
+        "card_streak",
+        "card_medals",
+        "card_total-drawings",
+        "card_member-since"
     ]
     
     var body: some View {
@@ -32,9 +37,7 @@ struct ShareCardEditView: View {
                                 cardColor: cardColor,
                                 cardText: cardText,
                                 textColor: textColor,
-                                cardIcon: .user,
-                                showUsername: showUsername,
-                                showAvatar: showAvatar
+                                cardIcon: .user
                             )
                         },
                         set: { _ in }
@@ -46,6 +49,10 @@ struct ShareCardEditView: View {
                             CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
                         case 1:
                             CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
+                        case 2:
+                            CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
+                        case 3:
+                            CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
                         default:
                             CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
                         }
@@ -98,8 +105,6 @@ struct ShareCardEditView: View {
                             messageInstructionControl
                         case 1: // Background
                             colorGridControl(binding: $backgroundColor)
-                        case 2: // Options
-                            optionsControl
                         default:
                             EmptyView()
                         }
@@ -118,13 +123,15 @@ struct ShareCardEditView: View {
     // MARK: - Sub-Controls
     
     var messageInstructionControl: some View {
-        VStack(spacing: 15) {
+        let currentImage = selectedTemplateIndex < cardImages.count ? cardImages[selectedTemplateIndex] : cardImages[0]
+        
+        return VStack(spacing: 15) {
             Image(systemName: "photo")
                 .font(.system(size: 40))
                 .foregroundColor(.gray.opacity(0.5))
                 .padding(.top, 20)
             
-            Text("The card is using the static asset 'card_1.png'.")
+            Text("The card is using the static asset '\(currentImage)'.")
                 .font(.headline)
                 .foregroundColor(.gray)
             
@@ -174,21 +181,6 @@ struct ShareCardEditView: View {
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
                 }
             }
-        }
-        .padding(.top, 20)
-    }
-
-    var optionsControl: some View {
-        VStack(spacing: 20) {
-            Toggle("Show Username", isOn: $showUsername)
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-            
-            Toggle("Show Avatar", isOn: $showAvatar)
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
         }
         .padding(.top, 20)
     }

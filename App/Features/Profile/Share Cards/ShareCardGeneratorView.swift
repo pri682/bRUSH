@@ -13,8 +13,6 @@ struct ShareCardGeneratorView: View {
     @State private var cardColor: Color = Color(hex: "#FFD700") ?? .yellow
     @State private var cardText: String = "BRUSH"
     @State private var textColor: Color = Color(hex: "#8B4513") ?? .brown
-    @State private var showUsername: Bool = true
-    @State private var showAvatar: Bool = true
     
     let tabs = ["Preview", "Edit"]
     @Namespace private var animation
@@ -35,8 +33,6 @@ struct ShareCardGeneratorView: View {
                         cardColor: $cardColor,
                         cardText: $cardText,
                         textColor: $textColor,
-                        showUsername: $showUsername,
-                        showAvatar: $showAvatar,
                         userProfile: userProfile, // Pass profile
                         currentPage: $selectedTemplateIndex // Binding to sync
                     )
@@ -48,8 +44,6 @@ struct ShareCardGeneratorView: View {
                         cardColor: $cardColor,
                         cardText: $cardText,
                         textColor: $textColor,
-                        showUsername: $showUsername,
-                        showAvatar: $showAvatar,
                         selectedTemplateIndex: selectedTemplateIndex, // Pass selected index
                         userProfile: userProfile
                     )

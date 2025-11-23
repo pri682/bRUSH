@@ -216,12 +216,10 @@ final class UserService {
     // Swift dictionaries drop nil values, so Firestore won't know to delete the field.
     func updateProfile(uid: String, data: [String: Any]) async throws {
         try await db.collection(usersCollection).document(uid).updateData(data)
-    }
-<<<<<<< HEAD
-    
-=======
+    }   
 
->>>>>>> 1009230f (KAN-187 Card Template, Better Design, Easier UX)
+
+
     // -------------------------------------------------------
     // UPDATE AVATAR SPECIFICALLY (Handles Deletions)
     // -------------------------------------------------------
