@@ -14,7 +14,7 @@ struct brushApp: App {
         }
         
         NotificationManager.shared.requestPermission()
-        NotificationManager.shared.markTodayCompleted()
+        NotificationManager.shared.scheduleNextReminder()
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
     
