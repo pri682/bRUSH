@@ -133,7 +133,7 @@ struct EditAvatarView: View {
                 .padding(.bottom, screenHeight * 0.01)
 
                 // Avatar Type Selection Tabs
-                HStack(spacing: 0) {
+                HStack(spacing: 5) {
                     ForEach(AvatarType.allCases, id: \.self) { avatarType in
                         Button {
                             saveToHistory()
@@ -154,7 +154,8 @@ struct EditAvatarView: View {
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, screenHeight * 0.02)
-
+                .animation(.easeInOut(duration: 0.3), value: selectedAvatarType)
+                
                 // Avatar Preview
                 AvatarView(
                     avatarType: selectedAvatarType,
@@ -164,7 +165,9 @@ struct EditAvatarView: View {
                     eyes: selectedEyes,
                     mouth: selectedMouth,
                     hair: selectedHair,
-                    facialHair: selectedFacialHair
+                    facialHair: selectedFacialHair,
+                    includeSpacer: false
+                    
                 )
                 .frame(width: avatarSize, height: avatarSize)
                 .padding(.bottom, screenHeight * 0.04)

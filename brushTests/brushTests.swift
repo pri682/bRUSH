@@ -56,3 +56,124 @@ final class FriendsViewModelTests: XCTestCase {
         XCTAssertEqual(vm.sent.first?.toUid, "uX")
     }
 }
+
+// MARK: - Leaderboard Tests
+final class LeaderboardTests: XCTestCase {
+    
+    // Helper to create leaderboard entries
+    private func makeEntry(
+        uid: String,
+        name: String = "Test User",
+        handle: String = "@test",
+        gold: Int,
+        silver: Int,
+        bronze: Int,
+        submittedAt: Date = Date()
+    ) -> LeaderboardEntry {
+        LeaderboardEntry(
+            uid: uid,
+            fullName: name,
+            handle: handle,
+            gold: gold,
+            silver: silver,
+            bronze: bronze,
+            submittedAt: submittedAt,
+            profileImageURL: nil,
+            avatarType: nil,
+            avatarBackground: nil,
+            avatarBody: nil,
+            avatarShirt: nil,
+            avatarEyes: nil,
+            avatarMouth: nil,
+            avatarHair: nil,
+            avatarFacialHair: nil
+        )
+    }
+    
+    // Test: Points calculation formula
+    func testPointsCalculation_CorrectFormula() {
+        let entry = makeEntry(uid: "u1", gold: 3, silver: 5, bronze: 7)
+        // 3*100 + 5*25 + 7*10 = 300 + 125 + 70 = 495
+        XCTAssertEqual(entry.points, 495, "Points should be gold*100 + silver*25 + bronze*10")
+    }
+    
+    func testPointsCalculation_ZeroMedals() {
+        let entry = makeEntry(uid: "u1", gold: 0, silver: 0, bronze: 0)
+        XCTAssertEqual(entry.points, 0, "Zero medals should result in zero points")
+    }
+    
+    func testPointsCalculation_OnlyGold() {
+        let entry = makeEntry(uid: "u1", gold: 2, silver: 0, bronze: 0)
+        XCTAssertEqual(entry.points, 200, "Only gold medals: 2*100 = 200")
+    }
+
+// Test: Sorting by points (higher points first)
+    func testSorting_HigherPointsFirst() {
+        let low = makeEntry(uid: "low", gold: 1, silver: 0, bronze: 0)    // 100 pts
+        let high = makeEntry(uid: "high", gold: 5, silver: 0, bronze: 0)  // 500 pts
+        let mid = makeEntry(uid: "mid", gold: 3, silver: 0, bronze: 0)    // 300 pts
+        
+        var entries = [low, high, mid]
+        entries.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(entries.map { $0.uid }, ["high", "mid", "low"],
+                      "Entries should be sorted by points descending")
+    }
+   
+    // Test: Tie-breaking by submittedAt (earlier date wins)
+    func testSorting_TieBreakByEarlierDate() {
+        let baseDate = Date(timeIntervalSince1970: 1700000000)
+        let earlier = makeEntry(uid: "earlier", gold: 2, silver: 0, bronze: 0, submittedAt: baseDate)
+        let later = makeEntry(uid: "later", gold: 2, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(60))
+        
+        var entries = [later, earlier]
+        entries.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(entries.map { $0.uid }, ["earlier", "later"],
+                      "When points are equal, earlier submittedAt should rank higher")
+    }
+
+ 
+    // Test: User with high score appears at top
+    func testLeaderboard_HighScoreAtTop() {
+        let user1 = makeEntry(uid: "u1", name: "Alice", gold: 1, silver: 2, bronze: 3)  // 155 pts
+        let user2 = makeEntry(uid: "u2", name: "Bob", gold: 5, silver: 1, bronze: 0)    // 525 pts
+        let user3 = makeEntry(uid: "u3", name: "Carol", gold: 2, silver: 0, bronze: 5)  // 250 pts
+        
+        var leaderboard = [user1, user2, user3]
+        leaderboard.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(leaderboard[0].uid, "u2", "Bob with 525 pts should be rank 1")
+        XCTAssertEqual(leaderboard[1].uid, "u3", "Carol with 250 pts should be rank 2")
+        XCTAssertEqual(leaderboard[2].uid, "u1", "Alice with 155 pts should be rank 3")
+    }
+
+// Test: Multiple users with same score, sorted by submission time
+    func testLeaderboard_SameScoreSortedByTime() {
+        let baseDate = Date(timeIntervalSince1970: 1700000000)
+        let user1 = makeEntry(uid: "u1", name: "First", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate)
+        let user2 = makeEntry(uid: "u2", name: "Second", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(10))
+        let user3 = makeEntry(uid: "u3", name: "Third", gold: 3, silver: 0, bronze: 0, submittedAt: baseDate.addingTimeInterval(20))
+        
+        var leaderboard = [user3, user1, user2]
+        leaderboard.sort {
+            if $0.points != $1.points { return $0.points > $1.points }
+            return $0.submittedAt < $1.submittedAt
+        }
+        
+        XCTAssertEqual(leaderboard.map { $0.uid }, ["u1", "u2", "u3"],
+                      "Same points should be ordered by earliest submission time")
+    }
+}
+
+
+    
