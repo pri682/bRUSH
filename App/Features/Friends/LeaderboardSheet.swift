@@ -76,7 +76,9 @@ struct LeaderboardSheet: View {
                 }
             }
         }
-        .sheet(isPresented: $vm.showingProfile) {
+        .sheet(isPresented: $vm.showingProfile, onDismiss: {
+            vm.loadLeaderboard()
+        }) {
             if let profile = vm.selectedProfile {
                 FriendProfileSheet(vm: vm, profile: profile)
             }
