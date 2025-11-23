@@ -74,9 +74,11 @@ struct AddFriendView: View {
                             }
                             
                             Spacer()
+                            
                             let isFriend = vm.friendIds.contains(user.uid)
                             let isPending = vm.isRequestPending(uid: user.uid)
                             let isCurrentUser = (user.uid == vm.meUid)
+                            let incomingReq = vm.requests.first(where: { $0.fromUid == user.uid })
                             
                             if isCurrentUser {
                                 Text("You")
@@ -86,6 +88,14 @@ struct AddFriendView: View {
                                 Text("Friend")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                            }
+                            else if let req = incomingReq {
+                                Button {
+                                    Task { await vm.accept(req) }
+                                } label: {
+                                    Text("Accept")
+                                }
+                                .buttonStyle(.glassProminent)
                             }
                             else if isPending {
                                 Text("Pending")
