@@ -35,7 +35,7 @@ struct CardTemplateTwoView: View {
                                         // 2. MEDALS DATA
                     if let profile = userProfile {
                         // Use Awarded properties for total lifetime medals
-                        let totalMedals = profile.goldMedalsAwarded + profile.silverMedalsAwarded + profile.bronzeMedalsAwarded
+                        let totalMedals = profile.goldMedalsAccumulated + profile.silverMedalsAccumulated + profile.bronzeMedalsAccumulated
                         let isOver100M = totalMedals > 99_999_999
                         let isAbbreviated = totalMedals > 99_999
                         
@@ -51,7 +51,8 @@ struct CardTemplateTwoView: View {
                                 .font(.system(size: 96, weight: .black, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color(hex: "#FF1493") ?? .pink, Color(hex: "#C71585") ?? .purple], // Slightly less bright/neon
+                                        // top of text color (currently pink)
+                                        colors: [Color(hex: "#FF1493") ?? .pink, Color(hex: "#ffc411") ?? .yellow], // bottom of text color
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
