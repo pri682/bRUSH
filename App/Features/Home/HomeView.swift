@@ -249,10 +249,10 @@ struct HomeView: View {
                             VStack(spacing: 16) {
                                 Image(systemName: "scribble.variable")
                                     .font(.system(size: 44, weight: .bold))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundColor(Color.gray.opacity(0.6))
                                 Text("Be the first one to draw today!")
                                     .font(.headline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundColor(Color.gray.opacity(0.6))
                                 Button {
                                     isPresentingCreate = true
                                 } label: {
