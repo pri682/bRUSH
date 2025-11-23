@@ -28,6 +28,8 @@ class FriendsViewModel: ObservableObject {
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
     private let notificationManager = NotificationManager.shared // New: Shared instance for notifications
+    private let userService = UserService.shared
+    
     var meUid: String? { AuthService.shared.user?.id }
     
     private var myHandle: String { currentUser?.displayName ?? AuthService.shared.user?.displayName ?? "unknown" }
@@ -35,48 +37,133 @@ class FriendsViewModel: ObservableObject {
         guard let user = currentUser else { return "" }
         return [user.firstName, user.lastName].filter { !$0.isEmpty }.joined(separator: " ")
     }
-    private let userService = UserService.shared
     
-    // New: Deinit to clean up the listener
-    deinit {
-        requestService.stopListeningForIncoming()
+    // MARK: - Async Data Loading
+    
+    func refreshAllData() async {
+        // Run these in parallel to speed up loading
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadMyProfileData() }
+            group.addTask { await self.refreshFriends() }
+            group.addTask { await self.refreshIncoming() }
+        }
+        
+        // Leaderboard depends on friends data, so load it after
+        loadLeaderboard()
     }
     
-    private func hydrateFriendsFromIds() {
-        self.friends = []
+    func loadMyProfileData() async {
+        guard let me = meUid else { return }
+        do {
+            let profile = try await userService.fetchProfile(uid: me)
+            self.currentUser = profile
+        } catch {
+            print("Error loading my profile: \(error)")
+        }
+    }
+    
+    func refreshFriends() async {
+        guard let me = meUid else {
+            self.friendIds = []
+            self.friends = []
+            return
+        }
+        
+        do {
+            let snap = try await Firestore.firestore()
+                .collection("friendships").document(me)
+                .collection("friends").getDocuments()
+            
+            let newIds = Set(snap.documents.map { $0.documentID })
+            
+            // Always hydrate if the list is empty (first load) or if IDs changed
+            if newIds != self.friendIds || self.friends.isEmpty {
+                self.friendIds = newIds
+                await hydrateFriendsFromIds()
+            }
+        } catch {
+            print("Error refreshing friends: \(error)")
+        }
+    }
+    
+    private func hydrateFriendsFromIds() async {
         let ids = Array(self.friendIds)
-        Task { @MainActor in
-            var loadedProfiles: [UserProfile] = []
-            for uid in ids {
-                do {
-                    let profile = try await userService.fetchProfile(uid: uid)
-                    loadedProfiles.append(profile)
-                } catch {
-                    // handle error silently or log
+        guard !ids.isEmpty else {
+            self.friends = []
+            return
+        }
+        
+        var loadedProfiles: [UserProfile] = []
+        
+        // Fetch profiles
+        for uid in ids {
+            do {
+                let profile = try await userService.fetchProfile(uid: uid)
+                loadedProfiles.append(profile)
+            } catch {
+                print("Failed to load profile for \(uid)")
+            }
+        }
+        
+        self.friends = loadedProfiles.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+    
+    func refreshIncoming() async {
+        guard let me = meUid else {
+            self.requests = []
+            return
+        }
+        
+        do {
+            // 1. Fetch raw DTOs
+            let dtos = try await requestService.fetchIncoming(forUid: me)
+            
+            // 2. Hydrate profiles in parallel using TaskGroup
+            var hydratedRequests: [FriendRequest] = []
+            
+            await withTaskGroup(of: FriendRequest?.self) { group in
+                for dto in dtos {
+                    group.addTask {
+                        let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !cleanUid.isEmpty else { return nil }
+                        
+                        do {
+                            let profile = try await self.userService.fetchProfile(uid: cleanUid)
+                            let fullName = [profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                            let finalName = fullName.isEmpty ? profile.displayName : fullName
+                            let finalHandle = "@\(profile.displayName)"
+                            
+                            return FriendRequest(
+                                fromUid: cleanUid,
+                                fromName: finalName.isEmpty ? "Unknown" : finalName,
+                                handle: finalHandle.isEmpty ? "@unknown" : finalHandle
+                            )
+                        } catch {
+                            return FriendRequest(
+                                fromUid: cleanUid,
+                                fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
+                                handle: dto.fromHandle
+                            )
+                        }
+                    }
+                }
+                
+                for await req in group {
+                    if let req = req {
+                        hydratedRequests.append(req)
+                    }
                 }
             }
-            self.friends = loadedProfiles.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
             
-            // Automatically update leaderboard if we have data
-            if !leaderboard.isEmpty {
-                loadLeaderboard()
-            }
+            self.requests = hydratedRequests
+        } catch {
+            self.addError = "Failed to load friend requests."
         }
     }
     
-    func refreshFriends() {
-        guard let me = meUid else { friendIds = []; return }
-        Task { @MainActor in
-            do {
-                let snap = try await Firestore.firestore()
-                    .collection("friendships").document(me)
-                    .collection("friends").getDocuments()
-                self.friendIds = Set(snap.documents.map { $0.documentID })
-                self.hydrateFriendsFromIds()
-            } catch {
-            }
-        }
-    }
+    // MARK: - Standard Actions
     
     var filteredFriends: [UserProfile] {
         guard !searchText.isEmpty else { return friends }
@@ -87,104 +174,78 @@ class FriendsViewModel: ObservableObject {
         }
     }
     
-    @MainActor
     func removeLocally(uids: [String]) {
         guard !uids.isEmpty else { return }
         let uidSet = Set(uids)
         friends.removeAll { uidSet.contains($0.uid) }
         friendIds.subtract(uidSet)
-        
-        if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            performAddSearch()
-        }
+        if !addQuery.isEmpty { performAddSearch() }
     }
+    
     func removeRemote(uids: [String]) async {
         guard let me = AuthService.shared.user?.id, !uids.isEmpty else { return }
         for other in uids {
-            do {
-                try await requestService.removeFriend(me: me, other: other)
-            } catch {
-                print("Failed to remove friend remotely: \(other), error: \(error)")
-            }
+            try? await requestService.removeFriend(me: me, other: other)
         }
-        await MainActor.run {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self.refreshFriends()
-            }
-        }
+        await refreshFriends()
     }
     
-    func loadMyProfileData() {
+    func accept(_ req: FriendRequest) async {
         guard let me = meUid else { return }
-        Task { @MainActor in
-            do {
-                self.currentUser = try await userService.fetchProfile(uid: me)
-            } catch {
-            }
-        }
-    }
-    
-    func accept(_ req: FriendRequest) {
-        guard let me = meUid else { return }
-        Task { @MainActor in
-            do {
-                try await requestService.accept(me: me, other: req.fromUid)
-                requests.removeAll { $0.id == req.id }
-                // Fetch the new friend profile
-                if let newProfile = try? await userService.fetchProfile(uid: req.fromUid) {
+        withAnimation { requests.removeAll { $0.id == req.id } }
+        
+        do {
+            try await requestService.accept(me: me, other: req.fromUid)
+            // Immediately fetch the new friend to update the list
+            if let newProfile = try? await userService.fetchProfile(uid: req.fromUid) {
+                withAnimation {
                     friends.append(newProfile)
-                    refreshFriends()
+                    friends.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+                    friendIds.insert(newProfile.uid)
                 }
             }
-            catch {
-                addError = "Failed to accept friend request."
-            }
+            await refreshIncoming()
+        } catch {
+            addError = "Failed to accept request."
+            await refreshIncoming() // Revert optimistic update
         }
     }
-    func decline(_ req: FriendRequest) {
+    
+    func decline(_ req: FriendRequest) async {
         guard let me = meUid else { return }
-        Task { @MainActor in
-            do {
-                try await requestService.decline(me: me, other: req.fromUid)
-                requests.removeAll { $0.id == req.id }
-            } catch {
-                addError = "Failed to decline friend request."
-            }
+        withAnimation { requests.removeAll { $0.id == req.id } }
+        do {
+            try await requestService.decline(me: me, other: req.fromUid)
+        } catch {
+            addError = "Failed to decline request."
+            await refreshIncoming()
         }
     }
+    
+    // MARK: - Search & Add Logic
     
     private func searchTask(for query: String) async {
         guard let me = meUid else {
-            await MainActor.run {
-                self.addResults = []
-                self.addError = "Sign in to search for friends."
-                self.isSearchingAdd = false
-            }
+            self.addResults = []
+            self.addError = "Sign in to search."
+            self.isSearchingAdd = false
             return
         }
         
-        let raw = query
-            .replacingOccurrences(of: "@", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
+        let raw = query.replacingOccurrences(of: "@", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard raw.count >= 1 else {
-            await MainActor.run {
-                addResults = []
-                addError = nil
-                isSearchingAdd = false
-            }
+            self.addResults = []
+            self.addError = nil
+            self.isSearchingAdd = false
             return
         }
         
-        await MainActor.run {
-            addError = nil
-        }
+        self.addError = nil
         
         do {
             let hits = try await handleService.searchHandles(prefix: raw, limit: 20)
-            
             let searchResults = hits.map { FriendSearchResult(uid: $0.uid, handle: $0.handle, fullName: $0.fullName) }
-            var newPendingOutgoing: Set<String> = []
+            var newPending: Set<String> = []
 
             await withTaskGroup(of: (String, Bool).self) { group in
                 for hit in searchResults {
@@ -193,33 +254,24 @@ class FriendsViewModel: ObservableObject {
                         return (hit.uid, isPending)
                     }
                 }
-                
                 for await (uid, isPending) in group {
-                    if isPending {
-                        newPendingOutgoing.insert(uid)
-                    }
+                    if isPending { newPending.insert(uid) }
                 }
             }
 
-            await MainActor.run {
-                self.addResults = searchResults
-                self.pendingOutgoing = newPendingOutgoing
-                self.isSearchingAdd = false
-            }
+            self.addResults = searchResults
+            self.pendingOutgoing = newPending
+            self.isSearchingAdd = false
             
         } catch {
-            await MainActor.run {
-                self.addResults = []
-                self.addError = "Search failed. Please try again."
-                self.isSearchingAdd = false
-            }
+            self.addResults = []
+            self.addError = "Search failed."
+            self.isSearchingAdd = false
         }
     }
     
     func performAddSearch() {
-        Task {
-            await searchTask(for: addQuery)
-        }
+        Task { await searchTask(for: addQuery) }
     }
     
     init() {
@@ -230,25 +282,14 @@ class FriendsViewModel: ObservableObject {
                 Task { @MainActor in
                     self?.isSearchingAdd = !trimmed.isEmpty
                     self?.addError = nil
-                    if trimmed.isEmpty {
-                        self?.addResults = []
-                    }
+                    if trimmed.isEmpty { self?.addResults = [] }
                 }
                 return trimmed
             }
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .sink { [weak self] trimmedQuery in
-                if trimmedQuery.isEmpty {
-                    Task { @MainActor in
-                        self?.addResults = []
-                        self?.addError = nil
-                        self?.isSearchingAdd = false
-                    }
-                } else {
-                    Task {
-                        await self?.searchTask(for: trimmedQuery)
-                    }
-                }
+                guard !trimmedQuery.isEmpty else { return }
+                Task { await self?.searchTask(for: trimmedQuery) }
             }
             .store(in: &cancellables)
     }
@@ -258,41 +299,36 @@ class FriendsViewModel: ObservableObject {
         leaderboardError = nil
         
         var allProfiles = friends
-        if let me = currentUser {
-            // Avoid duplicates
-            if !allProfiles.contains(where: { $0.uid == me.uid }) {
-                allProfiles.append(me)
-            }
+        if let me = currentUser, !allProfiles.contains(where: { $0.uid == me.uid }) {
+            allProfiles.append(me)
         }
         
         let entries = allProfiles.map { LeaderboardEntry(profile: $0) }
-        
-        // Sort by points desc
         self.leaderboard = entries.sorted {
             if $0.points != $1.points { return $0.points > $1.points }
             return $0.fullName < $1.fullName
         }
         
-        // Populate medal counts for quick lookup if needed
         var medalMap: [String: (gold: Int, silver: Int, bronze: Int)] = [:]
         for entry in entries {
             medalMap[entry.uid] = (entry.gold, entry.silver, entry.bronze)
         }
         self.medalCountsByUid = medalMap
-        
         isLoadingLeaderboard = false
     }
     
     func sendFriendRequest(to user: FriendSearchResult) {
         let handleLabel = "@\(user.handle)"
         guard !sent.contains(where: { $0.toUid == user.uid }) else { return }
+        
         sent.append(.init(toName: user.fullName, toUid: user.uid, handle: handleLabel))
+        pendingOutgoing.insert(user.uid)
+        
         guard let me = meUid else { return }
         let senderHandle = myHandle
         let senderDisplay = myFullName
         
-        pendingOutgoing.insert(user.uid)
-        Task { @MainActor in
+        Task {
             do {
                 try await FriendRequestServiceFirebase().sendRequest(
                     fromUid: me,
@@ -397,26 +433,15 @@ class FriendsViewModel: ObservableObject {
     
     func remove(friendProfile: UserProfile) {
         guard let me = AuthService.shared.user?.id else { return }
-        Task { @MainActor in
-            do {
-                try await requestService.removeFriend(me: me, other: friendProfile.uid)
-                if let idx = friends.firstIndex(of: friendProfile) {
-                    friends.remove(at: idx)
-                } else {
-                    friends.removeAll { $0.uid == friendProfile.uid }
-                }
-                friendIds.remove(friendProfile.uid)
-                if !addQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    performAddSearch()
-                }
-                refreshFriends()
-            } catch {
-                print("Failed to remove friend: \(error)")
-            }
+        Task {
+            if let idx = friends.firstIndex(of: friendProfile) { friends.remove(at: idx) }
+            friendIds.remove(friendProfile.uid)
+            try? await requestService.removeFriend(me: me, other: friendProfile.uid)
+            if !addQuery.isEmpty { performAddSearch() }
+            await refreshFriends()
         }
     }
     
-    // Open profile from local object
     func openProfile(for profile: UserProfile) {
         self.selectedProfile = profile
         self.showingProfile = true
@@ -424,40 +449,24 @@ class FriendsViewModel: ObservableObject {
     
     func openProfile(for searchResult: FriendSearchResult) {
         Task {
-            await MainActor.run {
-                selectedProfile = nil
-                showingProfile = true
-            }
-            do {
-                let profile = try await userService.fetchProfile(uid: searchResult.uid)
-                await MainActor.run {
-                    self.selectedProfile = profile
-                }
-            } catch {
-                print("Failed to fetch profile: \(error)")
-                await MainActor.run {
-                    showingProfile = false
-                }
+            self.selectedProfile = nil
+            self.showingProfile = true
+            if let profile = try? await userService.fetchProfile(uid: searchResult.uid) {
+                self.selectedProfile = profile
+            } else {
+                self.showingProfile = false
             }
         }
     }
     
     func openProfile(for request: FriendRequest) {
         Task {
-            await MainActor.run {
-                selectedProfile = nil
-                showingProfile = true
-            }
-            do {
-                let profile = try await userService.fetchProfile(uid: request.fromUid)
-                await MainActor.run {
-                    self.selectedProfile = profile
-                }
-            } catch {
-                print("Failed to fetch profile: \(error)")
-                await MainActor.run {
-                    showingProfile = false
-                }
+            self.selectedProfile = nil
+            self.showingProfile = true
+            if let profile = try? await userService.fetchProfile(uid: request.fromUid) {
+                self.selectedProfile = profile
+            } else {
+                self.showingProfile = false
             }
         }
     }
@@ -465,6 +474,7 @@ class FriendsViewModel: ObservableObject {
     func isRequestPending(uid: String) -> Bool {
         pendingOutgoing.contains(uid)
     }
+    
     func resetSessionData() {
         friends = []
         currentUser = nil

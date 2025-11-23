@@ -37,63 +37,87 @@ struct FriendsView: View {
 
                 List {
                     if selectedTab == .friends {
-                        if vm.filteredFriends.isEmpty && !isInitiallyLoading {
+                        // LOADING STATE
+                        if isInitiallyLoading && vm.friends.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView("Loading friends...")
+                                Spacer()
+                            }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 20)
+                        }
+                        // EMPTY STATE (Only if NOT loading)
+                        else if vm.filteredFriends.isEmpty {
                             if vm.searchText.isEmpty {
-                                Text("No friends yet. Add some!")
-                                    .foregroundStyle(.secondary)
+                                ContentUnavailableView {
+                                    Label("No friends yet", systemImage: "person.2.slash")
+                                } description: {
+                                    Text("Add some friends to start competing!")
+                                }
                             } else {
                                 Text("No friends found for \"\(vm.searchText)\"")
                                     .foregroundStyle(.secondary)
                             }
-                        } else if isInitiallyLoading && vm.friends.isEmpty {
+                        }
+                        // CONTENT STATE
+                        else {
+                            ForEach(vm.filteredFriends, id: \.uid) { profile in
+                                friendRow(profile)
+                            }
+                            .onDelete(perform: deleteFriends)
+                        }
+                        
+                    } else if selectedTab == .requests {
+                        // LOADING STATE
+                        if isInitiallyLoading && vm.requests.isEmpty {
                             HStack {
                                 Spacer()
                                 ProgressView()
                                 Spacer()
                             }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                         }
-                        
-                        ForEach(vm.filteredFriends, id: \.uid) { profile in
-                            friendRow(profile)
-                        }
-                        .onDelete(perform: deleteFriends)
-                        
-                    } else if selectedTab == .requests {
-                        if filteredRequests.isEmpty && !isInitiallyLoading {
+                        // EMPTY STATE
+                        else if filteredRequests.isEmpty {
                             if vm.searchText.isEmpty {
-                                Text("No new friend requests.")
-                                    .foregroundStyle(.secondary)
+                                ContentUnavailableView {
+                                    Label("No requests", systemImage: "envelope.open")
+                                } description: {
+                                    Text("You're all caught up.")
+                                }
                             } else {
                                 Text("No requests found for \"\(vm.searchText)\"")
                                     .foregroundStyle(.secondary)
                             }
-                        } else if isInitiallyLoading && vm.requests.isEmpty {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
                         }
-                        
-                        ForEach(filteredRequests) { req in
-                            requestRow(req)
+                        // CONTENT STATE
+                        else {
+                            ForEach(filteredRequests) { req in
+                                requestRow(req)
+                            }
                         }
                     }
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
+                .background(
+                    Color.accentColor.opacity(0.15)
+                    .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
+                )
+                .refreshable {
+                    await vm.refreshAllData()
+                }
             }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                guard isInitiallyLoading else { return }
-
-                vm.loadMyProfileData()
-                vm.refreshFriends()
-                // ⚠️ FIX: Use the correct function name: refreshIncoming()
-                vm.refreshIncoming()
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    isInitiallyLoading = false
+                Task {
+                    await vm.refreshAllData()
+                    withAnimation {
+                        isInitiallyLoading = false
+                    }
                 }
             }
             .navigationTitle("Friends")
@@ -101,7 +125,7 @@ struct FriendsView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
-                        vm.loadLeaderboard() // Ensure fresh sort based on current data
+                        vm.loadLeaderboard()
                         withAnimation { showLeaderboard.toggle() }
                     } label: {
                         Image(systemName: "trophy")
@@ -195,10 +219,15 @@ struct FriendsView: View {
             Spacer()
             
             if vm.searchText.isEmpty {
-                Button("Accept") { vm.accept(req) }
-                    .buttonStyle(.glassProminent)
-                Button("Decline") { vm.decline(req) }
-                    .buttonStyle(.glass)
+                Button("Accept") {
+                    Task { await vm.accept(req) }
+                }
+                .buttonStyle(.glassProminent)
+                
+                Button("Decline") {
+                    Task { await vm.decline(req) }
+                }
+                .buttonStyle(.glass)
             }
         }
         .padding(.vertical, 8)

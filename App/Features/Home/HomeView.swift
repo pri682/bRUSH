@@ -12,9 +12,7 @@ struct HomeView: View {
     @Namespace private var launchAnimation
     @State private var isShowingSplash = true
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-
-    @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
-    @AppStorage("lastPostDateString") private var lastPostDateString: String = ""
+    
     @State private var hasAttemptedDrawing: Bool = false
     @State private var didDismissCreate = false
     
@@ -55,6 +53,7 @@ struct HomeView: View {
             }
         }
         
+        await viewModel.checkUserPostStatus()
         await viewModel.loadFeed()
         
         await MainActor.run {
@@ -95,7 +94,7 @@ struct HomeView: View {
                                                     item: item,
                                                     prompt: viewModel.dailyPrompt,
                                                     loadID: loadID,
-                                                    hasPostedToday: $hasPostedToday,
+                                                    hasPostedToday: $viewModel.hasPostedToday,
                                                     hasAttemptedDrawing: $hasAttemptedDrawing,
                                                     isPresentingCreate: $isPresentingCreate,
                                                     isGoldDisabled: $dailyGoldAwarded,
@@ -103,7 +102,12 @@ struct HomeView: View {
                                                     isBronzeDisabled: $dailyBronzeAwarded,
                                                     onGoldTapped: { isSelected in dailyGoldAwarded = isSelected },
                                                     onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
-                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected }
+                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected },
+                                                    onRefreshNeeded: {
+                                                        Task {
+                                                            await reloadFeed(showOverlay: true)
+                                                        }
+                                                    }
                                                 )
                                                 .frame(width: cardWidth, height: geometry.size.height - (UIDevice.current.userInterfaceIdiom == .phone ? 90 : 0))
                                                 .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67)
@@ -313,9 +317,7 @@ struct HomeView: View {
                             }
                         }
                         
-                        checkDailyPostStatus()
                         updateNotificationStatus()
-                        
                         isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
                         
                         if hasInitialLoadCompleted && !isRefreshing {
@@ -356,21 +358,19 @@ struct HomeView: View {
                         NavigationStack {
                             DrawingView(onSave: { newItem in
                                 dataModel.addItem(newItem)
-                                hasPostedToday = true
-
-                                let formatter = DateFormatter()
-                                formatter.dateFormat = "yyyy-MM-dd"
-                                formatter.timeZone = TimeZone(identifier: "America/Chicago")
-                                lastPostDateString = formatter.string(from: Date())
+                                viewModel.hasPostedToday = true
                             }, prompt: viewModel.dailyPrompt)
                         }
                     }
                     .onChange(of: didDismissCreate) {
                         if didDismissCreate {
-                            let didSavePost = hasPostedToday
+                            let didSavePost = viewModel.hasPostedToday
+                            
                             if !didSavePost { hasAttemptedDrawing = true }
                             didDismissCreate = false
+                            
                             Task { await reloadFeed(showOverlay: true) }
+                            
                             if didSavePost {
                                 didJustPost = true
                             }
@@ -427,22 +427,6 @@ struct HomeView: View {
         return keyWindow?.safeAreaInsets.top ?? 0
     }
 
-    private func checkDailyPostStatus() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/Chicago")
-        let todayString = formatter.string(from: Date())
-
-        if lastPostDateString != todayString {
-            hasPostedToday = false
-            hasAttemptedDrawing = false
-            
-            dailyGoldAwarded = false
-            dailySilverAwarded = false
-            dailyBronzeAwarded = false
-        }
-    }
-    
     private static func isWinter() -> Bool {
         let month = Calendar.current.component(.month, from: Date())
         return [11, 12, 1, 2].contains(month)
