@@ -88,7 +88,7 @@ struct SignedInProfileView: View {
                             .stretchy()
                             
                         } else {
-                            Image("boko")
+                            Image("profile_loading")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(maxWidth: .infinity)
@@ -139,6 +139,7 @@ struct SignedInProfileView: View {
                                 .foregroundColor(avatarTextColor)
                                 .shadow(color: avatarTextShadowColor, radius: 0, x: 0.9, y: 0.9)
                             
+                            
                             Text("@\(viewModel.profile?.displayName ?? "")")
                                 .font(.system(size: screenWidth * 0.03, weight: .semibold))
                                 .foregroundColor(avatarTextColor.opacity(0.85))
@@ -157,9 +158,9 @@ struct SignedInProfileView: View {
                             CardItem(content: AnyView(
                                 AwardsStackCardView(
                                     cardTypeTitle: "Awards Accumulated",
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? -1,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? -1,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? -1,
+                                    firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? 0,
+                                    secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? 0,
+                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? 0,
                                     medalIconSize: largeMedalSize
                                 )
                             )),
@@ -167,9 +168,9 @@ struct SignedInProfileView: View {
                             CardItem(content: AnyView(
                                 AwardsStackCardView(
                                     cardTypeTitle: "Awarded to Friends",
-                                    firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? -1,
-                                    secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? -1,
-                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? -1,
+                                    firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? 0,
+                                    secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? 0,
+                                    thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? 0,
                                     medalIconSize: largeMedalSize
                                 )
                             )),

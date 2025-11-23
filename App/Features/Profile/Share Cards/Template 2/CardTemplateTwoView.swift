@@ -52,7 +52,7 @@ struct CardTemplateTwoView: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         // top of text color (currently pink)
-                                        colors: [Color(hex: "#FF1493") ?? .pink, Color(hex: "#ffc411") ?? .yellow], // bottom of text color
+                                        colors: [Color(hex: "#FF4500") ?? .pink, Color(hex: "#ffc411") ?? .yellow], // bottom of text color
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )

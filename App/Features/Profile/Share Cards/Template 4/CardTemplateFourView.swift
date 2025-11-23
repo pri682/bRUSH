@@ -61,7 +61,7 @@ struct CardTemplateFourView: View {
                                 .padding(.horizontal, 50)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.top, cardHeight * 0.40) // Lower positioning (was 0.30)
+                        .padding(.top, cardHeight * 0.52) // Moved down by 12% (was 0.40)
                     }
                 }
                 .frame(width: cardWidth, height: cardHeight)
