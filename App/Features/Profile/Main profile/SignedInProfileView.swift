@@ -3,13 +3,10 @@ import SwiftUI
 struct SignedInProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingEditProfile = false
+    @State private var showingShareCard = false
     @State private var lastMedalUpdate: Date? = nil
     @State private var isRefreshingMedals = false
     @State private var lastRefreshAttempt: Date? = nil
-    
-    private var isProfileLoaded: Bool {
-        viewModel.profile != nil
-    }
     
     private func timeDisplayString(from date: Date) -> String {
         let formatter = DateFormatter()
@@ -20,15 +17,12 @@ struct SignedInProfileView: View {
     
     private func needsUpdate(from date: Date) -> Bool {
         let now = Date()
-        let timeInterval = now.timeIntervalSince(date)
-        return timeInterval > 600
+        return now.timeIntervalSince(date) > 600
     }
     
     private func canRefresh() -> Bool {
         guard let lastAttempt = lastRefreshAttempt else { return true }
-        let now = Date()
-        let timeInterval = now.timeIntervalSince(lastAttempt)
-        return timeInterval > 60
+        return Date().timeIntervalSince(lastAttempt) > 60
     }
     
     private func refreshMedalData() {
@@ -57,8 +51,10 @@ struct SignedInProfileView: View {
             
             let largeMedalSize = contentWidth * 0.16
             let cardStackHorizontalPadding = screenWidth * 0.10
+            
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
-
+            
+            // Dynamic color for avatar text
             let (avatarTextColor, avatarTextShadowColor): (Color, Color) = {
                 if let background = viewModel.profile?.avatarBackground {
                     return ProfileElementsColorCalculation.calculateContrastingTextColor(for: background)
@@ -68,10 +64,14 @@ struct SignedInProfileView: View {
             
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
+                    
+                    // MARK: Header
                     ZStack(alignment: .bottomLeading) {
-                        // Avatar/Header Background
+                        
+                        // Avatar Background (stretchy)
                         if let profile = viewModel.profile,
                            let background = profile.avatarBackground {
+                            
                             AvatarView(
                                 avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,
                                 background: background,
@@ -86,8 +86,9 @@ struct SignedInProfileView: View {
                             .frame(height: headerHeight + 40)
                             .clipped()
                             .stretchy()
+                            
                         } else {
-                            Image("boko")
+                            Image("profile_loading")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(maxWidth: .infinity)
@@ -96,20 +97,34 @@ struct SignedInProfileView: View {
                                 .stretchy()
                         }
                         
-                        if isProfileLoaded {
+                        // 📌 BUTTON STACK (Share + Gear)
+                        if viewModel.profile != nil {
                             VStack {
                                 Spacer()
                                 HStack {
                                     Spacer()
-                                    Button {
-                                        showingEditProfile = true
-                                    } label: {
-                                        Image(systemName: "gearshape.fill")
-                                            .font(.system(size: 24, weight: .medium))
-                                            // 💡 FIX: Use dynamic color for the gear icon
-                                            .foregroundColor(avatarTextColor.opacity(0.85))
-                                            // 💡 FIX: Use dynamic shadow color
-                                            .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                    
+                                    VStack(spacing: isIpad ? 30 : 20) {
+                                        
+                                        // Share
+                                        Button {
+                                            showingShareCard = true
+                                        } label: {
+                                            Image(systemName: "square.and.arrow.up.fill")
+                                                .font(.system(size: isIpad ? 34 : 24, weight: .medium))
+                                                .foregroundColor(avatarTextColor.opacity(0.85))
+                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                        }
+                                        
+                                        // Gear
+                                        Button {
+                                            showingEditProfile = true
+                                        } label: {
+                                            Image(systemName: "gearshape.fill")
+                                                .font(.system(size: isIpad ? 34 : 24, weight: .medium))
+                                                .foregroundColor(avatarTextColor.opacity(0.85))
+                                                .shadow(color: avatarTextShadowColor, radius: 0, x: 1, y: 1)
+                                        }
                                     }
                                     .padding(.trailing, standardPadding * 0.75)
                                     .padding(.bottom, screenHeight * 0.02)
@@ -117,14 +132,15 @@ struct SignedInProfileView: View {
                             }
                         }
                         
-                        // Profile Name/Display Name
+                        // Name + Username
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(viewModel.profile?.firstName ?? "Placeholder")
+                            Text(viewModel.profile?.firstName ?? "Loading...")
                                 .font(.system(size: screenWidth * 0.08, weight: .bold))
                                 .foregroundColor(avatarTextColor)
                                 .shadow(color: avatarTextShadowColor, radius: 0, x: 0.9, y: 0.9)
                             
-                            Text("@\(viewModel.profile?.displayName ?? "placeholder")")
+                            
+                            Text("@\(viewModel.profile?.displayName ?? "")")
                                 .font(.system(size: screenWidth * 0.03, weight: .semibold))
                                 .foregroundColor(avatarTextColor.opacity(0.85))
                         }
@@ -132,9 +148,12 @@ struct SignedInProfileView: View {
                         .padding(.bottom, screenHeight * 0.04)
                     }
                     .frame(height: headerHeight)
-                    .padding(.bottom, containerTopSpacing * 0.5)
+                    .padding(.bottom, containerTopSpacing)
                     
+                    
+                    // MARK: Cards
                     VStack(spacing: screenHeight * 0.03) {
+                        
                         CardStackView(cards: [
                             CardItem(content: AnyView(
                                 AwardsStackCardView(
@@ -142,20 +161,20 @@ struct SignedInProfileView: View {
                                     firstPlaceCount: viewModel.profile?.goldMedalsAccumulated ?? 0,
                                     secondPlaceCount: viewModel.profile?.silverMedalsAccumulated ?? 0,
                                     thirdPlaceCount: viewModel.profile?.bronzeMedalsAccumulated ?? 0,
-                                    medalIconSize: largeMedalSize,
-                                    isCurrentUser: true
+                                    medalIconSize: largeMedalSize
                                 )
                             )),
+                            
                             CardItem(content: AnyView(
                                 AwardsStackCardView(
                                     cardTypeTitle: "Awarded to Friends",
                                     firstPlaceCount: viewModel.profile?.goldMedalsAwarded ?? 0,
                                     secondPlaceCount: viewModel.profile?.silverMedalsAwarded ?? 0,
                                     thirdPlaceCount: viewModel.profile?.bronzeMedalsAwarded ?? 0,
-                                    medalIconSize: largeMedalSize,
-                                    isCurrentUser: true
+                                    medalIconSize: largeMedalSize
                                 )
                             )),
+                            
                             CardItem(content: AnyView(
                                 StreakCardView(
                                     streakCount: viewModel.profile?.streakCount ?? 0,
@@ -169,53 +188,50 @@ struct SignedInProfileView: View {
                         .padding(.horizontal, cardStackHorizontalPadding)
                         .padding(.top, isIpad ? 60 : 40)
                         .scaleEffect(isIpad ? 1.12 : 1.05)
-                        .animation(.easeInOut(duration: 0.4), value: isIpad)
                         
+                        
+                        // MARK: Refresh Button (iPad-aware)
                         HStack {
                             Spacer()
                             Button {
                                 refreshMedalData()
                             } label: {
                                 HStack(spacing: 4) {
+                                    
                                     if isRefreshingMedals {
                                         ProgressView()
-                                            .scaleEffect(0.7)
+                                            .scaleEffect(isIpad ? 1.0 : 0.7)
                                     } else {
                                         Image(systemName: "arrow.clockwise")
                                             .font(isIpad ? .system(size: 26) : .caption)
                                             .padding(.top, isIpad ? 200 : 8)
                                     }
                                     
-                                    if let lastUpdate = lastMedalUpdate {
-                                        if needsUpdate(from: lastUpdate) {
-                                            if canRefresh() {
-                                                Text("Last Updated \(timeDisplayString(from: lastUpdate)), Update now?")
-                                                    .font(isIpad ? .system(size: 26) : .caption)
-                                                    .padding(.top, isIpad ? 200 : 8)
+                                    // Text
+                                    Group {
+                                        if let lastUpdate = lastMedalUpdate {
+                                            if needsUpdate(from: lastUpdate) {
+                                                if canRefresh() {
+                                                    Text("Last Updated \(timeDisplayString(from: lastUpdate)), Update now?")
+                                                } else {
+                                                    Text("Last Updated \(timeDisplayString(from: lastUpdate)), Please wait...")
+                                                }
                                             } else {
-                                                Text("Last Updated \(timeDisplayString(from: lastUpdate)), Please wait...")
-                                                    .font(isIpad ? .system(size: 26) : .caption)
-                                                    .padding(.top, isIpad ? 200 : 8)
+                                                Text("Last Updated \(timeDisplayString(from: lastUpdate))")
                                             }
                                         } else {
-                                            Text("Last Updated \(timeDisplayString(from: lastUpdate))")
-                                                .font(isIpad ? .system(size: 26) : .caption)
-                                                .padding(.top, isIpad ? 200 : 8)
-                                        }
-                                    } else {
-                                        if canRefresh() {
-                                            Text("Update medal counts now?")
-                                                .font(isIpad ? .system(size: 26) : .caption)
-                                                .padding(.top, isIpad ? 200 : 8)
-                                        } else {
-                                            Text("Please wait before updating again...")
-                                                .font(isIpad ? .system(size: 26) : .caption)
-                                                .padding(.top, isIpad ? 200 : 8)
+                                            if canRefresh() {
+                                                Text("Update medal counts now?")
+                                            } else {
+                                                Text("Please wait before updating again...")
+                                            }
                                         }
                                     }
+                                    .font(isIpad ? .system(size: 26) : .caption)
+                                    .padding(.top, isIpad ? 200 : 8)
+                                    
                                 }
-                                .font(.caption)
-                                .foregroundColor(canRefresh() ? .accentColor : .gray)
+                                .foregroundColor(canRefresh() ? .accent : .gray)
                             }
                             .disabled(isRefreshingMedals || !canRefresh())
                             Spacer()
@@ -224,27 +240,30 @@ struct SignedInProfileView: View {
                         
                         Spacer(minLength: 100)
                     }
-                    .padding(.top, isIpad ? -60 : 8)
-                    .padding(.bottom, 20)
-                    .background(
-                        Color.accentColor.opacity(0.15)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                    )
+                    .padding(.bottom, screenHeight * 0.03)
                 }
                 .frame(maxWidth: .infinity)
-                .redacted(reason: isProfileLoaded ? [] : .placeholder)
-                .disabled(!isProfileLoaded)
             }
             .navigationBarHidden(true)
             .edgesIgnoringSafeArea(.top)
+            
+            // Edit Profile
             .sheet(isPresented: $showingEditProfile) {
                 if let _ = viewModel.profile {
                     EditProfileView(userProfile: $viewModel.profile, profileViewModel: viewModel)
                 }
             }
+            
+            // Share Card
+            .sheet(isPresented: $showingShareCard) {
+                if let profile = viewModel.profile {
+                    ShareCardGeneratorView(userProfile: profile)
+                }
+            }
         }
     }
 }
+
 
 extension View {
     func stretchy() -> some View {

@@ -8,7 +8,6 @@ struct EditProfileView: View {
     @State private var selectedTab = 0
     @State private var showingDeleteConfirmation = false
     
-    // State to control the iPad modal sheet
     @State private var showingAvatarEditor = false
     
     @State private var currentAvatarParts: AvatarParts?
@@ -21,7 +20,6 @@ struct EditProfileView: View {
             wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!)
         )
         
-        // Store original avatar state for cancel functionality
         if let profile = userProfile.wrappedValue {
             let avatarType = AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal
             _originalAvatarParts = State(initialValue: AvatarParts(
@@ -38,12 +36,10 @@ struct EditProfileView: View {
     }
 
     var body: some View {
-        // Check for device type
         let isIpad = UIDevice.current.userInterfaceIdiom == .pad
         
         NavigationView {
             VStack(spacing: 0) {
-                // Custom Tab Bar
                 HStack(spacing: 0) {
                     ForEach(0..<2) { index in
                         Button {
@@ -66,15 +62,11 @@ struct EditProfileView: View {
                 }
                 .background(Color(.systemGray6))
                 
-                // Tab Content
                 TabView(selection: $selectedTab) {
-                    // Profile Information Tab
                     VStack(alignment: .leading, spacing: 0) {
-                        // First Name
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
                                 .font(.headline)
-                            // Using the InputField from your original file
                              InputField(
                                  placeholder: "Enter your first name (max 10 chars)",
                                  text: $viewModel.firstName,
@@ -96,7 +88,6 @@ struct EditProfileView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        // Username
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Username")
                                 .font(.headline)
@@ -126,7 +117,6 @@ struct EditProfileView: View {
                         .padding(.horizontal)
                         .padding(.top, 16)
                         
-                        // Account Actions Section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Account Actions")
                                 .font(.system(size: 16, weight: .medium))
@@ -134,7 +124,6 @@ struct EditProfileView: View {
                                 .padding(.horizontal)
                             
                             VStack(spacing: 0) {
-                                // Sign Out Button
                                 Button(action: { profileViewModel.signOut() }) {
                                     HStack {
                                         Text("Sign Out")
@@ -153,7 +142,6 @@ struct EditProfileView: View {
                                 Divider()
                                     .padding(.horizontal, 16)
                                 
-                                // Delete Profile Button
                                 Button {
                                     showingDeleteConfirmation = true
                                 } label: {
@@ -193,10 +181,7 @@ struct EditProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .tag(0)
                     
-                    // **CRITICAL FIX: Conditional Avatar Tab**
                     if isIpad {
-                        // --- iPad LAYOUT ---
-                        // Shows a button that presents a full-screen modal
                         VStack(spacing: 24) {
                             Spacer()
                             AvatarView(
@@ -230,27 +215,23 @@ struct EditProfileView: View {
                         .tag(1)
                         
                     } else {
-                        // --- iPhone LAYOUT ---
-                        // Shows the editor inline, as you preferred
                         EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
                             currentAvatarParts = avatarParts
-                        }, isPresentedModally: false) // Pass modal flag
+                        }, isPresentedModally: false)
                         .tag(1)
                     }
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
-            // This modifier presents the full-screen cover *only* on iPad
             .fullScreenCover(isPresented: $showingAvatarEditor) {
                 EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
                     currentAvatarParts = avatarParts
-                }, isPresentedModally: true) // Pass modal flag
+                }, isPresentedModally: true)
             }
             .navigationTitle("Edit Profile")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) {
-                        // Revert avatar changes to original state
                         if let original = originalAvatarParts, var profile = userProfile {
                             profile.avatarType = original.avatarType.rawValue
                             profile.avatarBackground = original.background
@@ -263,7 +244,6 @@ struct EditProfileView: View {
                             userProfile = profile
                         }
                         
-                        // Revert profile information changes to original state
                         if let originalProfile = profileViewModel.profile {
                             viewModel.firstName = originalProfile.firstName
                             viewModel.displayName = originalProfile.displayName
@@ -277,13 +257,11 @@ struct EditProfileView: View {
                         Task {
                             var success = true
                             
-                            // Always save profile information if there are changes
                             if let originalProfile = userProfile,
                                (viewModel.firstName != originalProfile.firstName ||
                                 viewModel.displayName != originalProfile.displayName) {
                                 success = await viewModel.saveChanges()
                                 if success {
-                                    // Push changes back into parent binding
                                     if var updated = userProfile {
                                         updated.firstName = viewModel.firstName
                                         updated.displayName = viewModel.displayName
@@ -292,7 +270,7 @@ struct EditProfileView: View {
                                 }
                             }
                             
-                            // Always save avatar changes regardless of current tab
+                            // THIS CALLS THE VIEWMODEL FUNCTION BELOW
                             if let profile = userProfile {
                                 let avatarParts = AvatarParts(
                                     avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,
