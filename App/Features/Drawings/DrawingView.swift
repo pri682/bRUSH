@@ -425,7 +425,7 @@ struct DrawingView: View {
         saveDrawingLocallyAndUpload()
 
         streakManager.markCompletedToday()
-        NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+        NotificationManager.shared.markTodayCompleted()
 
         withAnimation(.spring()) {
             showSubmittedPopup = true
