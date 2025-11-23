@@ -42,6 +42,12 @@ struct ShareCardGeneratorView: View {
                 Color(hex: "#A63446") ?? .red,
                 Color(hex: "#C85A54") ?? .orange
             ]
+        case 4: // Custom Drawing - Purple/Lavender theme
+            return [
+                Color(hex: "#B794F6") ?? .purple,
+                Color(hex: "#E9D5FF") ?? .purple,
+                Color(hex: "#DDD6FE") ?? .purple
+            ]
         default:
             return [.orange, .yellow, .red]
         }

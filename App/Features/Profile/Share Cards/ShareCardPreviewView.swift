@@ -18,6 +18,15 @@ struct ShareCardPreviewView: View {
     @State private var isSharing = false
     @State private var cardImage: UIImage? = nil
     
+    // Template 5 - Custom drawing state
+    @State private var selectedDrawing: Item? = nil
+    @State private var showDrawingPicker = false
+    @State private var showTemplate5Edit = false
+    @State private var showUsername = true
+    @State private var showPrompt = true
+    
+    @EnvironmentObject var dataModel: DataModel
+    
     var body: some View {
         GeometryReader { geometry in
             let height = geometry.size.height
@@ -50,6 +59,18 @@ struct ShareCardPreviewView: View {
                         
                     CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
                         .tag(3)
+                    
+                    CardTemplateFiveView(
+                        customization: customizationBinding,
+                        selectedDrawing: $selectedDrawing,
+                        showUsername: showUsername,
+                        showPrompt: showPrompt,
+                        userProfile: userProfile,
+                        onTapAddDrawing: {
+                            showDrawingPicker = true
+                        }
+                    )
+                        .tag(4)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never)) // Hide default dots
                 .padding(.bottom, height * 0.20) // Move cards up to prevent overlap
@@ -61,7 +82,7 @@ struct ShareCardPreviewView: View {
                         
                         // Custom Dots - Smooth stretch animation from circle to line
                         HStack(spacing: 8) {
-                            ForEach(0..<4) { index in
+                            ForEach(0..<5) { index in
                                 Capsule()
                                     .fill(Color.white.opacity(currentPage == index ? 1.0 : 0.4))
                                     .frame(
@@ -73,26 +94,63 @@ struct ShareCardPreviewView: View {
                         }
                         .padding(.bottom, 24)
                         
-                        // Redesigned Share Button with glassEffect
-                        Button(action: {
-                            captureCardAndShare()
-                        }) {
-                            HStack(spacing: 10) {
-                                // Rounded share arrow on the LEFT
-                                Image(systemName: "arrowshape.turn.up.right.fill")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                
-                                Text("Share")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.white)
+                        // Share Button(s) - Split into two when on Template 5
+                        if currentPage == 4 {
+                            GlassEffectContainer(spacing: 12.0) {
+                                HStack(spacing: 12) {
+                                    // Share Button
+                                    Button(action: {
+                                        captureCardAndShare()
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "arrowshape.turn.up.right.fill")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.white)
+                                            Text("Share")
+                                                .font(.system(size: 18, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding(.horizontal, 30)
+                                        .padding(.vertical, 16)
+                                        .glassEffect(.regular.tint(buttonTintColor(for: currentPage)).interactive(), in: RoundedRectangle(cornerRadius: 30))
+                                        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                                    }
+                                    
+                                    // Edit Button for Template 5 - Icon only
+                                    Button(action: {
+                                        showTemplate5Edit = true
+                                    }) {
+                                        Image(systemName: "pencil")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .frame(width: 50, height: 50)
+                                            .glassEffect(.regular.tint(buttonTintColor(for: currentPage)).interactive(), in: Circle())
+                                            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                                    }
+                                }
                             }
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 16)
-                            .glassEffect(.regular.tint(buttonTintColor(for: currentPage)).interactive(), in: RoundedRectangle(cornerRadius: 30))
-                            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                            .padding(.bottom, height * 0.06)
+                        } else {
+                            // Single Share Button for Templates 1-4
+                            Button(action: {
+                                captureCardAndShare()
+                            }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "arrowshape.turn.up.right.fill")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    Text("Share")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 16)
+                                .glassEffect(.regular.tint(buttonTintColor(for: currentPage)).interactive(), in: RoundedRectangle(cornerRadius: 30))
+                                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                            }
+                            .padding(.bottom, height * 0.06)
                         }
-                        .padding(.bottom, height * 0.06)
                     }
                 }
             }
@@ -103,6 +161,21 @@ struct ShareCardPreviewView: View {
                 ShareSheet(activityItems: [itemSource])
                     .presentationDetents([.medium, .large])
             }
+        }
+        .sheet(isPresented: $showDrawingPicker) {
+            DrawingPickerView(
+                selectedDrawing: $selectedDrawing,
+                isPresented: $showDrawingPicker
+            )
+            .environmentObject(dataModel)
+        }
+        .sheet(isPresented: $showTemplate5Edit) {
+            TemplateFiveEditSheet(
+                showUsername: $showUsername,
+                showPrompt: $showPrompt,
+                showDrawingPicker: $showDrawingPicker,
+                isPresented: $showTemplate5Edit
+            )
         }
     }
     
@@ -119,6 +192,8 @@ struct ShareCardPreviewView: View {
             return Color(hex: "#4A90A4") ?? .blue
         case 3: // Member Since - Maroon/Red
             return Color(hex: "#A63446") ?? .red
+        case 4: // Custom Drawing - Purple
+            return Color(hex: "#A78BFA") ?? .purple
         default:
             return .orange
         }
@@ -145,6 +220,8 @@ struct ShareCardPreviewView: View {
             cardView = AnyView(CardTemplateThreeView(customization: .constant(customization), userProfile: userProfile))
         case 3:
             cardView = AnyView(CardTemplateFourView(customization: .constant(customization), userProfile: userProfile))
+        case 4:
+            cardView = AnyView(CardTemplateFiveView(customization: .constant(customization), selectedDrawing: .constant(selectedDrawing), showUsername: showUsername, showPrompt: showPrompt, userProfile: userProfile, onTapAddDrawing: {}))
         default:
             cardView = AnyView(CardTemplateOneView(customization: .constant(customization), userProfile: userProfile))
         }
