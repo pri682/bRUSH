@@ -4,24 +4,27 @@ import UIKit
 
 class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
+    
     private override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
     }
     
-    // Ask user for notification permission
+    // MARK: - Permission
     func requestPermission() {
-        UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-                if let error = error {
-                    print("⚠️ Notification permission error: \(error)")
-                } else {
-                    print(granted ? "✅ Notifications granted" : "❌ Notifications denied")
-                }
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: [.alert, .sound, .badge]
+        ) { granted, error in
+            if let error = error {
+                print("⚠️ Notification permission error: \(error)")
+            } else {
+                print(granted ? "✅ Notifications granted" : "❌ Notifications denied")
             }
+        }
     }
     
-    // Save a notification into history (UserDefaults)
+    
+    // MARK: - History
     private func saveNotificationToHistory(title: String, body: String) {
         var history = UserDefaults.standard.array(forKey: "notificationsHistory") as? [[String: String]] ?? []
         
@@ -34,80 +37,88 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UserDefaults.standard.set(history, forKey: "notificationsHistory")
     }
     
-    // Public getter for history
     func getNotificationHistory() -> [[String: String]] {
         return UserDefaults.standard.array(forKey: "notificationsHistory") as? [[String: String]] ?? []
     }
     
-    // Schedule reminders every 2 hours until deadline
-    func scheduleDailyReminders(hour: Int = 20, minute: Int = 0) {
-        let center = UNUserNotificationCenter.current()
-        clearReminders() // Remove old ones first
-        
-        var startComponents = DateComponents()
-        startComponents.hour = hour
-        startComponents.minute = minute
-        
-        guard let startDate = Calendar.current.date(from: startComponents) else { return }
-        
-        for i in 0..<12 {
-            if let notifyDate = Calendar.current.date(byAdding: .hour, value: i * 2, to: startDate) {
-                let comps = Calendar.current.dateComponents([.hour, .minute], from: notifyDate)
-                
-                let content = UNMutableNotificationContent()
-                let formattedTime = DateFormatter.localizedString(from: notifyDate, dateStyle: .none, timeStyle: .short)
-                content.title = "🖌️ Reminder #\(i + 1)"
-                content.body = "It’s now \(formattedTime). Don’t forget to finish today’s bRUSH!"
-                content.sound = .default
-                content.badge = NSNumber(value: i + 1)
-                
-                let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-                let request = UNNotificationRequest(
-                    identifier: "DailyBrush\(i)",
-                    content: content,
-                    trigger: trigger
-                )
-                center.add(request)
-            }
+    
+    // MARK: - Reminder Logic (BEST FIX)
+    
+    /// Schedule the *next* reminder only
+    func scheduleNextReminder() {
+        // If already completed today → do not schedule anything
+        if UserDefaults.standard.bool(forKey: "hasBrushedToday") {
+            clearReminders()
+            return
         }
+        
+        clearReminders() // Only 1 reminder at a time
+        
+        let content = UNMutableNotificationContent()
+        content.title = "🖌️ Daily Brush Reminder"
+        content.body = "Don't forget to complete today's bRUSH!"
+        content.sound = .default
+        
+        // Next reminder = now + 2 hours
+        let nextDate = Date().addingTimeInterval(30)
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: nextDate)
+        
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        
+        let request = UNNotificationRequest(
+            identifier: "NextBrushReminder",
+            content: content,
+            trigger: trigger
+        )
+        
+        UNUserNotificationCenter.current().add(request)
+        print("⏰ Scheduled next reminder at \(comps.hour!):\(String(format: "%02d", comps.minute!))")
     }
     
-    // Clear all reminders
+    
+    /// Call this when the user completes their drawing
+    func markTodayCompleted() {
+        UserDefaults.standard.set(true, forKey: "hasBrushedToday")
+        clearReminders()
+        clearBadge()
+        print("🎨 Today’s brush marked complete. All reminders cancelled.")
+    }
+    
+    /// Call this at midnight to reset streak & start new day
+    func resetForNewDay() {
+        UserDefaults.standard.set(false, forKey: "hasBrushedToday")
+        scheduleNextReminder()
+    }
+    
+    
+    // MARK: - Clearing
+    
     func clearReminders() {
-        let identifiers = (0..<12).map { "DailyBrush\($0)" }
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["NextBrushReminder"])
     }
-    
-    // Reset Daily Brush Cycle
-    func resetDailyReminders(hour: Int = 20, minute: Int = 0) {
-        clearReminders()
-        if let newDeadline = Calendar.current.date(
-            bySettingHour: hour,
-            minute: minute,
-            second: 0,
-            of: Date().addingTimeInterval(86400)
-        ) {
-            UserDefaults.standard.set(newDeadline, forKey: "doodleDeadline")
-        }
-        scheduleDailyReminders(hour: hour, minute: minute)
-    }
-    
-    // Clear app badge
+
     func clearBadge() {
-        UNUserNotificationCenter.current().setBadgeCount(0) { error in
-            if let error = error {
-                print("⚠️ Failed to clear badge: \(error)")
-            }
-        }
-        clearReminders()
+        UNUserNotificationCenter.current().setBadgeCount(0)
     }
     
-    // MARK: - UNUserNotificationCenterDelegate
+    
+    // MARK: - Delegate
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        
+        // If already done → suppress notification
+        if UserDefaults.standard.bool(forKey: "hasBrushedToday") {
+            completionHandler([])
+            return
+        }
+        
         let content = notification.request.content
         saveNotificationToHistory(title: content.title, body: content.body)
-        completionHandler([.banner, .sound, .badge])
+        
+        // Schedule next reminder when this fires
+        scheduleNextReminder()
+        
+        completionHandler([.banner, .sound])
     }
 }
