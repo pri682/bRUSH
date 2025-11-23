@@ -45,12 +45,12 @@ struct CardTemplateFourView: View {
                                 .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
                                 .offset(x: 30, y: 20) // More to the right and down
                             
-                            // Large year text with gold gradient for contrast
+                            // Large year text with green gradient
                             Text(memberYear)
                                 .font(.system(size: 120, weight: .black, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color(hex: "#FFD700") ?? .yellow, Color(hex: "#FFA500") ?? .orange],
+                                        colors: [Color(hex: "#90EE90") ?? .green, Color(hex: "#F5F5F0") ?? .white],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
@@ -58,6 +58,7 @@ struct CardTemplateFourView: View {
                                 .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
                                 .minimumScaleFactor(0.5)
                                 .lineLimit(1)
+                                .padding(.horizontal, 50)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, cardHeight * 0.40) // Lower positioning (was 0.30)

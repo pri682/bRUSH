@@ -50,7 +50,7 @@ struct ShareCardGeneratorView: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             // MARK: - Animated Background Gradient
-            AnimatedGradientBackground(colors: gradientColors(for: selectedTemplateIndex))
+            AnimatedGradientBackground(colors: gradientColors(for: selectedTemplateIndex), templateIndex: selectedTemplateIndex)
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 0.8), value: selectedTemplateIndex)
             
@@ -80,7 +80,9 @@ struct ShareCardGeneratorView: View {
 // MARK: - Animated Gradient Background
 struct AnimatedGradientBackground: View {
     let colors: [Color]
+    let templateIndex: Int
     @State private var animateGradient = false
+    @State private var isAnimating = false
     
     var body: some View {
         LinearGradient(
@@ -89,9 +91,25 @@ struct AnimatedGradientBackground: View {
             endPoint: animateGradient ? .bottomTrailing : .topTrailing
         )
         .onAppear {
-            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
-                animateGradient.toggle()
+            startAnimation()
+        }
+        .onChange(of: templateIndex) { _ in
+            // Stop animation when template changes
+            isAnimating = false
+            animateGradient = false
+            
+            // Restart animation after 1 second delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                startAnimation()
             }
+        }
+    }
+    
+    private func startAnimation() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+            animateGradient.toggle()
         }
     }
 }
