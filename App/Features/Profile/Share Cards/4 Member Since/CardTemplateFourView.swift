@@ -22,6 +22,10 @@ struct CardTemplateFourView: View {
                     if let profile = userProfile {
                         let memberYear = UserService.formatMemberSinceDate(profile.memberSince).year
                         
+                        let outlineThickness = cardWidth * 0.0035
+                        let diagonalOffset = outlineThickness / 1.4142
+                        let yearFontSize = cardHeight * 0.2
+                        
                         VStack(spacing: 0) {
                             Text("Member Since")
                                 .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
@@ -29,22 +33,40 @@ struct CardTemplateFourView: View {
                                 .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                             
-                            Text(memberYear)
-                                .font(.system(size: cardHeight * 0.2, weight: .black, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(hex: "#90EE90") ?? .green,
-                                            Color(hex: "#F5F5F0") ?? .white
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            ZStack {
+                                Group {
+                                    Text(memberYear).offset(x: outlineThickness, y: 0)
+                                    Text(memberYear).offset(x: -outlineThickness, y: 0)
+                                    Text(memberYear).offset(x: 0, y: outlineThickness)
+                                    Text(memberYear).offset(x: 0, y: -outlineThickness)
+                                    
+                                    Text(memberYear).offset(x: diagonalOffset, y: diagonalOffset)
+                                    Text(memberYear).offset(x: -diagonalOffset, y: -diagonalOffset)
+                                    Text(memberYear).offset(x: diagonalOffset, y: -diagonalOffset)
+                                    Text(memberYear).offset(x: -diagonalOffset, y: diagonalOffset)
+                                }
+                                .font(.system(size: yearFontSize, weight: .black, design: .rounded))
+                                .foregroundColor(.black)
+                                
+                                Text(memberYear)
+                                    .font(.system(size: yearFontSize, weight: .black, design: .rounded))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color(hex: "#A9D91D") ?? .green,
+                                                Color(hex: "#F4EDC7") ?? .white
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                                .minimumScaleFactor(0.5)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                
+                            }
+                            .drawingGroup()
+                            .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                            .minimumScaleFactor(0.5)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                         }
                         .padding(.horizontal, cardWidth * 0.07)
                         .padding(.bottom, cardHeight * 0.04)

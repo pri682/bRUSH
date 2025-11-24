@@ -9,6 +9,10 @@ struct CardTemplateTwoView: View {
             let cardWidth = geo.size.width
             let cardHeight = geo.size.height
             
+            let shadowColor = Color(hex: "#3F2D5B") ?? .purple
+            
+            let horizontalPadding = cardWidth * 0.075
+            
             ZStack {
                 Color.clear
                 
@@ -21,6 +25,46 @@ struct CardTemplateTwoView: View {
                         .clipped()
                     
                     if let profile = userProfile {
+                        
+                        let totalMedals =
+                            profile.goldMedalsAccumulated +
+                            profile.silverMedalsAccumulated +
+                            profile.bronzeMedalsAccumulated
+                        
+                        let isOver100M = totalMedals > 99_999_999
+                        let isAbbreviated = totalMedals > 99_999
+                        
+                        let mainText: String = {
+                            if isOver100M { return "100M" }
+                            if isAbbreviated {
+                                return totalMedals.formatted(.number.notation(.compactName))
+                            }
+                            return "\(totalMedals)"
+                        }()
+                        
+                        let countFontSize = cardHeight * 0.20
+                        
+                        VStack(spacing: 0) {
+                            Spacer()
+                                .frame(height: cardHeight * 0.40)
+                            
+                            VStack(spacing: -5) {
+                                Text(mainText)
+                                    .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                    .foregroundColor(shadowColor)
+                                    .offset(x: cardWidth * 0.018, y: cardHeight * 0.010)
+                                    .minimumScaleFactor(0.3)
+                                    .lineLimit(1)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, horizontalPadding)
+                            }
+                            .frame(width: cardWidth * 0.75)
+                            
+                            Spacer()
+                        }
+                        .frame(width: cardWidth, height: cardHeight, alignment: .top)
+                        
                         VStack(spacing: 0) {
                             
                             Spacer()
@@ -28,72 +72,113 @@ struct CardTemplateTwoView: View {
                             
                             VStack(spacing: -5) {
                                 
-                                let totalMedals =
-                                    profile.goldMedalsAccumulated +
-                                    profile.silverMedalsAccumulated +
-                                    profile.bronzeMedalsAccumulated
+                                let outlineThickness = cardWidth * 0.0035
+                                let diagonalOffset = outlineThickness / 1.4142
                                 
-                                let isOver100M = totalMedals > 99_999_999
-                                let isAbbreviated = totalMedals > 99_999
-                                
-                                let mainText: String = {
-                                    if isOver100M { return "100M" }
-                                    if isAbbreviated {
-                                        return totalMedals.formatted(.number.notation(.compactName))
+                                ZStack {
+                                    Group {
+                                        Text(mainText).offset(x: outlineThickness, y: 0)
+                                        Text(mainText).offset(x: -outlineThickness, y: 0)
+                                        Text(mainText).offset(x: 0, y: outlineThickness)
+                                        Text(mainText).offset(x: 0, y: -outlineThickness)
+                                        
+                                        Text(mainText).offset(x: diagonalOffset, y: diagonalOffset)
+                                        Text(mainText).offset(x: -diagonalOffset, y: -diagonalOffset)
+                                        Text(mainText).offset(x: diagonalOffset, y: -diagonalOffset)
+                                        Text(mainText).offset(x: -diagonalOffset, y: diagonalOffset)
                                     }
-                                    return "\(totalMedals)"
-                                }()
-                                
-                                Text(mainText)
-                                    .font(.system(size: 96, weight: .black, design: .rounded))
-                                    .foregroundStyle(
-                                        LinearGradient(
-                                            colors: [
-                                                Color(hex: "#FF4500") ?? .pink,
-                                                Color(hex: "#ffc411") ?? .yellow
-                                            ],
-                                            startPoint: .top,
-                                            endPoint: .bottom
+                                    .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                    .foregroundColor(.black)
+                                    .drawingGroup()
+                                    
+                                    Text(mainText)
+                                        .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [
+                                                    .red,
+                                                    .blue,
+                                                    .yellow
+                                                ],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
                                         )
-                                    )
-                                    .shadow(
-                                        color: Color(hex: "#FF1493")?.opacity(0.8)
-                                            ?? .pink.opacity(0.8),
-                                        radius: 20, x: 0, y: 0
-                                    )
-                                    .minimumScaleFactor(0.3)
-                                    .lineLimit(1)
-                                    .multilineTextAlignment(.center)
+                                }
+                                .minimumScaleFactor(0.3)
+                                .lineLimit(1)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, horizontalPadding)
                                 
-                                let subText: String = {
-                                    if isOver100M { return "OVER 100 MILLION!" }
-                                    if isAbbreviated {
-                                        return "\(totalMedals.formatted()) Medals Earned"
-                                    }
-                                    return "Medals Earned"
-                                }()
-                                
-                                Text(subText)
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .shadow(
-                                        color: .black.opacity(0.5),
-                                        radius: 2, x: 0, y: 1
-                                    )
-                                    .padding(.top, 5)
-                                    .multilineTextAlignment(.center)
+                                if isOver100M {
+                                    Text("OVER")
+                                        .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .padding(.top, 5)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.horizontal, horizontalPadding)
+                                        .minimumScaleFactor(0.5)
+                                        .lineLimit(1)
+                                    
+                                    Text("100 MILLION!")
+                                        .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .padding(.top, 10)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.horizontal, horizontalPadding)
+                                        .minimumScaleFactor(0.5)
+                                        .lineLimit(1)
+                                        
+                                } else if isAbbreviated {
+                                    Text(totalMedals.formatted())
+                                        .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .padding(.top, 5)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.horizontal, horizontalPadding)
+                                        .minimumScaleFactor(0.5)
+                                        .lineLimit(1)
+                                    
+                                    Text("Medals Earned")
+                                        .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .padding(.top, 10)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.horizontal, horizontalPadding)
+                                        .minimumScaleFactor(0.5)
+                                        .lineLimit(1)
+                                } else {
+                                    Text("Medals Earned")
+                                        .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .padding(.top, 5)
+                                        .multilineTextAlignment(.center)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.horizontal, horizontalPadding)
+                                        .minimumScaleFactor(0.5)
+                                        .lineLimit(1)
+                                }
                                 
                                 Text("@\(profile.displayName)")
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .font(.system(size: cardHeight * 0.03, weight: .semibold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.8))
-                                    .shadow(
-                                        color: .black.opacity(0.5),
-                                        radius: 2, x: 0, y: 1
-                                    )
+                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                     .padding(.top, 10)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, horizontalPadding)
                                 
                             }
-                            .frame(width: cardWidth * 0.60)
+                            .frame(width: cardWidth * 0.75)
                             
                             Spacer()
                         }
@@ -107,8 +192,7 @@ struct CardTemplateTwoView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: cardWidth * 0.18)
-                                .shadow(color: .black.opacity(0.4),
-                                        radius: 4, x: 0, y: 2)
+                                .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
                                 .padding(.top, cardHeight * 0.03)
                                 .padding(.trailing, cardWidth * 0.04)
                         }

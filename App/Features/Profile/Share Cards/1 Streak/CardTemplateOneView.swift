@@ -9,6 +9,10 @@ struct CardTemplateOneView: View {
             let cardWidth = geo.size.width
             let cardHeight = geo.size.height
             
+            let countFontSize = cardHeight * 0.19
+            let titleFontSize = cardHeight * 0.04
+            let usernameFontSize = cardHeight * 0.028
+            
             ZStack {
                 Color.clear
                 
@@ -20,32 +24,55 @@ struct CardTemplateOneView: View {
                         .clipped()
                     
                     if let profile = userProfile {
+                        
+                        let outlineThickness = cardWidth * 0.0035
+                        let diagonalOffset = outlineThickness / 1.4142
+                        
                         VStack(spacing: -5) {
-                            Text("\(profile.streakCount)")
-                                .font(.system(size: 96, weight: .black, design: .rounded))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Color(hex: "#FFD700") ?? .yellow,
-                                                 Color(hex: "#FF4500") ?? .orange],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            
+                            ZStack {
+                                Group {
+                                    Text("\(profile.streakCount)").offset(x: outlineThickness, y: 0)
+                                    Text("\(profile.streakCount)").offset(x: -outlineThickness, y: 0)
+                                    Text("\(profile.streakCount)").offset(x: 0, y: outlineThickness)
+                                    Text("\(profile.streakCount)").offset(x: 0, y: -outlineThickness)
+                                    
+                                    Text("\(profile.streakCount)").offset(x: diagonalOffset, y: diagonalOffset)
+                                    Text("\(profile.streakCount)").offset(x: -diagonalOffset, y: -diagonalOffset)
+                                    Text("\(profile.streakCount)").offset(x: diagonalOffset, y: -diagonalOffset)
+                                    Text("\(profile.streakCount)").offset(x: -diagonalOffset, y: diagonalOffset)
+                                }
+                                .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                .foregroundColor(.black)
+                                
+                                Text("\(profile.streakCount)")
+                                    .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [Color(hex: "#FFD700") ?? .yellow,
+                                                     Color(hex: "#FF4500") ?? .orange],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                                .shadow(color: Color(hex: "#FF4500")?.opacity(0.5)
-                                            ?? .orange.opacity(0.5),
-                                        radius: 10, x: 0, y: 5)
-                                .minimumScaleFactor(0.3)
-                                .lineLimit(1)
-                                .padding(.horizontal, 50)
+                                
+                            }
+                            .drawingGroup()
+                            .shadow(color: Color(hex: "#FF4500")?.opacity(0.5)
+                                    ?? .orange.opacity(0.5),
+                                    radius: 10, x: 0, y: 5)
+                            .minimumScaleFactor(0.3)
+                            .lineLimit(1)
+                            .padding(.horizontal, 50)
                             
                             Text("Current Streak")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .font(.system(size: titleFontSize, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.9))
                                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                                 .padding(.top, 5)
-
+                            
                             Text("@\(profile.displayName)")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.system(size: usernameFontSize, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.8))
                                 .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                 .padding(.top, 10)
