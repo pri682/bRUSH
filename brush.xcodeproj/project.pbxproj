@@ -59,7 +59,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitignore,
-				"Features/Profile/Share Cards/CardTemplateOneView.swift",
 			);
 			target = 1033B8D72E863B8800111590 /* brush */;
 		};
