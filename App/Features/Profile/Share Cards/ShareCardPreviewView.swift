@@ -245,17 +245,45 @@ struct ShareCardPreviewView: View {
         default:
             cardView = AnyView(CardTemplateOneView(customization: .constant(customization), userProfile: userProfile))
         }
+                
+        let fullScreenHeight = UIScreen.main.bounds.height
+        let shadowBuffer: CGFloat = 40.0
         
-        // Render the card at screen size
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
+        let finalCardHeight: CGFloat
+        let finalCardWidth: CGFloat
         
-        let renderer = ImageRenderer(content: cardView.frame(width: screenWidth, height: screenHeight))
-        renderer.scale = 3.0 // High quality export
+        let ratio2_3: CGFloat = 2.0 / 3.0
+        let ratio9_16: CGFloat = 9.0 / 16.0
         
-        if let image = renderer.uiImage {
-            self.cardImage = image
-            self.isSharing = true
+        if currentPage == 4 {
+            let exportHeightFactor: CGFloat = 0.9
+            finalCardHeight = fullScreenHeight * exportHeightFactor
+            finalCardWidth = finalCardHeight * ratio9_16
+        } else {
+            let cardHeightFactor: CGFloat = 0.65
+            finalCardHeight = fullScreenHeight * cardHeightFactor
+            finalCardWidth = finalCardHeight * ratio2_3
         }
+
+        let renderContent = cardView
+            .frame(width: finalCardWidth, height: finalCardHeight)
+            .padding(shadowBuffer / 2)
+            .background(Color.clear)
+        
+        let renderer = ImageRenderer(content: renderContent)
+        
+        renderer.scale = 3.0
+        
+        renderer.proposedSize = .init(width: finalCardWidth + shadowBuffer, height: finalCardHeight + shadowBuffer)
+        
+        guard let uiImage = renderer.uiImage else {
+            return nil
+        }
+        
+        if let pngData = uiImage.pngData(), let finalImage = UIImage(data: pngData) {
+            return finalImage
+        }
+        
+        return uiImage
     }
 }

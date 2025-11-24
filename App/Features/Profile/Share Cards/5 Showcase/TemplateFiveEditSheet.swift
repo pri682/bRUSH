@@ -1,10 +1,3 @@
-//
-//  TemplateFiveEditSheet.swift
-//  brush
-//
-//  Created by Meidad Troper on 11/23/25.
-//
-
 import SwiftUI
 
 struct TemplateFiveEditSheet: View {
@@ -45,7 +38,7 @@ struct TemplateFiveEditSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(role: .confirm) {
                         isPresented = false
                     }
                     .fontWeight(.semibold)
