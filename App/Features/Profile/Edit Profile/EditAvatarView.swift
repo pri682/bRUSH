@@ -109,7 +109,8 @@ struct EditAvatarView: View {
                         }
                         .disabled(!canRedo)
                     }
-
+                    .frame(width: screenWidth * 0.2, alignment: .leading)
+                    
                     Spacer()
 
                     Text("Edit Avatar")
@@ -123,6 +124,7 @@ struct EditAvatarView: View {
                                 .font(.system(size: screenWidth * 0.04, weight: .bold))
                                 .foregroundColor(.accentColor)
                         }
+                        .frame(width: screenWidth * 0.2, alignment: .trailing)
                     } else {
                         Color.clear
                             .frame(width: screenWidth * 0.2, height: screenWidth * 0.08)

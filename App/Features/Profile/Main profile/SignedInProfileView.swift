@@ -8,6 +8,10 @@ struct SignedInProfileView: View {
     @State private var isRefreshingMedals = false
     @State private var lastRefreshAttempt: Date? = nil
     
+    private var isProfileLoaded: Bool {
+        viewModel.profile != nil
+    }
+    
     private func timeDisplayString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
@@ -98,7 +102,7 @@ struct SignedInProfileView: View {
                         }
                         
                         // 📌 BUTTON STACK (Share + Gear)
-                        if viewModel.profile != nil {
+                        if isProfileLoaded {
                             VStack {
                                 Spacer()
                                 HStack {
@@ -134,13 +138,12 @@ struct SignedInProfileView: View {
                         
                         // Name + Username
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(viewModel.profile?.firstName ?? "Loading...")
+                            Text(viewModel.profile?.firstName ?? "Placeholder Name")
                                 .font(.system(size: screenWidth * 0.08, weight: .bold))
                                 .foregroundColor(avatarTextColor)
                                 .shadow(color: avatarTextShadowColor, radius: 0, x: 0.9, y: 0.9)
                             
-                            
-                            Text("@\(viewModel.profile?.displayName ?? "")")
+                            Text("@\(viewModel.profile?.displayName ?? "placeholder_username")")
                                 .font(.system(size: screenWidth * 0.03, weight: .semibold))
                                 .foregroundColor(avatarTextColor.opacity(0.85))
                         }
@@ -188,6 +191,7 @@ struct SignedInProfileView: View {
                         .padding(.horizontal, cardStackHorizontalPadding)
                         .padding(.top, isIpad ? 60 : 40)
                         .scaleEffect(isIpad ? 1.12 : 1.05)
+                        .animation(.easeInOut(duration: 0.4), value: isIpad)
                         
                         
                         // MARK: Refresh Button (iPad-aware)
@@ -231,7 +235,7 @@ struct SignedInProfileView: View {
                                     .padding(.top, isIpad ? 200 : 8)
                                     
                                 }
-                                .foregroundColor(canRefresh() ? .accent : .gray)
+                                .foregroundColor(canRefresh() ? .accentColor : .gray)
                             }
                             .disabled(isRefreshingMedals || !canRefresh())
                             Spacer()
@@ -243,6 +247,8 @@ struct SignedInProfileView: View {
                     .padding(.bottom, screenHeight * 0.03)
                 }
                 .frame(maxWidth: .infinity)
+                .redacted(reason: isProfileLoaded ? [] : .placeholder)
+                .disabled(!isProfileLoaded)
             }
             .navigationBarHidden(true)
             .edgesIgnoringSafeArea(.top)

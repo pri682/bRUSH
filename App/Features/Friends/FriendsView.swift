@@ -34,10 +34,6 @@ struct FriendsView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 12)
-                .background(
-                    Color.accentColor.opacity(0.15)
-                    .clipShape(RoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
-                )
 
                 List {
                     if selectedTab == .friends {
@@ -86,10 +82,6 @@ struct FriendsView: View {
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
-                .background(
-                    Color.accentColor.opacity(0.15)
-                    .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
-                )
             }
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
