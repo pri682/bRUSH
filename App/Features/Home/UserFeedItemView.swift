@@ -28,7 +28,7 @@ struct UserFeedItemView: View {
     @State private var isContentLoaded = false
     
     @State private var isShowingProfileSheet: Bool = false
-    @StateObject private var friendsViewModel = FriendsViewModel()
+    @ObservedObject private var friendsViewModel = FriendsViewModel()
 
     @Binding var isGoldDisabled: Bool
     @Binding var isSilverDisabled: Bool
@@ -199,7 +199,6 @@ struct UserFeedItemView: View {
         }
         .onAppear {
             friendsViewModel.refreshFriends()
-            friendsViewModel.refreshIncoming()
         }
     }
     
