@@ -1,18 +1,13 @@
-//
-//  DrawingPickerView.swift
-//  brush
-//
-//  Created by Meidad Troper on 11/23/25.
-//
-
 import SwiftUI
 
 struct DrawingPickerView: View {
     @EnvironmentObject var dataModel: DataModel
     @Binding var selectedDrawing: Item?
     @Binding var isPresented: Bool
-    
-    private let gridColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+
+    private let gridColumns = [
+        GridItem(.adaptive(minimum: 100), spacing: 30)
+    ]
     
     var body: some View {
         NavigationStack {
@@ -38,7 +33,7 @@ struct DrawingPickerView: View {
                     }
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: gridColumns, spacing: 20) {
+                        LazyVGrid(columns: gridColumns, spacing: 30) {
                             ForEach(dataModel.items) { item in
                                 Button(action: {
                                     if item.image != nil {
@@ -51,20 +46,20 @@ struct DrawingPickerView: View {
                                             Image(uiImage: image)
                                                 .resizable()
                                                 .scaledToFill()
-                                                .frame(width: 100, height: 100)
+                                                .aspectRatio(9/16, contentMode: .fill)
                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                                 .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                                         } else {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .fill(Color.gray.opacity(0.2))
-                                                .frame(width: 100, height: 100)
+                                                .aspectRatio(9/16, contentMode: .fill)
                                                 .overlay(ProgressView())
                                         }
                                     }
+                                    .aspectRatio(9/16, contentMode: .fit)
                                 }
                                 .buttonStyle(.plain)
                                 .onAppear {
-                                    // Load image if not already loaded (like GridItemView)
                                     if item.image == nil {
                                         dataModel.loadImage(for: item.id)
                                     }
@@ -79,7 +74,7 @@ struct DrawingPickerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
+                    Button(role: .cancel) {
                         isPresented = false
                     }
                 }
