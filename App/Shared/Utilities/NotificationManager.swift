@@ -10,6 +10,14 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().delegate = self
         // 💡 FIX: Request permission immediately upon initialization
         requestPermission()
+
+        // ✅ FIX: Add observer to clear the badge when the app comes to the foreground
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAppForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+    }
+
+    // ✅ New Function to clear the badge when the app becomes active
+    @objc func handleAppForeground() {
+        clearBadge()
     }
 
     // MARK: - Permission
@@ -49,8 +57,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             return
         }
 
-        clearReminders()      // Remove old repeating schedules
-        clearBadge()          // Reset badge to 0 first
+        clearReminders()       // Remove old repeating schedules
+        clearBadge()           // Reset badge to 0 first
 
         let content = UNMutableNotificationContent()
         content.title = "🖌️ Time to draw!"
@@ -111,8 +119,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Delegate Handlers
     func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                 didReceive response: UNNotificationResponse,
-                                 withCompletionHandler completionHandler: @escaping () -> Void) {
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
 
         let content = response.notification.request.content
         saveNotificationToHistory(title: content.title, body: content.body)
@@ -125,8 +133,8 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                 willPresent notification: UNNotification,
-                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound, .badge])
     }
     
@@ -136,13 +144,13 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         content.title = "🤝 New Friend Request"
         content.body = "\(name) (\(handle)) wants to be your friend!"
         content.sound = UNNotificationSound.default
-            
+                
         let request = UNNotificationRequest(
             identifier: "friendRequest_\(UUID().uuidString)",
             content: content,
             trigger: nil // nil trigger means present immediately
         )
-            
+                
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("⚠️ Failed to schedule friend request notification: \(error.localizedDescription)")
