@@ -5,19 +5,41 @@ struct LeaderboardSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showScoringInfo = false
     
+    // MARK: - Toast State
+    @State private var showRefreshToast = false
+    
     private let listBgOpacity: CGFloat = 0.15
     private let currentUserRowOpacity: CGFloat = 0.25
     
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        podiumSection
-                            .zIndex(1)
-                            .padding(.top, 40)
+                ZStack(alignment: .bottom) {
+                    
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            podiumSection
+                                .zIndex(1)
+                                .padding(.top, 40)
 
-                        listSection(minHeight: max(geo.size.height - 220, 300))
+                            listSection(minHeight: max(geo.size.height - 220, 300))
+                        }
+                    }
+                    
+                    if showRefreshToast {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Leaderboard Updated")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .glassEffect(.regular)
+                        .padding(.bottom, 30)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .zIndex(100)
                     }
                 }
                 .navigationTitle("Leaderboard")
@@ -34,7 +56,9 @@ struct LeaderboardSheet: View {
                         }
                     }
                     ToolbarItem {
-                        Button(action: { vm.loadLeaderboard() }) {
+                        Button(action: {
+                            handleRefresh()
+                        }) {
                             Image(systemName: "arrow.clockwise")
                         }
                     }
@@ -59,6 +83,27 @@ struct LeaderboardSheet: View {
         }
         .presentationDetents([.large])
         .presentationBackground(Color(.systemBackground))
+    }
+    
+    // MARK: - Refresh Logic
+    private func handleRefresh() {
+        vm.loadLeaderboard()
+        
+        // Haptic Feedback
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
+        // Show Toast
+        withAnimation(.spring()) {
+            showRefreshToast = true
+        }
+        
+        // Hide Toast after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation(.easeInOut) {
+                showRefreshToast = false
+            }
+        }
     }
     
     private struct ScoringInfoView: View {

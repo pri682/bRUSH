@@ -18,35 +18,35 @@ struct ShareCardGeneratorView: View {
     // Based on dominant colors from each card background
     private func gradientColors(for templateIndex: Int) -> [Color] {
         switch templateIndex {
-        case 0: // Streak Card - Fire/Orange theme
+        case 0:
             return [
-                Color(hex: "#FF6B35") ?? .orange,
-                Color(hex: "#FF8C42") ?? .orange,
-                Color(hex: "#FFAA5A") ?? .orange
+                Color(hex: "#CC522A") ?? .orange,
+                Color(hex: "#D66A2E") ?? .orange,
+                Color(hex: "#D68645") ?? .orange
             ]
-        case 1: // Medals Card - Pink/Purple theme
+        case 1:
             return [
-                Color(hex: "#E91E8C") ?? .pink,
-                Color(hex: "#C71585") ?? .purple,
-                Color(hex: "#9B4F96") ?? .purple
+                Color(hex: "#B0186E") ?? .pink,
+                Color(hex: "#8F0F63") ?? .purple,
+                Color(hex: "#6D3B74") ?? .purple
             ]
-        case 2: // Total Drawings - Blue theme
+        case 2:
             return [
-                Color(hex: "#2C5F7C") ?? .blue,
-                Color(hex: "#4A90A4") ?? .blue,
-                Color(hex: "#76C1D4") ?? .cyan
+                Color(hex: "#1E445A") ?? .blue,
+                Color(hex: "#356B7F") ?? .blue,
+                Color(hex: "#4FA5B8") ?? .cyan
             ]
-        case 3: // Member Since - Maroon/Deep Red theme
+        case 3:
             return [
-                Color(hex: "#8B2635") ?? .red,
-                Color(hex: "#A63446") ?? .red,
-                Color(hex: "#C85A54") ?? .orange
+                Color(hex: "#7A0040") ?? .pink,
+                Color(hex: "#C0282E") ?? .red,
+                Color(hex: "#FF5400") ?? .orange
             ]
-        case 4: // Custom Drawing - Purple/Lavender theme
+        case 4:
             return [
-                Color(hex: "#B794F6") ?? .purple,
-                Color(hex: "#E9D5FF") ?? .purple,
-                Color(hex: "#DDD6FE") ?? .purple
+                Color(hex: "#054336") ?? .green,
+                Color(hex: "#065F46") ?? .green,
+                Color(hex: "#10B981") ?? .teal
             ]
         default:
             return [.orange, .yellow, .red]
@@ -54,31 +54,32 @@ struct ShareCardGeneratorView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // MARK: - Animated Background Gradient
-            AnimatedGradientBackground(colors: gradientColors(for: selectedTemplateIndex), templateIndex: selectedTemplateIndex)
-                .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.8), value: selectedTemplateIndex)
-            
-            // MARK: - Main Content - Just the Preview
-            ShareCardPreviewView(
-                backgroundColor: $backgroundColor,
-                cardColor: $cardColor,
-                cardText: $cardText,
-                textColor: $textColor,
-                userProfile: userProfile,
-                currentPage: $selectedTemplateIndex
-            )
-            
-            // MARK: - Close Button (Top Right)
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.white.opacity(0.8))
-                    .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 2)
+        NavigationStack {
+            ZStack {
+                AnimatedGradientBackground(colors: gradientColors(for: selectedTemplateIndex), templateIndex: selectedTemplateIndex)
+                    .ignoresSafeArea()
+                    .animation(.easeInOut(duration: 0.8), value: selectedTemplateIndex)
+                
+                ShareCardPreviewView(
+                    backgroundColor: $backgroundColor,
+                    cardColor: $cardColor,
+                    cardText: $cardText,
+                    textColor: $textColor,
+                    userProfile: userProfile,
+                    currentPage: $selectedTemplateIndex
+                )
             }
-            .padding(.top, 20)
-            .padding(.trailing, 20)
+            .navigationTitle("Share Card")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                    }
+                }
+            }
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark)
         }
     }
 }

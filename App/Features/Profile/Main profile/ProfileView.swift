@@ -5,7 +5,10 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            if viewModel.user != nil {
+            if viewModel.isCheckingAuth {
+                Color.clear
+                    .ignoresSafeArea(.all)
+            } else if viewModel.user != nil {
                 SignedInProfileView(viewModel: viewModel)
             } else {
                 SignInProfileView(viewModel: viewModel)

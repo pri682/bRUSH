@@ -11,6 +11,7 @@ class ProfileViewModel: ObservableObject {
     @Published var profile: UserProfile? = nil   // 🔥 New: Firestore profile
     @Published var errorMessage: String? = nil
     @Published var isLoadingProfile: Bool = false
+    @Published var isCheckingAuth: Bool = true
 
     private let auth = AuthService.shared
     private let db = Firestore.firestore()
@@ -22,6 +23,7 @@ class ProfileViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newUser in
                 self?.user = newUser
+                self?.isCheckingAuth = false
                 Task {
                     if let uid = newUser?.id {
                         await self?.loadProfile(uid: uid)
