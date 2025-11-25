@@ -134,50 +134,37 @@ struct HomeView: View {
                                     if !viewModel.feedItems.isEmpty {
                                         let itemCount = viewModel.feedItems.count
                                         let capsuleWidth: CGFloat = 8
-                                        let verticalPadding: CGFloat = 24
-                                        let capsuleHeight = max(1, (availablePageHeight - (verticalPadding * 2)) / CGFloat(itemCount))
+                                        let verticalSpacing: CGFloat = capsuleWidth
+                                        
+                                        let topFeedPadding: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67
+                                        let bottomFeedPadding: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70
+                                        
+                                        let contentHeightBetweenBars = availablePageHeight - topFeedPadding - bottomFeedPadding + 48
+                                        
+                                        let totalSpacing = CGFloat(max(0, itemCount - 1)) * verticalSpacing
+                                        let availableHeightForCapsules = contentHeightBetweenBars - totalSpacing
+                                        let capsuleHeight = max(4, availableHeightForCapsules / CGFloat(max(1, itemCount)))
 
                                         HStack {
                                             Spacer()
                                             VStack {
-                                                ScrollViewReader { proxy in
-                                                    ScrollView(.vertical) {
-                                                        VStack(spacing: capsuleWidth) {
-                                                            ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                                                Button(action: {
-                                                                    withAnimation(.spring()) {
-                                                                        currentItemID = index
-                                                                    }
-                                                                }) {
-                                                                    if currentFeedIndex == index {
-                                                                        Capsule()
-                                                                            .fill(Color(red: 1.0, green: 0.149, blue: 0.0))
-                                                                            .glassEffect(.regular)
-                                                                            .frame(width: capsuleWidth, height: capsuleHeight)
-                                                                    } else {
-                                                                        Capsule()
-                                                                            .fill(Color.accentColor)
-                                                                            .glassEffect(.clear)
-                                                                            .frame(width: capsuleWidth, height: capsuleHeight)
-                                                                    }
-                                                                }
-                                                                .id(index)
+                                                VStack(spacing: verticalSpacing) {
+                                                    ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                        Button(action: {
+                                                            withAnimation(.spring()) {
+                                                                currentItemID = index
                                                             }
+                                                        }) {
+                                                            Capsule()
+                                                                .fill(currentFeedIndex == index ? Color.red : Color.accentColor)
+                                                                .frame(width: capsuleWidth, height: capsuleHeight)
                                                         }
-                                                    }
-                                                    .offset(x: 2)
-                                                    .scrollIndicators(.hidden)
-                                                    .onChange(of: currentFeedIndex) {
-                                                        withAnimation {
-                                                            proxy.scrollTo(currentFeedIndex, anchor: .center)
-                                                        }
-                                                    }
-                                                    .onAppear {
-                                                        proxy.scrollTo(currentFeedIndex, anchor: .center)
+                                                        .glassEffect()
                                                     }
                                                 }
+                                                .frame(maxHeight: contentHeightBetweenBars)
+                                                .clipped()
                                             }
-                                            .padding(.vertical, 30)
                                             .frame(height: availablePageHeight)
                                         }
                                         .padding(.trailing, 10)

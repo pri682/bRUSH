@@ -100,7 +100,7 @@ struct ShareCardPreviewView: View {
                         .tag(4)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .padding(.top, 50)
+                .padding(.top, 20)
                 .padding(.bottom, height * 0.25)
                 
                 if showActions {

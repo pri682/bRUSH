@@ -74,14 +74,14 @@ struct CardTemplateFourView: View {
                     
                     VStack {
                         HStack {
-                            Spacer()
                             Image("brush_logo_1")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: cardWidth * 0.18)
                                 .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
-                                .padding(.top, cardHeight * 0.03)
-                                .padding(.trailing, cardWidth * 0.04)
+                                .padding(.top, cardHeight * 0.04)
+                                .padding(.leading, cardWidth * 0.05)
+                            Spacer()
                         }
                         Spacer()
                     }
