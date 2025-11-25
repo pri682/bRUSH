@@ -11,6 +11,7 @@ final class HomeViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     @Published var hasPostedToday: Bool = false
+    @Published var hasAttemptedDrawing: Bool = false
 
     private let db = Firestore.firestore()
 
@@ -35,21 +36,41 @@ final class HomeViewModel: ObservableObject {
         
         do {
             let doc = try await db.collection("users").document(currentUID).getDocument()
+            
+            // Check Last Completed
             if let timestamp = doc.get("lastCompletedDate") as? Timestamp {
                 let date = timestamp.dateValue()
                 let isToday = Calendar.current.isDateInToday(date)
-                
-                await MainActor.run {
-                    self.hasPostedToday = isToday
-                    print("✅ Status check: User posted today? \(isToday)")
-                }
+                await MainActor.run { self.hasPostedToday = isToday }
             } else {
-                await MainActor.run {
-                    self.hasPostedToday = false
-                }
+                await MainActor.run { self.hasPostedToday = false }
             }
+            
+            // Check Last Attempted 🔥
+            if let attemptTimestamp = doc.get("lastAttemptedDate") as? Timestamp {
+                let attemptDate = attemptTimestamp.dateValue()
+                let isAttemptedToday = Calendar.current.isDateInToday(attemptDate)
+                await MainActor.run { self.hasAttemptedDrawing = isAttemptedToday }
+            } else {
+                await MainActor.run { self.hasAttemptedDrawing = false }
+            }
+            
         } catch {
-            print("❌ Error checking user post status: \(error.localizedDescription)")
+            print("❌ Error checking user status: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Mark Attempted
+    func markDrawingAttempted() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            // Optimistic update
+            await MainActor.run { self.hasAttemptedDrawing = true }
+            // Cloud update
+            try await UserService.shared.updateLastAttemptedDate(uid: uid)
+            print("✅ Marked drawing as attempted in cloud")
+        } catch {
+            print("❌ Error marking drawing attempt: \(error)")
         }
     }
 

@@ -6,6 +6,9 @@ struct HomeView: View {
     @State private var showOnboarding: Bool = false
     @State private var showingNotifications: Bool = false
     @StateObject private var viewModel = HomeViewModel()
+    
+    @StateObject private var friendsViewModel = FriendsViewModel()
+    
     @State private var isOnboardingPresented: Bool = false
     @State private var isPresentingCreate: Bool = false
     
@@ -13,7 +16,6 @@ struct HomeView: View {
     @State private var isShowingSplash = true
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
-    @State private var hasAttemptedDrawing: Bool = false
     @State private var didDismissCreate = false
     
     @State private var showSnow: Bool = HomeView.isWinter()
@@ -54,7 +56,11 @@ struct HomeView: View {
         }
         
         await viewModel.checkUserPostStatus()
-        await viewModel.loadFeed()
+        
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await viewModel.loadFeed() }
+            group.addTask { await friendsViewModel.refreshFriends() }
+        }
         
         await MainActor.run {
             loadID = UUID()
@@ -94,8 +100,9 @@ struct HomeView: View {
                                                     item: item,
                                                     prompt: viewModel.dailyPrompt,
                                                     loadID: loadID,
+                                                    friendsViewModel: friendsViewModel,
                                                     hasPostedToday: $viewModel.hasPostedToday,
-                                                    hasAttemptedDrawing: $hasAttemptedDrawing,
+                                                    hasAttemptedDrawing: $viewModel.hasAttemptedDrawing,
                                                     isPresentingCreate: $isPresentingCreate,
                                                     isGoldDisabled: $dailyGoldAwarded,
                                                     isSilverDisabled: $dailySilverAwarded,
@@ -264,7 +271,7 @@ struct HomeView: View {
                                         .padding(.horizontal)
                                 }
                                 .buttonStyle(.glassProminent)
-                                .disabled(hasAttemptedDrawing)
+                                .disabled(viewModel.hasAttemptedDrawing)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(AnimatedMeshGradientBackground().ignoresSafeArea())
@@ -364,15 +371,20 @@ struct HomeView: View {
                     }
                     .onChange(of: didDismissCreate) {
                         if didDismissCreate {
-                            let didSavePost = viewModel.hasPostedToday
-                            
-                            if !didSavePost { hasAttemptedDrawing = true }
                             didDismissCreate = false
                             
-                            Task { await reloadFeed(showOverlay: true) }
-                            
-                            if didSavePost {
-                                didJustPost = true
+                            Task {
+                                let didSavePost = viewModel.hasPostedToday
+                                
+                                if !didSavePost {
+                                    await viewModel.markDrawingAttempted()
+                                }
+                                
+                                await reloadFeed(showOverlay: true)
+                                
+                                if didSavePost {
+                                    didJustPost = true
+                                }
                             }
                         }
                     }
@@ -388,7 +400,10 @@ struct HomeView: View {
                     }
                     .task {
                         isInitialLoading = true
-                        await viewModel.loadDailyPrompt()
+                        await withTaskGroup(of: Void.self) { group in
+                            group.addTask { await viewModel.loadDailyPrompt() }
+                            group.addTask { await friendsViewModel.refreshFriends() }
+                        }
                         await reloadFeed(showOverlay: true)
                         isInitialLoading = false
                         hasInitialLoadCompleted = true

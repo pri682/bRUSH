@@ -28,7 +28,7 @@ struct UserFeedItemView: View {
     @State private var isContentLoaded = false
     
     @State private var isShowingProfileSheet: Bool = false
-    @ObservedObject private var friendsViewModel = FriendsViewModel()
+    @ObservedObject var friendsViewModel: FriendsViewModel
 
     @Binding var isGoldDisabled: Bool
     @Binding var isSilverDisabled: Bool
@@ -42,6 +42,7 @@ struct UserFeedItemView: View {
         item: FeedItem,
         prompt: String,
         loadID: UUID,
+        friendsViewModel: FriendsViewModel,
         hasPostedToday: Binding<Bool>,
         hasAttemptedDrawing: Binding<Bool>,
         isPresentingCreate: Binding<Bool>,
@@ -56,6 +57,7 @@ struct UserFeedItemView: View {
         self.item = item
         self.prompt = prompt
         self.loadID = loadID
+        self.friendsViewModel = friendsViewModel
 
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
@@ -179,7 +181,8 @@ struct UserFeedItemView: View {
                 totalDrawingCount: item.totalDrawingCount,
                 streakCount: item.streakCount,
                 memberSince: item.memberSince,
-                lastCompletedDate: item.lastCompletedDate
+                lastCompletedDate: item.lastCompletedDate,
+                lastAttemptedDate: nil
             )
             FriendProfileSheet(vm: friendsViewModel, profile: profile)
         }
@@ -210,11 +213,6 @@ struct UserFeedItemView: View {
             
             if isFirstLoad {
                 self.isContentLoaded = true
-            }
-        }
-        .onAppear {
-            Task {
-                await friendsViewModel.refreshFriends()
             }
         }
     }
