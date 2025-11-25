@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct UserFeedItemView: View {
     let item: FeedItem
@@ -12,6 +13,14 @@ struct UserFeedItemView: View {
     @State private var silverSelected = false
     @State private var bronzeSelected = false
     @State private var showOverlays = true
+    
+    @State private var showAwardConfirmation = false
+    @State private var pendingAwardType: AwardType?
+
+    private var isOwnPost: Bool {
+        Auth.auth().currentUser?.uid == item.userId
+    }
+
 
     @Binding var hasPostedToday: Bool
     @Binding var hasAttemptedDrawing: Bool
@@ -215,7 +224,74 @@ struct UserFeedItemView: View {
                 self.isContentLoaded = true
             }
         }
+        .alert(
+            confirmTitle(for: pendingAwardType ?? .gold),
+            isPresented: $showAwardConfirmation
+        ) {
+            Button("Use", role: .destructive) {
+                if let type = pendingAwardType {
+                    applyAward(type: type)
+                }
+                pendingAwardType = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingAwardType = nil
+            }
+        }
     }
+    
+    private func sendAward(for type: AwardType) {
+            Task {
+                do {
+                    try await AwardServiceFirebase.shared.setAward(type, forPostOwner: item.userId)
+                } catch {
+                    print("Failed to set \(type) award for \(item.userId): \(error.localizedDescription)")
+                }
+            }
+        }
+    
+    private func applyAward(type: AwardType) {
+        switch type {
+        case .gold:
+            goldSelected = true
+            goldCount += 1
+            onGoldTapped?(true)
+
+        case .silver:
+            silverSelected = true
+            silverCount += 1
+            onSilverTapped?(true)
+
+        case .bronze:
+            bronzeSelected = true
+            bronzeCount += 1
+            onBronzeTapped?(true)
+        }
+
+        sendAward(for: type)
+        
+        Task {
+            do {
+                try await AwardServiceFirebase.shared.incrementUserMedalStats(
+                    ownerId: item.userId,
+                    giverId: Auth.auth().currentUser!.uid,
+                    type: type
+                )
+            } catch {
+                print("Failed to increment stats:", error.localizedDescription)
+            }
+        }
+    }
+
+
+    private func confirmTitle(for type: AwardType) -> String {
+        switch type {
+        case .gold: return "Use your gold medal for today?"
+        case .silver: return "Use your silver medal for today?"
+        case .bronze: return "Use your bronze medal for today?"
+        }
+    }
+
     
     private func fetchImage() async -> UIImage? {
         guard let url = URL(string: item.imageURL) else {
@@ -267,20 +343,38 @@ struct UserFeedItemView: View {
 
     private var actionsOverlay: some View {
         VStack(spacing: 16) {
-            medalButton(assetName: "gold_medal", color: Color(red: 0.8, green: 0.65, blue: 0.0), count: $goldCount, isSelected: $goldSelected,
-                        isDisabled: isGoldDisabled, onTapped: onGoldTapped)
+            medalButton(assetName: "gold_medal",
+                        color: Color(red: 0.8, green: 0.65, blue: 0.0),
+                        type: .gold,
+                        count: $goldCount,
+                        isSelected: $goldSelected,
+                        isDisabled: isGoldDisabled || isOwnPost,
+                        onTapped: onGoldTapped
+                    )
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
                 .allowsHitTesting(showOverlays)
 
-            medalButton(assetName: "silver_medal", color: Color.gray, count: $silverCount, isSelected: $silverSelected,
-                        isDisabled: isSilverDisabled, onTapped: onSilverTapped)
+            medalButton(assetName: "silver_medal",
+                        color: Color.gray,
+                        type: .silver,
+                        count: $silverCount,
+                        isSelected: $silverSelected,
+                        isDisabled: isSilverDisabled || isOwnPost,
+                        onTapped: onSilverTapped
+                    )
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
                 .allowsHitTesting(showOverlays)
             
-            medalButton(assetName: "bronze_medal", color: Color(red: 0.6, green: 0.35, blue: 0.0), count: $bronzeCount, isSelected: $bronzeSelected,
-                        isDisabled: isBronzeDisabled, onTapped: onBronzeTapped)
+            medalButton(assetName: "bronze_medal",
+                        color: Color(red: 0.6, green: 0.35, blue: 0.0),
+                        type: .bronze,
+                        count: $bronzeCount,
+                        isSelected: $bronzeSelected,
+                        isDisabled: isBronzeDisabled || isOwnPost,
+                        onTapped: onBronzeTapped
+                    )
                 .opacity(showOverlays ? 1 : 0)
                 .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
                 .allowsHitTesting(showOverlays)
@@ -323,74 +417,45 @@ struct UserFeedItemView: View {
     }
 
     @ViewBuilder
-    private func medalButton(assetName: String, color: Color, count: Binding<Int>, isSelected: Binding<Bool>,
-                             isDisabled: Bool, onTapped: ((Bool) -> Void)?) -> some View {
-        ZStack {
-            if isSelected.wrappedValue {
+    private func medalButton(assetName: String,
+                             color: Color,
+                             type: AwardType,
+                             count: Binding<Int>,
+                             isSelected: Binding<Bool>,
+                             isDisabled: Bool,
+                             onTapped: ((Bool) -> Void)?) -> some View {
                 Button {
-                    isSelected.wrappedValue.toggle()
-                    count.wrappedValue -= 1
-                    onTapped?(isSelected.wrappedValue)
+                    // Don’t allow taps when this medal is disabled (used today or own post)
+                    guard !isDisabled else { return }
+                    pendingAwardType = type
+                    showAwardConfirmation = true
                 } label: {
                     VStack(spacing: 4) {
-                        Image(assetName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 32, height: 32)
+                        ZStack(alignment: .topTrailing) {
+                            Image(assetName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
                         Text("\(count.wrappedValue)")
                             .foregroundColor(.white)
                             .font(.caption)
                             .fontWeight(.semibold)
                     }
                     .padding(8)
+                    .opacity(isDisabled ? 0.75 : 1.0) // slightly dim if disabled, but keep color
                 }
-                .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .buttonStyle(.plain)
+                .glassEffect(
+                    isSelected.wrappedValue
+                        ? .regular.tint(color).interactive()
+                        : .clear.tint(color.opacity(0.5)).interactive(),
+                    in: RoundedRectangle(cornerRadius: 12)
+                )
                 .contentShape(RoundedRectangle(cornerRadius: 12))
                 .frame(minWidth: 48, minHeight: 48)
-            } else if isDisabled {
-                Button {} label: {
-                    VStack(spacing: 4) {
-                        Image(assetName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 32, height: 32)
-                            .saturation(0)
-                            .opacity(0.5)
-                        Text("\(count.wrappedValue)")
-                            .foregroundColor(.white.opacity(0.5))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(8)
-                }
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
-                .contentShape(RoundedRectangle(cornerRadius: 12))
-                .frame(minWidth: 48, minHeight: 48)
-                .disabled(true)
-            } else {
-                Button {
-                    isSelected.wrappedValue.toggle()
-                    count.wrappedValue += 1
-                    onTapped?(isSelected.wrappedValue)
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(assetName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 32, height: 32)
-                        Text("\(count.wrappedValue)")
-                            .foregroundColor(.white)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(8)
-                }
-                .glassEffect(.clear.tint(color.opacity(0.5)).interactive(), in: RoundedRectangle(cornerRadius: 12))
-                .contentShape(RoundedRectangle(cornerRadius: 12))
-                .frame(minWidth: 48, minHeight: 48)
+                .disabled(isDisabled)
+                .animation(.easeInOut, value: isSelected.wrappedValue)
             }
-        }
-        .animation(.easeInOut, value: isSelected.wrappedValue)
     }
 
     private func shareButton() -> some View {

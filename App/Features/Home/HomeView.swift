@@ -80,7 +80,7 @@ struct HomeView: View {
                     ZStack {
                         AnimatedMeshGradientBackground()
                             .ignoresSafeArea()
-                            .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
+                            .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation, isSource: false)
                             .opacity(isShowingSplash ? 0 : 1)
 
                         VStack(spacing: 0) {
@@ -405,6 +405,7 @@ struct HomeView: View {
                             group.addTask { await friendsViewModel.refreshFriends() }
                         }
                         await reloadFeed(showOverlay: true)
+                        await syncMedalUsageFromBackend()
                         isInitialLoading = false
                         hasInitialLoadCompleted = true
                     }
@@ -418,7 +419,7 @@ struct HomeView: View {
                                 .aspectRatio(contentMode: .fill)
                         )
                         .edgesIgnoringSafeArea(.all)
-                        .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
+                        .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation, isSource: true)
                         
                         GeometryReader { geo in
                             Image("brush_shadow")
@@ -434,14 +435,23 @@ struct HomeView: View {
                 }
             }
         }
-
+    
+    private func syncMedalUsageFromBackend() async {
+        let usage = await AwardServiceFirebase.shared.fetchTodayUsage()
+        await MainActor.run {
+            dailyGoldAwarded = usage.gold
+            dailySilverAwarded = usage.silver
+            dailyBronzeAwarded = usage.bronze
+        }
+    }
+    
     private func safeAreaInsetsTop() -> CGFloat {
         let keyWindow = UIApplication.shared.connectedScenes
             .compactMap { ($0 as? UIWindowScene)?.keyWindow }
             .first
         return keyWindow?.safeAreaInsets.top ?? 0
     }
-
+    
     private static func isWinter() -> Bool {
         let month = Calendar.current.component(.month, from: Date())
         return [11, 12, 1, 2].contains(month)

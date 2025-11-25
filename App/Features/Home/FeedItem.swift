@@ -6,9 +6,9 @@ struct FeedItem: Identifiable {
     let firstName: String
     let displayName: String
     let imageURL: String
-    let medalGold: Int
-    let medalSilver: Int
-    let medalBronze: Int
+    var medalGold: Int
+    var medalSilver: Int
+    var medalBronze: Int
     let date: String
     let createdAt: Date?
     

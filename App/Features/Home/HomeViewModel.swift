@@ -74,6 +74,27 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
+    private func attachMedalCounts(to items: [FeedItem]) async -> [FeedItem] {
+        var enriched = items
+
+        for index in enriched.indices {
+            let ownerId = enriched[index].userId
+
+            do {
+                let counts = try await AwardServiceFirebase.shared
+                    .fetchAwardCounts(forPostOwner: ownerId)
+
+                enriched[index].medalGold = counts.gold
+                enriched[index].medalSilver = counts.silver
+                enriched[index].medalBronze = counts.bronze
+            } catch {
+                print("Failed to load medal counts for \(ownerId): \(error.localizedDescription)")
+                // If it fails, we just leave the counts as whatever they were (likely 0)
+            }
+        }
+        return enriched
+    }
+    
     // MARK: - Load Feed (Friends + Own)
     func loadFeed() async {
         guard let currentUID = Auth.auth().currentUser?.uid else {
@@ -180,10 +201,13 @@ final class HomeViewModel: ObservableObject {
             // 4️⃣ Sort newest first
             allFeedItems.sort { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
 
-            // 5️⃣ Update the published feedItems on main thread
+            // 5: attach medal counts from awards subcollection
+            let itemsWithMedals = await attachMedalCounts(to: allFeedItems)
+            
+            // 6: Update the published feedItems on main thread
             await MainActor.run {
-                self.feedItems = allFeedItems
-                print("✅ Loaded \(allFeedItems.count) drawings for today (\(todayString))")
+                self.feedItems = itemsWithMedals
+                print("✅ Loaded \(itemsWithMedals.count) drawings for today (\(todayString))")
             }
 
         } catch {

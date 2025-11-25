@@ -25,7 +25,7 @@ final class AwardServiceFirebase {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.timeZone = TimeZone(identifier: "America/Chicago") // CST/CDT
         formatter.dateFormat = "yyyyMMdd"
         return formatter.string(from: Date())
     }
@@ -110,11 +110,26 @@ final class AwardServiceFirebase {
                 .collection("awards")
                 .getDocuments()
 
+        let today = todayKey()
+        
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "America/Chicago")
+        formatter.dateFormat = "yyyyMMdd"
+        
             var gold = 0
             var silver = 0
             var bronze = 0
 
             for doc in snapshot.documents {
+                // only consider docs that have updatedAt timestamp
+                guard let ts = doc.get("updatedAt") as? Timestamp else { continue }
+                
+                let docDate = formatter.string(from: ts.dateValue())
+                // skip medals from previous days
+                guard docDate == today else { continue }
+                
                 if doc.get("gold") as? Bool ?? false { gold += 1 }
                 if doc.get("silver") as? Bool ?? false { silver += 1 }
                 if doc.get("bronze") as? Bool ?? false { bronze += 1 }
@@ -122,4 +137,49 @@ final class AwardServiceFirebase {
         
         return AwardCounts(gold: gold, silver: silver, bronze: bronze)
     }
+    
+    func fetchTodayUsage() async -> (gold: Bool, silver: Bool, bronze: Bool) {
+        guard let uid = Auth.auth().currentUser?.uid else { return (false,false,false) }
+
+        let key = todayKey()
+        let usageRef = db.collection("awardUsage").document("\(uid)_\(key)")
+
+        do {
+            let snap = try await usageRef.getDocument()
+            return (
+                gold: snap.get("goldUsed") as? Bool ?? false,
+                silver: snap.get("silverUsed") as? Bool ?? false,
+                bronze: snap.get("bronzeUsed") as? Bool ?? false
+            )
+        } catch {
+            print("No usage doc for today (this is normal on first launch)")
+            return (false,false,false)
+        }
+    }
+
+    
+    // update profile counts after awarding
+    func incrementUserMedalStats(ownerId: String, giverId: String, type: AwardType) async throws {
+        let ownerRef = db.collection("users").document(ownerId)
+        let giverRef = db.collection("users").document(giverId)
+
+        var ownerInc: [String: Any] = [:]
+        var giverInc: [String: Any] = [:]
+
+        switch type {
+        case .gold:
+            ownerInc["goldMedalsAccumulated"] = FieldValue.increment(Int64(1))
+            giverInc["goldMedalsAwarded"] = FieldValue.increment(Int64(1))
+        case .silver:
+            ownerInc["silverMedalsAccumulated"] = FieldValue.increment(Int64(1))
+            giverInc["silverMedalsAwarded"] = FieldValue.increment(Int64(1))
+        case .bronze:
+            ownerInc["bronzeMedalsAccumulated"] = FieldValue.increment(Int64(1))
+            giverInc["bronzeMedalsAwarded"] = FieldValue.increment(Int64(1))
+        }
+
+        try await ownerRef.updateData(ownerInc)
+        try await giverRef.updateData(giverInc)
+    }
+    
 }
