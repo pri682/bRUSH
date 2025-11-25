@@ -27,7 +27,7 @@ class FriendsViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let handleService = HandleServiceFirebase()
     private let requestService = FriendRequestServiceFirebase()
-    private let notificationManager = NotificationManager.shared // New: Shared instance for notifications
+    private let notificationManager = NotificationManager.shared
     private let userService = UserService.shared
     
     var meUid: String? { AuthService.shared.user?.id }
@@ -38,15 +38,22 @@ class FriendsViewModel: ObservableObject {
         return [user.firstName, user.lastName].filter { !$0.isEmpty }.joined(separator: " ")
     }
     
+    deinit {
+        requestService.stopListeningForIncoming()
+    }
+    
     // MARK: - Async Data Loading
     
     func refreshAllData() async {
-        // Run these in parallel to speed up loading
+        // Run profile and friends fetch in parallel
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await self.loadMyProfileData() }
             group.addTask { await self.refreshFriends() }
             group.addTask { await self.refreshIncoming() }
         }
+        
+        // Start the real-time listener for requests (Synchronous setup)
+        self.refreshIncoming()
         
         // Leaderboard depends on friends data, so load it after
         loadLeaderboard()
@@ -110,56 +117,86 @@ class FriendsViewModel: ObservableObject {
         }
     }
     
-    func refreshIncoming() async {
+    // MARK: - Real-time Incoming Requests
+    
+    func refreshIncoming() {
         guard let me = meUid else {
+            requestService.stopListeningForIncoming()
             self.requests = []
             return
         }
         
-        do {
-            // 1. Fetch raw DTOs
-            let dtos = try await requestService.fetchIncoming(forUid: me)
-            
-            // 2. Hydrate profiles in parallel using TaskGroup
-            var hydratedRequests: [FriendRequest] = []
-            
-            await withTaskGroup(of: FriendRequest?.self) { group in
-                for dto in dtos {
-                    group.addTask {
-                        let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !cleanUid.isEmpty else { return nil }
-                        
-                        do {
-                            let profile = try await self.userService.fetchProfile(uid: cleanUid)
-                            let fullName = [profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " ")
-                            let finalName = fullName.isEmpty ? profile.displayName : fullName
-                            let finalHandle = "@\(profile.displayName)"
+        // Start the real-time listener
+        requestService.startListeningForIncoming(forUid: me) { [weak self] dtos in
+            Task { @MainActor in
+                guard let self = self else { return }
+                
+                var hydratedRequests: [FriendRequest] = []
+                
+                // Track UIDs for requests currently known to the ViewModel
+                let existingRequestUids = Set(self.requests.map { $0.fromUid })
+                var newRequestProfiles: [FriendRequest] = []
+
+                // Hydrate profiles in parallel using TaskGroup
+                await withTaskGroup(of: FriendRequest?.self) { group in
+                    for dto in dtos {
+                        group.addTask {
+                            let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !cleanUid.isEmpty else { return nil }
                             
-                            return FriendRequest(
-                                fromUid: cleanUid,
-                                fromName: finalName.isEmpty ? "Unknown" : finalName,
-                                handle: finalHandle.isEmpty ? "@unknown" : finalHandle
-                            )
-                        } catch {
-                            return FriendRequest(
-                                fromUid: cleanUid,
-                                fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
-                                handle: dto.fromHandle
-                            )
+                            do {
+                                let profile = try await self.userService.fetchProfile(uid: cleanUid)
+                                let fullName = [profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                                let finalName = fullName.isEmpty ? profile.displayName : fullName
+                                let finalHandle = "@\(profile.displayName)"
+                                
+                                let request = FriendRequest(
+                                    fromUid: cleanUid,
+                                    fromName: finalName.isEmpty ? "Unknown" : finalName,
+                                    handle: finalHandle.isEmpty ? "@unknown" : finalHandle
+                                )
+                                
+                                // Check if this request is new
+                                if !existingRequestUids.contains(cleanUid) {
+                                    await MainActor.run {
+                                        newRequestProfiles.append(request)
+                                    }
+                                }
+                                
+                                return request
+                            } catch {
+                                if let authErr = error as? AuthError, case .backend(let msg) = authErr, msg == "Profile not found." {
+                                    return nil
+                                }
+                                
+                                return FriendRequest(
+                                    fromUid: cleanUid,
+                                    fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
+                                    handle: dto.fromHandle
+                                )
+                            }
+                        }
+                    }
+                    
+                    for await req in group {
+                        if let req = req {
+                            hydratedRequests.append(req)
                         }
                     }
                 }
                 
-                for await req in group {
-                    if let req = req {
-                        hydratedRequests.append(req)
-                    }
+                self.requests = hydratedRequests.sorted { $0.fromName.localizedCaseInsensitiveCompare($1.fromName) == .orderedAscending }
+                
+                // Trigger notifications for newly detected requests
+                for newReq in newRequestProfiles {
+                    self.notificationManager.scheduleFriendRequestNotification(
+                        from: newReq.fromName,
+                        handle: newReq.handle
+                    )
                 }
+
+                self.addError = nil
             }
-            
-            self.requests = hydratedRequests
-        } catch {
-            self.addError = "Failed to load friend requests."
         }
     }
     
@@ -196,7 +233,6 @@ class FriendsViewModel: ObservableObject {
         
         do {
             try await requestService.accept(me: me, other: req.fromUid)
-            // Immediately fetch the new friend to update the list
             if let newProfile = try? await userService.fetchProfile(uid: req.fromUid) {
                 withAnimation {
                     friends.append(newProfile)
@@ -204,10 +240,11 @@ class FriendsViewModel: ObservableObject {
                     friendIds.insert(newProfile.uid)
                 }
             }
-            await refreshIncoming()
+            // Refresh incoming to keep the listener in sync
+            refreshIncoming()
         } catch {
             addError = "Failed to accept request."
-            await refreshIncoming() // Revert optimistic update
+            refreshIncoming()
         }
     }
     
@@ -218,7 +255,7 @@ class FriendsViewModel: ObservableObject {
             try await requestService.decline(me: me, other: req.fromUid)
         } catch {
             addError = "Failed to decline request."
-            await refreshIncoming()
+            refreshIncoming()
         }
     }
     
@@ -247,16 +284,35 @@ class FriendsViewModel: ObservableObject {
             let searchResults = hits.map { FriendSearchResult(uid: $0.uid, handle: $0.handle, fullName: $0.fullName) }
             var newPending: Set<String> = []
 
-            await withTaskGroup(of: (String, Bool).self) { group in
+            await withTaskGroup(of: (String, Bool, Bool).self) { group in
                 for hit in searchResults {
                     group.addTask {
                         let isPending = (try? await self.requestService.hasPending(fromUid: me, toUid: hit.uid)) ?? false
-                        return (hit.uid, isPending)
+                        
+                        let isFriend = (try? await Firestore.firestore()
+                            .collection("friendships").document(me)
+                            .collection("friends").document(hit.uid)
+                            .getDocument().exists) ?? false
+                            
+                        return (hit.uid, isPending, isFriend)
                     }
                 }
-                for await (uid, isPending) in group {
+                
+                var newFriends: Set<String> = []
+                
+                for await (uid, isPending, isFriend) in group {
                     if isPending { newPending.insert(uid) }
+                    if isFriend { newFriends.insert(uid) }
                 }
+                
+                if !newFriends.isEmpty {
+                    self.friendIds.formUnion(newFriends)
+                }
+            }
+
+            let searchResultUids = Set(searchResults.map { $0.uid })
+            self.sent.removeAll { request in
+                return searchResultUids.contains(request.toUid) && !newPending.contains(request.toUid)
             }
 
             self.addResults = searchResults
@@ -337,96 +393,9 @@ class FriendsViewModel: ObservableObject {
                     toUid: user.uid)
             }
             catch {
-                sent.removeAll { $0.handle == handleLabel }
+                sent.removeAll { $0.toUid == user.uid }
                 pendingOutgoing.remove(user.uid)
                 addError = "Failed to send friend request."
-            }
-        }
-    }
-    
-    // 💡 FIX: Replaced one-time fetch with a real-time listener that triggers notifications
-    func refreshIncoming() {
-        guard let me = meUid else {
-            requestService.stopListeningForIncoming()
-            self.requests = []
-            return
-        }
-        
-        // Start the real-time listener
-        requestService.startListeningForIncoming(forUid: me) { [weak self] dtos in
-            Task { @MainActor in
-                guard let self = self else { return }
-                
-                var hydratedRequests: [FriendRequest] = []
-                
-                // Track UIDs for requests currently known to the ViewModel (before this update)
-                let existingRequestUids = Set(self.requests.map { $0.fromUid })
-                var newRequestProfiles: [FriendRequest] = [] // Requests found in this snapshot that were NOT in the last one
-
-                // 2. Hydrate profiles in parallel using TaskGroup
-                await withTaskGroup(of: FriendRequest?.self) { group in
-                    for dto in dtos {
-                        group.addTask {
-                            let cleanUid = dto.fromUid.trimmingCharacters(in: .whitespacesAndNewlines)
-                            guard !cleanUid.isEmpty else { return nil }
-                            
-                            do {
-                                let profile = try await self.userService.fetchProfile(uid: cleanUid)
-                                
-                                let fullName = [profile.firstName, profile.lastName]
-                                    .filter { !$0.isEmpty }
-                                    .joined(separator: " ")
-                                
-                                let finalName = fullName.isEmpty ? profile.displayName : fullName
-                                let finalHandle = "@\(profile.displayName)"
-                                
-                                let request = FriendRequest(
-                                    fromUid: cleanUid,
-                                    fromName: finalName.isEmpty ? "Unknown" : finalName,
-                                    handle: finalHandle.isEmpty ? "@unknown" : finalHandle
-                                )
-                                
-                                // NOTIFICATION LOGIC: Check if this request is new to the ViewModel
-                                if !existingRequestUids.contains(cleanUid) {
-                                    await MainActor.run {
-                                        newRequestProfiles.append(request)
-                                    }
-                                }
-                                
-                                return request
-                            } catch {
-                                // Fallback to DTO data if fetch fails
-                                print("Failed to hydrate request for \(cleanUid): \(error.localizedDescription)")
-                                return FriendRequest(
-                                    fromUid: cleanUid,
-                                    fromName: dto.fromDisplay.isEmpty ? dto.fromHandle : dto.fromDisplay,
-                                    handle: dto.fromHandle
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Collect results
-                    for await req in group {
-                        if let req = req {
-                            hydratedRequests.append(req)
-                        }
-                    }
-                }
-                
-                // 3. Update UI
-                self.requests = hydratedRequests.sorted { $0.fromName.localizedCaseInsensitiveCompare($1.fromName) == .orderedAscending }
-                
-                // 4. Trigger notifications for newly detected requests
-                for newReq in newRequestProfiles {
-                    self.notificationManager.scheduleFriendRequestNotification(
-                        from: newReq.fromName,
-                        handle: newReq.handle
-                    )
-                }
-
-                // Clear any lingering error since a new successful snapshot arrived
-                self.addError = nil
             }
         }
     }
