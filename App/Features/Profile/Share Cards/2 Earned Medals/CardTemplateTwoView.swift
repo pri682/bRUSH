@@ -3,6 +3,7 @@ import SwiftUI
 struct CardTemplateTwoView: View {
     @Binding var customization: CardCustomization
     var userProfile: UserProfile?
+    var isExporting: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -77,15 +78,17 @@ struct CardTemplateTwoView: View {
                                 
                                 ZStack {
                                     Group {
-                                        Text(mainText).offset(x: outlineThickness, y: 0)
-                                        Text(mainText).offset(x: -outlineThickness, y: 0)
-                                        Text(mainText).offset(x: 0, y: outlineThickness)
-                                        Text(mainText).offset(x: 0, y: -outlineThickness)
-                                        
-                                        Text(mainText).offset(x: diagonalOffset, y: diagonalOffset)
-                                        Text(mainText).offset(x: -diagonalOffset, y: -diagonalOffset)
-                                        Text(mainText).offset(x: diagonalOffset, y: -diagonalOffset)
-                                        Text(mainText).offset(x: -diagonalOffset, y: diagonalOffset)
+                                        if !isExporting {
+                                            Text(mainText).offset(x: outlineThickness, y: 0)
+                                            Text(mainText).offset(x: -outlineThickness, y: 0)
+                                            Text(mainText).offset(x: 0, y: outlineThickness)
+                                            Text(mainText).offset(x: 0, y: -outlineThickness)
+                                            
+                                            Text(mainText).offset(x: diagonalOffset, y: diagonalOffset)
+                                            Text(mainText).offset(x: -diagonalOffset, y: -diagonalOffset)
+                                            Text(mainText).offset(x: diagonalOffset, y: -diagonalOffset)
+                                            Text(mainText).offset(x: -diagonalOffset, y: diagonalOffset)
+                                        }
                                     }
                                     .font(.system(size: countFontSize, weight: .black, design: .rounded))
                                     .foregroundColor(.black)
@@ -115,7 +118,7 @@ struct CardTemplateTwoView: View {
                                     Text("OVER")
                                         .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
-                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                         .padding(.top, 5)
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
@@ -126,7 +129,7 @@ struct CardTemplateTwoView: View {
                                     Text("100 MILLION!")
                                         .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
-                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                         .padding(.top, 10)
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
@@ -138,7 +141,7 @@ struct CardTemplateTwoView: View {
                                     Text(totalMedals.formatted())
                                         .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
-                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                         .padding(.top, 5)
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
@@ -149,7 +152,7 @@ struct CardTemplateTwoView: View {
                                     Text("Medals Earned")
                                         .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
-                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                         .padding(.top, 10)
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
@@ -160,7 +163,7 @@ struct CardTemplateTwoView: View {
                                     Text("Medals Earned")
                                         .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
-                                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                         .padding(.top, 5)
                                         .multilineTextAlignment(.center)
                                         .frame(maxWidth: .infinity)
@@ -172,7 +175,7 @@ struct CardTemplateTwoView: View {
                                 Text("@\(profile.displayName)")
                                     .font(.system(size: cardHeight * 0.03, weight: .semibold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.8))
-                                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                    .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                     .padding(.top, 10)
                                     .frame(maxWidth: .infinity)
                                     .padding(.horizontal, horizontalPadding)

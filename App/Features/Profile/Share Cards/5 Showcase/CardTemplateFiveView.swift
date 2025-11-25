@@ -5,7 +5,9 @@ struct CardTemplateFiveView: View {
     @Binding var selectedDrawing: Item?
     var showUsername: Bool
     var showPrompt: Bool
+
     var userProfile: UserProfile?
+    var isExporting: Bool = false
     var onTapAddDrawing: () -> Void
     
     var body: some View {
@@ -51,9 +53,9 @@ struct CardTemplateFiveView: View {
                                         .font(.system(size: cardHeight * 0.03, weight: .bold, design: .rounded))
                                         .foregroundColor(.white)
                                         .multilineTextAlignment(.center)
-                                        .shadow(color: .black.opacity(1.0), radius: 2, x: 0, y: 0)
-                                        .shadow(color: .black.opacity(0.8), radius: 8, x: 0, y: 4)
-                                        .shadow(color: .black.opacity(0.6), radius: 16, x: 0, y: 8)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(1.0), radius: 2, x: 0, y: 0)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.8), radius: 8, x: 0, y: 4)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.6), radius: 16, x: 0, y: 8)
                                         .padding(.horizontal, cardWidth * 0.08)
                                 }
                                 
@@ -67,9 +69,9 @@ struct CardTemplateFiveView: View {
                                                 endPoint: .trailing
                                             )
                                         )
-                                        .shadow(color: .black.opacity(1.0), radius: 2, x: 0, y: 0)
-                                        .shadow(color: .black.opacity(0.8), radius: 6, x: 0, y: 3)
-                                        .shadow(color: .black.opacity(0.6), radius: 12, x: 0, y: 6)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(1.0), radius: 2, x: 0, y: 0)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.8), radius: 6, x: 0, y: 3)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.6), radius: 12, x: 0, y: 6)
                                 }
                             }
                             .padding(.bottom, cardHeight * 0.05)

@@ -260,7 +260,7 @@ struct VideoExportFrameView: View {
             // We need to wrap the card view
             cardView
                 .frame(width: finalCardWidth, height: finalCardHeight)
-                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
+
         }
         .frame(width: width, height: height)
         .background(Color.black) // Ensure no transparency
@@ -270,13 +270,13 @@ struct VideoExportFrameView: View {
     var cardView: some View {
         switch templateIndex {
         case 0:
-            CardTemplateOneView(customization: .constant(customization), userProfile: userProfile)
+            CardTemplateOneView(customization: .constant(customization), userProfile: userProfile, isExporting: true)
         case 1:
-            CardTemplateTwoView(customization: .constant(customization), userProfile: userProfile)
+            CardTemplateTwoView(customization: .constant(customization), userProfile: userProfile, isExporting: true)
         case 2:
-            CardTemplateThreeView(customization: .constant(customization), userProfile: userProfile)
+            CardTemplateThreeView(customization: .constant(customization), userProfile: userProfile, isExporting: true)
         case 3:
-            CardTemplateFourView(customization: .constant(customization), userProfile: userProfile)
+            CardTemplateFourView(customization: .constant(customization), userProfile: userProfile, isExporting: true)
         case 4:
             CardTemplateFiveView(
                 customization: .constant(customization),
@@ -284,6 +284,7 @@ struct VideoExportFrameView: View {
                 showUsername: showUsername,
                 showPrompt: showPrompt,
                 userProfile: userProfile,
+                isExporting: true,
                 onTapAddDrawing: {}
             )
         default:
