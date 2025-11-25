@@ -7,10 +7,13 @@ class ShareCardVideoExporter: ObservableObject {
     static let shared = ShareCardVideoExporter()
     
     @Published var isExporting = false
+
     @Published var progress: Double = 0
     
-    private let width: CGFloat = 1080
-    private let height: CGFloat = 1920
+    private var exportTask: Task<Void, Never>?
+    
+    private let width: CGFloat = 720
+    private let height: CGFloat = 1280
     private let fps: Int32 = 30
     private let duration: Double = 12.0 // 2 loops of 6s (3s move + 3s revert)
     
@@ -85,8 +88,16 @@ class ShareCardVideoExporter: ObservableObject {
         // We need to render on Main Actor, but write on background.
         // Since ImageRenderer is MainActor bound, we have to coordinate.
         
-        Task { @MainActor in
+        exportTask = Task { @MainActor in
+            // Create renderer once and reuse
+            let renderer = ImageRenderer(content: VideoExportFrameView(
+                templateIndex: 0, customization: customization, userProfile: nil, selectedDrawing: nil, showUsername: false, showPrompt: false, colors: [], animationProgress: 0, width: width, height: height
+            ))
+            renderer.scale = 1.0
+            
             for i in 0..<totalFrames {
+                if Task.isCancelled { break }
+                
                 let time = Double(i) / Double(fps)
                 
                 // Calculate animation progress (0.0 to 1.0)
@@ -116,13 +127,16 @@ class ShareCardVideoExporter: ObservableObject {
                     height: height
                 )
                 
-                let renderer = ImageRenderer(content: frameView)
-                renderer.scale = 1.0 // We set explicit frame size
+                // Update existing renderer content instead of creating new one
+                renderer.content = frameView
                 
                 if let uiImage = renderer.uiImage {
                     while !videoWriterInput.isReadyForMoreMediaData {
+                        if Task.isCancelled { break }
                         try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
                     }
+                    
+                    if Task.isCancelled { break }
                     
                     if let pixelBuffer = buffer(from: uiImage) {
                         let presentationTime = CMTime(value: CMTimeValue(i), timescale: fps)
@@ -132,19 +146,34 @@ class ShareCardVideoExporter: ObservableObject {
                 
                 self.progress = Double(i) / Double(totalFrames)
                 
-                // Yield to keep UI responsive
-                if i % 5 == 0 {
-                    await Task.yield()
-                }
+                // Yield every frame with enough time for UI to update (approx 5ms)
+                // This ensures the loading animation remains smooth
+                try? await Task.sleep(nanoseconds: 5_000_000)
             }
             
-            videoWriterInput.markAsFinished()
-            await videoWriter.finishWriting()
+            if Task.isCancelled {
+                videoWriterInput.markAsFinished()
+                videoWriter.cancelWriting()
+                self.isExporting = false
+                self.progress = 0
+                completion(nil)
+            } else {
+                videoWriterInput.markAsFinished()
+                await videoWriter.finishWriting()
+                
+                self.isExporting = false
+                self.progress = 1.0
+                completion(videoOutputURL)
+            }
             
-            self.isExporting = false
-            self.progress = 1.0
-            completion(videoOutputURL)
+            self.exportTask = nil
         }
+    }
+    
+    func cancelExport() {
+        exportTask?.cancel()
+        isExporting = false
+        progress = 0
     }
     
     private func buffer(from image: UIImage) -> CVPixelBuffer? {

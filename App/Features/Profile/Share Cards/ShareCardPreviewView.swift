@@ -182,23 +182,17 @@ struct ShareCardPreviewView: View {
             if videoExporter.isExporting {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
-                    VStack(spacing: 20) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(.white)
-                        Text("Exporting Video...")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("\(Int(videoExporter.progress * 100))%")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .padding(30)
-                    .glassEffect(.regular)
+                    
+                    CustomExportAnimation(progress: videoExporter.progress)
+                    
+
                 }
                 .transition(.opacity)
                 .zIndex(100)
             }
+        }
+        .onDisappear {
+            videoExporter.cancelExport()
         }
         .sheet(isPresented: Binding(
             get: { self.isSharing },
