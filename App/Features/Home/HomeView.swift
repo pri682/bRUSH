@@ -158,8 +158,16 @@ struct HomeView: View {
                                                             Capsule()
                                                                 .fill(currentFeedIndex == index ? Color.red : Color.accentColor)
                                                                 .frame(width: capsuleWidth, height: capsuleHeight)
+                                                                .overlay(
+                                                                    Group {
+                                                                        if currentFeedIndex != index {
+                                                                            Capsule()
+                                                                                .inset(by: 0.4)
+                                                                                .stroke(Color.white.opacity(0.34), lineWidth: 1)
+                                                                        }
+                                                                    }
+                                                                )
                                                         }
-                                                        .glassEffect()
                                                     }
                                                 }
                                                 .frame(maxHeight: contentHeightBetweenBars)

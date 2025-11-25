@@ -27,34 +27,52 @@ struct CardTemplateThreeView: View {
                     
                     if let profile = userProfile {
                         let isOver100M = profile.totalDrawingCount > 99_999_999
-                        let drawingCountText = isOver100M ? "100 MILLION!" : "\(profile.totalDrawingCount)"
                         
                         let outlineThickness = cardWidth * 0.0035
                         let diagonalOffset = outlineThickness / 1.4142
                         
-                        VStack(spacing: -5) {
+                        VStack(spacing: 0) {
                             Text("@\(profile.displayName)")
                                 .font(.system(size: usernameFontSize, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.9))
                                 .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
                             
                             ZStack {
-                                Group {
-                                    Text(drawingCountText).offset(x: outlineThickness, y: 0)
-                                    Text(drawingCountText).offset(x: -outlineThickness, y: 0)
-                                    Text(drawingCountText).offset(x: 0, y: outlineThickness)
-                                    Text(drawingCountText).offset(x: 0, y: -outlineThickness)
-                                    
-                                    Text(drawingCountText).offset(x: diagonalOffset, y: diagonalOffset)
-                                    Text(drawingCountText).offset(x: -diagonalOffset, y: -diagonalOffset)
-                                    Text(drawingCountText).offset(x: diagonalOffset, y: -diagonalOffset)
-                                    Text(drawingCountText).offset(x: -diagonalOffset, y: diagonalOffset)
+                                let content = Group {
+                                    if isOver100M {
+                                        VStack(spacing: -countFontSize * 0.15) {
+                                            Text("100")
+                                                .font(.system(size: countFontSize * 0.7, weight: .black, design: .rounded))
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.3)
+                                            
+                                            Text("MILLION!")
+                                                .font(.system(size: countFontSize * 0.4, weight: .black, design: .rounded))
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.3)
+                                        }
+                                    } else {
+                                        Text("\(profile.totalDrawingCount)")
+                                            .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.3)
+                                    }
                                 }
-                                .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                
+                                Group {
+                                    content.offset(x: outlineThickness, y: 0)
+                                    content.offset(x: -outlineThickness, y: 0)
+                                    content.offset(x: 0, y: outlineThickness)
+                                    content.offset(x: 0, y: -outlineThickness)
+                                    
+                                    content.offset(x: diagonalOffset, y: diagonalOffset)
+                                    content.offset(x: -diagonalOffset, y: -diagonalOffset)
+                                    content.offset(x: diagonalOffset, y: -diagonalOffset)
+                                    content.offset(x: -diagonalOffset, y: diagonalOffset)
+                                }
                                 .foregroundColor(.black)
                                 
-                                Text(drawingCountText)
-                                    .font(.system(size: countFontSize, weight: .black, design: .rounded))
+                                content
                                     .foregroundStyle(
                                         LinearGradient(
                                             colors: [
@@ -68,10 +86,8 @@ struct CardTemplateThreeView: View {
                             }
                             .drawingGroup()
                             .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
-                            .minimumScaleFactor(0.3)
-                            .lineLimit(1)
                             .multilineTextAlignment(.center)
-                            .frame(width: cardWidth * 0.5)
+                            .frame(width: cardWidth * 0.85)
                             
                             VStack(spacing: 2) {
                                 Text("Total Drawings")
@@ -89,7 +105,7 @@ struct CardTemplateThreeView: View {
                             }
                         }
                         .frame(width: cardWidth, alignment: .center)
-                        .padding(.bottom, cardHeight * 0.08)
+                        .padding(.bottom, cardHeight * 0.04)
                     }
                     
                     VStack {
