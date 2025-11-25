@@ -124,52 +124,12 @@ struct ShareCardPreviewView: View {
                         }
                         .padding(.bottom, 24)
                         
-                        if showShareMenu {
-                            VStack(spacing: 12) {
-                                Button(action: {
-                                    exportImage()
-                                }) {
-                                    HStack {
-                                        Image(systemName: "photo")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Text("Export Image")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Spacer()
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .frame(width: 200)
-                                    .glassEffect(.regular)
-                                }
-                                
-                                Button(action: {
-                                    exportVideo()
-                                }) {
-                                    HStack {
-                                        Image(systemName: "video")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Text("Export Video")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Spacer()
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .frame(width: 200)
-                                    .glassEffect(.regular)
-                                }
-                            }
-                            .padding(.bottom, 10)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
+
                         
                         GlassEffectContainer(spacing: 12.0) {
                             HStack(alignment: .top, spacing: 12) {
                                     Button(action: {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            showShareMenu.toggle()
-                                        }
+                                        showShareMenu = true
                                     }) {
                                         HStack(spacing: 8) {
                                             Image(systemName: "square.and.arrow.up")
@@ -183,6 +143,17 @@ struct ShareCardPreviewView: View {
                                         .padding(.vertical, 16)
                                         .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
                                         .glassEffectID("shareButton", in: namespace)
+                                    }
+                                    .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
+                                        Button("Export as Image") {
+                                            exportImage()
+                                        }
+                                        
+                                        Button("Export as Video") {
+                                            exportVideo()
+                                        }
+                                        
+                                        Button("Cancel", role: .cancel) {}
                                     }
                                 .disabled(currentPage == 4 && selectedDrawing == nil)
                                                                 
@@ -384,9 +355,6 @@ struct ShareCardPreviewView: View {
     }
     
     private func exportImage() {
-        withAnimation {
-            showShareMenu = false
-        }
         Task {
             let image = captureCard()
             await MainActor.run {
@@ -399,9 +367,6 @@ struct ShareCardPreviewView: View {
     }
     
     private func exportVideo() {
-        withAnimation {
-            showShareMenu = false
-        }
         let customization = CardCustomization(
             backgroundColor: backgroundColor,
             cardColor: cardColor,
