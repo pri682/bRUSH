@@ -25,7 +25,22 @@ This test makes sure that the length logic is working right, and later we can bu
 ---
 
 ## Kelvin Mathew – Unit Tests Plan
-*(no tests added yet)*
+
+### 1. testDrawingViewThemeIdentity()
+This test checks the theme system that the drawing view uses (like switching between a color background or a texture).  
+It makes sure IDs are created in a consistent way so the UI can loop over them without breaking, and that two themes with the same color are actually treated the same.  
+If this logic is wrong, the UI might reload wrong themes or just not update like it should.
+
+### 2. testStreakManagerLocalUpdate()
+This focuses on the streak system that runs fully on the device using UserDefaults.  
+It resets the stored streak, marks a drawing as completed “today,” and checks that the count goes up the right way.  
+Also tests that doing it twice doesn’t double-count.  
+It matters because the streak is shown to the user directly, and small bugs here can confuse or frustrate people fast.
+
+### 3. testDrawingPreviewViewInitialization()
+This just makes sure the preview view can be created with a normal item and not crash.  
+It feeds in a mock item and a simple binding, then checks that the view actually builds its body.  
+It’s one of those safety tests to make sure the UI won’t blow up when the user taps something.
 
 ---
 
