@@ -25,6 +25,10 @@ struct ShareCardPreviewView: View {
     @State private var showUsername = true
     @State private var showPrompt = true
     
+    @ObservedObject var videoExporter = ShareCardVideoExporter.shared
+    @State private var showShareMenu = false
+    @State private var shareItems: [Any] = []
+    
     @EnvironmentObject var dataModel: DataModel
     
     @Namespace private var namespace
@@ -120,32 +124,37 @@ struct ShareCardPreviewView: View {
                         }
                         .padding(.bottom, 24)
                         
+
+                        
                         GlassEffectContainer(spacing: 12.0) {
                             HStack(alignment: .top, spacing: 12) {
-                                Button(action: {
-                                    Task {
-                                        let image = captureCard()
-                                        await MainActor.run {
-                                            self.cardImage = image
-                                            if self.cardImage != nil {
-                                                self.isSharing = true
-                                            }
+                                    Button(action: {
+                                        showShareMenu = true
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.white)
+                                            Text("Share")
+                                                .font(.system(size: 18, weight: .semibold))
+                                                .foregroundColor(.white)
                                         }
+                                        .padding(.horizontal, 30)
+                                        .padding(.vertical, 16)
+                                        .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
+                                        .glassEffectID("shareButton", in: namespace)
                                     }
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "arrowshape.turn.up.right.fill")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(.white)
-                                        Text("Share")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundColor(.white)
+                                    .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
+                                        Button("Export as Image") {
+                                            exportImage()
+                                        }
+                                        
+                                        Button("Export as Video") {
+                                            exportVideo()
+                                        }
+                                        
+                                        Button("Cancel", role: .cancel) {}
                                     }
-                                    .padding(.horizontal, 30)
-                                    .padding(.vertical, 16)
-                                    .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
-                                    .glassEffectID("shareButton", in: namespace)
-                                }
                                 .disabled(currentPage == 4 && selectedDrawing == nil)
                                                                 
                                 if canEditTemplateFive {
@@ -169,16 +178,28 @@ struct ShareCardPreviewView: View {
                     }
                 }
             }
+            
+            if videoExporter.isExporting {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    
+                    CustomExportAnimation(progress: videoExporter.progress)
+                    
+
+                }
+                .transition(.opacity)
+                .zIndex(100)
+            }
+        }
+        .onDisappear {
+            videoExporter.cancelExport()
         }
         .sheet(isPresented: Binding(
             get: { self.isSharing },
             set: { self.isSharing = $0 }
         )) {
-            if let image = cardImage {
-                let itemSource = ImageActivityItemSource(title: "Brush Share Card", image: image)
-                ShareSheet(activityItems: [itemSource])
-                    .presentationDetents([.medium, .large])
-            }
+            ShareSheet(activityItems: shareItems)
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showDrawingPicker) {
             DrawingPickerView(
@@ -202,6 +223,8 @@ struct ShareCardPreviewView: View {
     
     // MARK: - Helper Functions
     
+    // MARK: - Helper Functions
+    
     /// Returns the tint color for the share button based on current template
     private func buttonTintColor(for templateIndex: Int) -> Color {
         switch templateIndex {
@@ -217,6 +240,44 @@ struct ShareCardPreviewView: View {
             return Color(hex: "#054336") ?? .green
         default:
             return .orange
+        }
+    }
+    
+    // Helper to get colors for video export (matching ShareCardGeneratorView)
+    private func gradientColors(for templateIndex: Int) -> [Color] {
+        switch templateIndex {
+        case 0:
+            return [
+                Color(hex: "#CC522A") ?? .orange,
+                Color(hex: "#D66A2E") ?? .orange,
+                Color(hex: "#D68645") ?? .orange
+            ]
+        case 1:
+            return [
+                Color(hex: "#B0186E") ?? .pink,
+                Color(hex: "#8F0F63") ?? .purple,
+                Color(hex: "#6D3B74") ?? .purple
+            ]
+        case 2:
+            return [
+                Color(hex: "#1E445A") ?? .blue,
+                Color(hex: "#356B7F") ?? .blue,
+                Color(hex: "#4FA5B8") ?? .cyan
+            ]
+        case 3:
+            return [
+                Color(hex: "#7A0040") ?? .pink,
+                Color(hex: "#C0282E") ?? .red,
+                Color(hex: "#FF5400") ?? .orange
+            ]
+        case 4:
+            return [
+                Color(hex: "#054336") ?? .green,
+                Color(hex: "#065F46") ?? .green,
+                Color(hex: "#10B981") ?? .teal
+            ]
+        default:
+            return [.orange, .yellow, .red]
         }
     }
     
@@ -285,5 +346,44 @@ struct ShareCardPreviewView: View {
         }
         
         return uiImage
+    }
+    
+    private func exportImage() {
+        Task {
+            let image = captureCard()
+            await MainActor.run {
+                if let image = image {
+                    self.shareItems = [ImageActivityItemSource(title: "Brush Share Card", image: image)]
+                    self.isSharing = true
+                }
+            }
+        }
+    }
+    
+    private func exportVideo() {
+        let customization = CardCustomization(
+            backgroundColor: backgroundColor,
+            cardColor: cardColor,
+            cardText: cardText,
+            textColor: textColor,
+            cardIcon: .user
+        )
+        
+        videoExporter.exportVideo(
+            templateIndex: currentPage,
+            customization: customization,
+            userProfile: userProfile,
+            selectedDrawing: selectedDrawing,
+            showUsername: showUsername,
+            showPrompt: showPrompt,
+            colors: gradientColors(for: currentPage)
+        ) { url in
+            if let url = url {
+                DispatchQueue.main.async {
+                    self.shareItems = [url]
+                    self.isSharing = true
+                }
+            }
+        }
     }
 }

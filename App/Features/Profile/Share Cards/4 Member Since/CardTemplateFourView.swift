@@ -3,6 +3,7 @@ import SwiftUI
 struct CardTemplateFourView: View {
     @Binding var customization: CardCustomization
     var userProfile: UserProfile?
+    var isExporting: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -30,20 +31,22 @@ struct CardTemplateFourView: View {
                             Text("Member Since")
                                 .font(.system(size: cardHeight * 0.04, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
-                                .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
+                                .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 3, x: 0, y: 2)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                             
                             ZStack {
                                 Group {
-                                    Text(memberYear).offset(x: outlineThickness, y: 0)
-                                    Text(memberYear).offset(x: -outlineThickness, y: 0)
-                                    Text(memberYear).offset(x: 0, y: outlineThickness)
-                                    Text(memberYear).offset(x: 0, y: -outlineThickness)
-                                    
-                                    Text(memberYear).offset(x: diagonalOffset, y: diagonalOffset)
-                                    Text(memberYear).offset(x: -diagonalOffset, y: -diagonalOffset)
-                                    Text(memberYear).offset(x: diagonalOffset, y: -diagonalOffset)
-                                    Text(memberYear).offset(x: -diagonalOffset, y: diagonalOffset)
+                                    if !isExporting {
+                                        Text(memberYear).offset(x: outlineThickness, y: 0)
+                                        Text(memberYear).offset(x: -outlineThickness, y: 0)
+                                        Text(memberYear).offset(x: 0, y: outlineThickness)
+                                        Text(memberYear).offset(x: 0, y: -outlineThickness)
+                                        
+                                        Text(memberYear).offset(x: diagonalOffset, y: diagonalOffset)
+                                        Text(memberYear).offset(x: -diagonalOffset, y: -diagonalOffset)
+                                        Text(memberYear).offset(x: diagonalOffset, y: -diagonalOffset)
+                                        Text(memberYear).offset(x: -diagonalOffset, y: diagonalOffset)
+                                    }
                                 }
                                 .font(.system(size: yearFontSize, weight: .black, design: .rounded))
                                 .foregroundColor(.black)
@@ -63,7 +66,7 @@ struct CardTemplateFourView: View {
                                 
                             }
                             .drawingGroup()
-                            .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                            .shadow(color: isExporting ? .clear : .black.opacity(0.4), radius: 6, x: 0, y: 3)
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .trailing)
