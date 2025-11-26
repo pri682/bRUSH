@@ -3,6 +3,7 @@ import SwiftUI
 struct CardTemplateThreeView: View {
     @Binding var customization: CardCustomization
     var userProfile: UserProfile?
+    var isExporting: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -35,7 +36,7 @@ struct CardTemplateThreeView: View {
                             Text("@\(profile.displayName)")
                                 .font(.system(size: usernameFontSize, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.8), radius: 2, x: 1, y: 1)
+                                .shadow(color: isExporting ? .clear : .black.opacity(0.8), radius: 2, x: 1, y: 1)
                             
                             ZStack {
                                 let content = Group {
@@ -60,15 +61,17 @@ struct CardTemplateThreeView: View {
                                 }
                                 
                                 Group {
-                                    content.offset(x: outlineThickness, y: 0)
-                                    content.offset(x: -outlineThickness, y: 0)
-                                    content.offset(x: 0, y: outlineThickness)
-                                    content.offset(x: 0, y: -outlineThickness)
-                                    
-                                    content.offset(x: diagonalOffset, y: diagonalOffset)
-                                    content.offset(x: -diagonalOffset, y: -diagonalOffset)
-                                    content.offset(x: diagonalOffset, y: -diagonalOffset)
-                                    content.offset(x: -diagonalOffset, y: diagonalOffset)
+                                    if !isExporting {
+                                        content.offset(x: outlineThickness, y: 0)
+                                        content.offset(x: -outlineThickness, y: 0)
+                                        content.offset(x: 0, y: outlineThickness)
+                                        content.offset(x: 0, y: -outlineThickness)
+                                        
+                                        content.offset(x: diagonalOffset, y: diagonalOffset)
+                                        content.offset(x: -diagonalOffset, y: -diagonalOffset)
+                                        content.offset(x: diagonalOffset, y: -diagonalOffset)
+                                        content.offset(x: -diagonalOffset, y: diagonalOffset)
+                                    }
                                 }
                                 .foregroundColor(.black)
                                 
@@ -85,7 +88,7 @@ struct CardTemplateThreeView: View {
                                     )
                             }
                             .drawingGroup()
-                            .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
+                            .shadow(color: isExporting ? .clear : .black.opacity(0.4), radius: 4, x: 0, y: 2)
                             .multilineTextAlignment(.center)
                             .frame(width: cardWidth * 0.85)
                             
@@ -93,13 +96,13 @@ struct CardTemplateThreeView: View {
                                 Text("Total Drawings")
                                     .font(.system(size: titleFontSize, weight: .bold, design: .rounded))
                                     .foregroundColor(.white.opacity(0.9))
-                                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                    .shadow(color: isExporting ? .clear : .black.opacity(0.3), radius: 2, x: 0, y: 1)
                                 
                                 if isOver100M {
                                     Text("The Card can't show more than that! You did it!")
                                         .font(.system(size: noteFontSize, weight: .medium, design: .rounded))
                                         .foregroundColor(.white.opacity(0.8))
-                                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                        .shadow(color: isExporting ? .clear : .black.opacity(0.3), radius: 1, x: 0, y: 1)
                                         .padding(.top, 2)
                                 }
                             }

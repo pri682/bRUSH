@@ -19,9 +19,22 @@ struct ProfileElementsColorCalculation {
     /// - Returns: A tuple containing the primary text Color and its contrasting shadow Color.
     static func calculateContrastingTextColor(for backgroundName: String) -> (color: Color, shadowColor: Color) {
         
-        guard let backgroundUIImage = UIImage(named: backgroundName),
-              let averageColor = backgroundUIImage.averageColor else {
+        guard let backgroundUIImage = UIImage(named: backgroundName) else {
             // Default to white text with a black shadow if the image cannot be loaded
+            return (.white, .black)
+        }
+        
+        return calculateContrastingTextColor(for: backgroundUIImage)
+    }
+    
+    /// Calculates the best contrasting text color (Black or White) and its corresponding shadow
+    /// based on the average luminance of the provided UIImage.
+    ///
+    /// - Parameter image: The UIImage to analyze.
+    /// - Returns: A tuple containing the primary text Color and its contrasting shadow Color.
+    static func calculateContrastingTextColor(for image: UIImage) -> (color: Color, shadowColor: Color) {
+        
+        guard let averageColor = image.averageColor else {
             return (.white, .black)
         }
         

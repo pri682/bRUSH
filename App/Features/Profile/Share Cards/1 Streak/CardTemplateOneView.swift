@@ -3,6 +3,7 @@ import SwiftUI
 struct CardTemplateOneView: View {
     @Binding var customization: CardCustomization
     var userProfile: UserProfile?
+    var isExporting: Bool = false
     
     var body: some View {
         GeometryReader { geo in
@@ -58,8 +59,8 @@ struct CardTemplateOneView: View {
                                 
                             }
                             .drawingGroup()
-                            .shadow(color: Color(hex: "#FF4500")?.opacity(0.5)
-                                    ?? .orange.opacity(0.5),
+                            .shadow(color: isExporting ? .clear : (Color(hex: "#FF4500")?.opacity(0.5)
+                                    ?? .orange.opacity(0.5)),
                                     radius: 10, x: 0, y: 5)
                             .minimumScaleFactor(0.3)
                             .lineLimit(1)
@@ -68,13 +69,13 @@ struct CardTemplateOneView: View {
                             Text("Current Streak")
                                 .font(.system(size: titleFontSize, weight: .bold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                .shadow(color: isExporting ? .clear : .black.opacity(0.3), radius: 2, x: 0, y: 1)
                                 .padding(.top, 5)
                             
                             Text("@\(profile.displayName)")
                                 .font(.system(size: usernameFontSize, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white.opacity(0.8))
-                                .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                                .shadow(color: isExporting ? .clear : .black.opacity(0.5), radius: 2, x: 0, y: 1)
                                 .padding(.top, 10)
                         }
                         .frame(maxWidth: .infinity)
