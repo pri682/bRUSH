@@ -29,6 +29,7 @@ public struct UserProfile: Codable, Equatable, Hashable {
     var streakCount: Int
     var memberSince: Date
     var lastCompletedDate: Date?
+    var lastAttemptedDate: Date?
 }
 
 final class UserService {
@@ -37,6 +38,15 @@ final class UserService {
     private let usersCollection = "users"
 
     private init() {}
+    
+    // -------------------------------------------------------
+    // UPDATE LAST ATTEMPTED DATE
+    // -------------------------------------------------------
+    func updateLastAttemptedDate(uid: String) async throws {
+        try await db.collection(usersCollection).document(uid).updateData([
+            "lastAttemptedDate": FieldValue.serverTimestamp()
+        ])
+    }
     
     // -------------------------------------------------------
     // UPDATE STREAK + DRAW COUNT
@@ -135,7 +145,49 @@ final class UserService {
     // DELETE PROFILE
     // -------------------------------------------------------
     func deleteProfile(uid: String) async throws {
+        let friendshipsRef = db.collection("friendships")
+        let myFriendsCollection = friendshipsRef.document(uid).collection("friends")
+        
+        let friendSnapshot = try? await myFriendsCollection.getDocuments()
+        let batch1 = db.batch()
+        
+        if let docs = friendSnapshot?.documents {
+            for doc in docs {
+                let friendUid = doc.documentID
+                let friendRef = friendshipsRef.document(friendUid).collection("friends").document(uid)
+                batch1.deleteDocument(friendRef)
+                batch1.deleteDocument(doc.reference)
+            }
+        }
+        try? await batch1.commit()
+        
+        let incomingRef = db.collection("friendRequests").document(uid).collection("incoming")
+        let incomingSnapshot = try? await incomingRef.getDocuments()
+        
+        let batch2 = db.batch()
+        if let docs = incomingSnapshot?.documents {
+            for doc in docs {
+                batch2.deleteDocument(doc.reference)
+            }
+        }
+        try? await batch2.commit()
+        
+        let outgoingSnapshot = try? await db.collectionGroup("incoming")
+            .whereField("fromUid", isEqualTo: uid)
+            .getDocuments()
+            
+        let batch3 = db.batch()
+        if let docs = outgoingSnapshot?.documents {
+            for doc in docs {
+                batch3.deleteDocument(doc.reference)
+            }
+        }
+        try? await batch3.commit()
+        
         try await db.collection(usersCollection).document(uid).delete()
+        
+        try? await friendshipsRef.document(uid).delete()
+        try? await db.collection("friendRequests").document(uid).delete()
     }
     
     // -------------------------------------------------------
@@ -180,6 +232,7 @@ final class UserService {
         
         let memberSince = (data["memberSince"] as? Timestamp)?.dateValue() ?? Date()
         let lastCompletedDate = (data["lastCompletedDate"] as? Timestamp)?.dateValue()
+        let lastAttemptedDate = (data["lastAttemptedDate"] as? Timestamp)?.dateValue()
         
         return UserProfile(
             uid: uid,
@@ -205,7 +258,8 @@ final class UserService {
             totalDrawingCount: totalDrawingCount,
             streakCount: streakCount,
             memberSince: memberSince,
-            lastCompletedDate: lastCompletedDate
+            lastCompletedDate: lastCompletedDate,
+            lastAttemptedDate: lastAttemptedDate
         )
     }
     
@@ -216,9 +270,7 @@ final class UserService {
     // Swift dictionaries drop nil values, so Firestore won't know to delete the field.
     func updateProfile(uid: String, data: [String: Any]) async throws {
         try await db.collection(usersCollection).document(uid).updateData(data)
-    }   
-
-
+    }
 
     // -------------------------------------------------------
     // UPDATE AVATAR SPECIFICALLY (Handles Deletions)

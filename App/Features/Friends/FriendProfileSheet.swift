@@ -56,6 +56,7 @@ struct FriendProfileSheet: View {
                     
                     let isFriend = vm.friendIds.contains(profile.uid)
                     let isPending = vm.isRequestPending(uid: profile.uid)
+                    let incomingReq = vm.requests.first(where: { $0.fromUid == profile.uid })
                     
                     VStack {
                         if !isCurrentUser {
@@ -78,6 +79,24 @@ struct FriendProfileSheet: View {
                                     }
                                     Button("Cancel", role: .cancel) {}
                                 }
+                            } else if let req = incomingReq {
+                                HStack(spacing: 12) {
+                                    Button {
+                                        Task { await vm.accept(req) }
+                                    } label: {
+                                        Text("Accept")
+                                    }
+                                    .buttonStyle(.glassProminent)
+                                    
+                                    Button {
+                                        Task { await vm.decline(req) }
+                                    } label: {
+                                        Text("Decline")
+                                    }
+                                    .buttonStyle(.glass)
+                                }
+                                .padding(.horizontal, 40)
+                                
                             } else if isPending {
                                 Text("Request Pending")
                                     .font(.headline)

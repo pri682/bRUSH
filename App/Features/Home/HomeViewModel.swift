@@ -9,6 +9,9 @@ final class HomeViewModel: ObservableObject {
     @Published var dailyPrompt: String = "Loading..."
     @Published var isLoadingFeed: Bool = true
     @Published var errorMessage: String?
+    
+    @Published var hasPostedToday: Bool = false
+    @Published var hasAttemptedDrawing: Bool = false
 
     private let db = Firestore.firestore()
 
@@ -24,6 +27,50 @@ final class HomeViewModel: ObservableObject {
         } catch {
             dailyPrompt = "Error loading prompt"
             print("❌ Error loading prompt:", error.localizedDescription)
+        }
+    }
+    
+    // MARK: - Check User Status
+    func checkUserPostStatus() async {
+        guard let currentUID = Auth.auth().currentUser?.uid else { return }
+        
+        do {
+            let doc = try await db.collection("users").document(currentUID).getDocument()
+            
+            // Check Last Completed
+            if let timestamp = doc.get("lastCompletedDate") as? Timestamp {
+                let date = timestamp.dateValue()
+                let isToday = Calendar.current.isDateInToday(date)
+                await MainActor.run { self.hasPostedToday = isToday }
+            } else {
+                await MainActor.run { self.hasPostedToday = false }
+            }
+            
+            // Check Last Attempted 🔥
+            if let attemptTimestamp = doc.get("lastAttemptedDate") as? Timestamp {
+                let attemptDate = attemptTimestamp.dateValue()
+                let isAttemptedToday = Calendar.current.isDateInToday(attemptDate)
+                await MainActor.run { self.hasAttemptedDrawing = isAttemptedToday }
+            } else {
+                await MainActor.run { self.hasAttemptedDrawing = false }
+            }
+            
+        } catch {
+            print("❌ Error checking user status: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Mark Attempted
+    func markDrawingAttempted() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            // Optimistic update
+            await MainActor.run { self.hasAttemptedDrawing = true }
+            // Cloud update
+            try await UserService.shared.updateLastAttemptedDate(uid: uid)
+            print("✅ Marked drawing as attempted in cloud")
+        } catch {
+            print("❌ Error marking drawing attempt: \(error)")
         }
     }
 
@@ -74,6 +121,7 @@ final class HomeViewModel: ObservableObject {
                     let email = userData?["email"] as? String ?? ""
                     let avatarType = userData?["avatarType"] as? String ?? "personal"
                     let avatarBackground = userData?["avatarBackground"] as? String
+                    let avatarFace = userData?["avatarFace"] as? String
                     let avatarBody = userData?["avatarBody"] as? String
                     let avatarShirt = userData?["avatarShirt"] as? String
                     let avatarEyes = userData?["avatarEyes"] as? String
@@ -90,6 +138,7 @@ final class HomeViewModel: ObservableObject {
                     let totalDrawingCount = userData?["totalDrawingCount"] as? Int ?? 0
                     let streakCount = userData?["streakCount"] as? Int ?? 0
                     let memberSince = (userData?["memberSince"] as? Timestamp)?.dateValue() ?? Date()
+                    let lastCompletedDate = (userData?["lastCompletedDate"] as? Timestamp)?.dateValue()
                     
                     let item = FeedItem(
                         id: docSnapshot.documentID,
@@ -106,6 +155,7 @@ final class HomeViewModel: ObservableObject {
                         email: email,
                         avatarType: avatarType,
                         avatarBackground: avatarBackground,
+                        avatarFace: avatarFace,
                         avatarBody: avatarBody,
                         avatarShirt: avatarShirt,
                         avatarEyes: avatarEyes,
@@ -120,7 +170,8 @@ final class HomeViewModel: ObservableObject {
                         bronzeMedalsAwarded: bronzeMedalsAwarded,
                         totalDrawingCount: totalDrawingCount,
                         streakCount: streakCount,
-                        memberSince: memberSince
+                        memberSince: memberSince,
+                        lastCompletedDate: lastCompletedDate
                     )
                     allFeedItems.append(item)
                 }

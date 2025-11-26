@@ -141,17 +141,13 @@ class ProfileViewModel: ObservableObject {
             try await auth.deleteUser()
             
             // Clear local state
-            await MainActor.run {
-                self.user = nil
-                self.profile = nil
-                self.email = ""
-                self.password = ""
-                LocalUserStorage.shared.clearProfile()
-            }
+            self.signOut()
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
             }
+            // Force sign out to ensure user is returned to login screen
+            self.signOut()
         }
     }
     
