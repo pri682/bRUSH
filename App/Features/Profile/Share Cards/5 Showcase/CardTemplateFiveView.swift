@@ -49,13 +49,15 @@ struct CardTemplateFiveView: View {
                             
                             VStack(spacing: cardHeight * 0.02) {
                                 if showPrompt {
+                                    let (promptTextColor, promptShadowColor) = ProfileElementsColorCalculation.calculateContrastingTextColor(for: drawingImage)
+                                    
                                     Text(drawing.prompt)
                                         .font(.system(size: cardHeight * 0.03, weight: .bold, design: .rounded))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(promptTextColor)
                                         .multilineTextAlignment(.center)
-                                        .shadow(color: isExporting ? .clear : .black.opacity(1.0), radius: 2, x: 0, y: 0)
-                                        .shadow(color: isExporting ? .clear : .black.opacity(0.8), radius: 8, x: 0, y: 4)
-                                        .shadow(color: isExporting ? .clear : .black.opacity(0.6), radius: 16, x: 0, y: 8)
+                                        .shadow(color: isExporting ? .clear : promptShadowColor.opacity(1.0), radius: 2, x: 0, y: 0)
+                                        .shadow(color: isExporting ? .clear : promptShadowColor.opacity(0.8), radius: 8, x: 0, y: 4)
+                                        .shadow(color: isExporting ? .clear : promptShadowColor.opacity(0.6), radius: 16, x: 0, y: 8)
                                         .padding(.horizontal, cardWidth * 0.08)
                                 }
                                 
