@@ -161,7 +161,9 @@ class SignUpViewModel: ObservableObject {
                     bronzeMedalsAwarded: 0,
                     totalDrawingCount: 0,
                     streakCount: 0,
-                    memberSince: Date()
+                    memberSince: Date(),
+                    lastCompletedDate: nil,
+                    lastAttemptedDate: nil
                 )
 
                 // DEBUG: print the profile payload keys/values before saving to Firestore.

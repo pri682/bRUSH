@@ -28,7 +28,7 @@ struct UserFeedItemView: View {
     @State private var isContentLoaded = false
     
     @State private var isShowingProfileSheet: Bool = false
-    @ObservedObject private var friendsViewModel = FriendsViewModel()
+    @ObservedObject var friendsViewModel: FriendsViewModel
 
     @Binding var isGoldDisabled: Bool
     @Binding var isSilverDisabled: Bool
@@ -36,11 +36,13 @@ struct UserFeedItemView: View {
     var onGoldTapped: ((Bool) -> Void)?
     var onSilverTapped: ((Bool) -> Void)?
     var onBronzeTapped: ((Bool) -> Void)?
+    var onRefreshNeeded: (() -> Void)?
 
     init(
         item: FeedItem,
         prompt: String,
         loadID: UUID,
+        friendsViewModel: FriendsViewModel,
         hasPostedToday: Binding<Bool>,
         hasAttemptedDrawing: Binding<Bool>,
         isPresentingCreate: Binding<Bool>,
@@ -49,11 +51,13 @@ struct UserFeedItemView: View {
         isBronzeDisabled: Binding<Bool>,
         onGoldTapped: ((Bool) -> Void)? = nil,
         onSilverTapped: ((Bool) -> Void)? = nil,
-        onBronzeTapped: ((Bool) -> Void)? = nil
+        onBronzeTapped: ((Bool) -> Void)? = nil,
+        onRefreshNeeded: (() -> Void)? = nil
     ) {
         self.item = item
         self.prompt = prompt
         self.loadID = loadID
+        self.friendsViewModel = friendsViewModel
 
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
@@ -70,6 +74,7 @@ struct UserFeedItemView: View {
         self.onGoldTapped = onGoldTapped
         self.onSilverTapped = onSilverTapped
         self.onBronzeTapped = onBronzeTapped
+        self.onRefreshNeeded = onRefreshNeeded
     }
 
     var body: some View {
@@ -141,7 +146,17 @@ struct UserFeedItemView: View {
         .background(Color.clear)
         .opacity(isContentLoaded ? 1 : 0)
         .animation(.easeIn(duration: 0.3), value: isContentLoaded)
-        .sheet(isPresented: $isShowingProfileSheet) {
+        .sheet(isPresented: $isShowingProfileSheet, onDismiss: {
+            // Check if the friend was removed during the sheet interaction
+            // We do this by checking if the ID is still in the local view model's friend list
+            let isStillFriend = friendsViewModel.friendIds.contains(item.userId)
+            let isMe = item.userId == friendsViewModel.meUid
+            
+            if !isStillFriend && !isMe {
+                // Friend was removed, request a refresh
+                onRefreshNeeded?()
+            }
+        }) {
             let profile = UserProfile(
                 uid: item.userId,
                 firstName: item.firstName,
@@ -151,6 +166,7 @@ struct UserFeedItemView: View {
                 avatarType: item.avatarType,
                 avatarBackground: item.avatarBackground,
                 avatarBody: item.avatarBody,
+                avatarFace: item.avatarFace,
                 avatarShirt: item.avatarShirt,
                 avatarEyes: item.avatarEyes,
                 avatarMouth: item.avatarMouth,
@@ -164,7 +180,9 @@ struct UserFeedItemView: View {
                 bronzeMedalsAwarded: item.bronzeMedalsAwarded,
                 totalDrawingCount: item.totalDrawingCount,
                 streakCount: item.streakCount,
-                memberSince: item.memberSince
+                memberSince: item.memberSince,
+                lastCompletedDate: item.lastCompletedDate,
+                lastAttemptedDate: nil
             )
             FriendProfileSheet(vm: friendsViewModel, profile: profile)
         }
@@ -196,9 +214,6 @@ struct UserFeedItemView: View {
             if isFirstLoad {
                 self.isContentLoaded = true
             }
-        }
-        .onAppear {
-            friendsViewModel.refreshFriends()
         }
     }
     

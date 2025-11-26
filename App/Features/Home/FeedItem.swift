@@ -16,6 +16,7 @@ struct FeedItem: Identifiable {
     let email: String
     let avatarType: String
     let avatarBackground: String?
+    let avatarFace: String?
     let avatarBody: String?
     let avatarShirt: String?
     let avatarEyes: String?
@@ -31,6 +32,7 @@ struct FeedItem: Identifiable {
     let totalDrawingCount: Int
     let streakCount: Int
     let memberSince: Date
+    let lastCompletedDate: Date?
 
     var profileSystemImageName: String { "person.circle.fill" }
 }

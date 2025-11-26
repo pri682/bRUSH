@@ -6,16 +6,16 @@ struct HomeView: View {
     @State private var showOnboarding: Bool = false
     @State private var showingNotifications: Bool = false
     @StateObject private var viewModel = HomeViewModel()
+    
+    @StateObject private var friendsViewModel = FriendsViewModel()
+    
     @State private var isOnboardingPresented: Bool = false
     @State private var isPresentingCreate: Bool = false
     
     @Namespace private var launchAnimation
     @State private var isShowingSplash = true
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-
-    @AppStorage("hasPostedToday") private var hasPostedToday: Bool = false
-    @AppStorage("lastPostDateString") private var lastPostDateString: String = ""
-    @State private var hasAttemptedDrawing: Bool = false
+    
     @State private var didDismissCreate = false
     
     @State private var showSnow: Bool = HomeView.isWinter()
@@ -55,7 +55,12 @@ struct HomeView: View {
             }
         }
         
-        await viewModel.loadFeed()
+        await viewModel.checkUserPostStatus()
+        
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await viewModel.loadFeed() }
+            group.addTask { await friendsViewModel.refreshFriends() }
+        }
         
         await MainActor.run {
             loadID = UUID()
@@ -95,15 +100,21 @@ struct HomeView: View {
                                                     item: item,
                                                     prompt: viewModel.dailyPrompt,
                                                     loadID: loadID,
-                                                    hasPostedToday: $hasPostedToday,
-                                                    hasAttemptedDrawing: $hasAttemptedDrawing,
+                                                    friendsViewModel: friendsViewModel,
+                                                    hasPostedToday: $viewModel.hasPostedToday,
+                                                    hasAttemptedDrawing: $viewModel.hasAttemptedDrawing,
                                                     isPresentingCreate: $isPresentingCreate,
                                                     isGoldDisabled: $dailyGoldAwarded,
                                                     isSilverDisabled: $dailySilverAwarded,
                                                     isBronzeDisabled: $dailyBronzeAwarded,
                                                     onGoldTapped: { isSelected in dailyGoldAwarded = isSelected },
                                                     onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
-                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected }
+                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected },
+                                                    onRefreshNeeded: {
+                                                        Task {
+                                                            await reloadFeed(showOverlay: true)
+                                                        }
+                                                    }
                                                 )
                                                 .frame(width: cardWidth, height: geometry.size.height - (UIDevice.current.userInterfaceIdiom == .phone ? 90 : 0))
                                                 .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67)
@@ -260,7 +271,7 @@ struct HomeView: View {
                                         .padding(.horizontal)
                                 }
                                 .buttonStyle(.glassProminent)
-                                .disabled(hasAttemptedDrawing)
+                                .disabled(viewModel.hasAttemptedDrawing)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(AnimatedMeshGradientBackground().ignoresSafeArea())
@@ -313,9 +324,7 @@ struct HomeView: View {
                             }
                         }
                         
-                        checkDailyPostStatus()
                         updateNotificationStatus()
-                        
                         isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
                         
                         if hasInitialLoadCompleted && !isRefreshing {
@@ -356,23 +365,26 @@ struct HomeView: View {
                         NavigationStack {
                             DrawingView(onSave: { newItem in
                                 dataModel.addItem(newItem)
-                                hasPostedToday = true
-
-                                let formatter = DateFormatter()
-                                formatter.dateFormat = "yyyy-MM-dd"
-                                formatter.timeZone = TimeZone(identifier: "America/Chicago")
-                                lastPostDateString = formatter.string(from: Date())
+                                viewModel.hasPostedToday = true
                             }, prompt: viewModel.dailyPrompt)
                         }
                     }
                     .onChange(of: didDismissCreate) {
                         if didDismissCreate {
-                            let didSavePost = hasPostedToday
-                            if !didSavePost { hasAttemptedDrawing = true }
                             didDismissCreate = false
-                            Task { await reloadFeed(showOverlay: true) }
-                            if didSavePost {
-                                didJustPost = true
+                            
+                            Task {
+                                let didSavePost = viewModel.hasPostedToday
+                                
+                                if !didSavePost {
+                                    await viewModel.markDrawingAttempted()
+                                }
+                                
+                                await reloadFeed(showOverlay: true)
+                                
+                                if didSavePost {
+                                    didJustPost = true
+                                }
                             }
                         }
                     }
@@ -388,7 +400,10 @@ struct HomeView: View {
                     }
                     .task {
                         isInitialLoading = true
-                        await viewModel.loadDailyPrompt()
+                        await withTaskGroup(of: Void.self) { group in
+                            group.addTask { await viewModel.loadDailyPrompt() }
+                            group.addTask { await friendsViewModel.refreshFriends() }
+                        }
                         await reloadFeed(showOverlay: true)
                         isInitialLoading = false
                         hasInitialLoadCompleted = true
@@ -427,22 +442,6 @@ struct HomeView: View {
         return keyWindow?.safeAreaInsets.top ?? 0
     }
 
-    private func checkDailyPostStatus() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(identifier: "America/Chicago")
-        let todayString = formatter.string(from: Date())
-
-        if lastPostDateString != todayString {
-            hasPostedToday = false
-            hasAttemptedDrawing = false
-            
-            dailyGoldAwarded = false
-            dailySilverAwarded = false
-            dailyBronzeAwarded = false
-        }
-    }
-    
     private static func isWinter() -> Bool {
         let month = Calendar.current.component(.month, from: Date())
         return [11, 12, 1, 2].contains(month)
