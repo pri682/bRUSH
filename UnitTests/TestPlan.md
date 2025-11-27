@@ -55,5 +55,26 @@ It’s one of those safety tests to make sure the UI won’t blow up when the us
 ---
 
 ## Jesse Flynn – Unit Tests Plan
-*(no tests added yet)*
+
+### 1. testAwardService_AllowsSingleGoldPerDayPerUser()
+This test will focus on the new AwardServiceFirebase.setAward logic and the /awardUsage/{uid_YYYYMMDD} document. It simulates 
+a user giving a gold medal to a friend’s drawing once, and then trying to give a second gold medal on the same day. The first 
+call should succeed and mark goldUsed = true for that user/day, and the second call should be no extra writes and no double 
+award. This matters because our whole “one gold/silver/bronze per day per user” rule depends on this transaction behaving 
+exactly right, and it’s easy to accidentally let people spam medals without this guard.
+
+### 2. testFetchAwardCounts_AggregatesAwardsPerPostOwner()
+This test targets AwardServiceFirebase.fetchAwardCounts(forPostOwner:). It will create a fake /dailyFeed/{userId}/awards  
+subcollection with multiple docs (each representing a different giver) and different combinations of gold/silver/bronze =  
+true/false, then verify that the method returns the correct AwardCounts totals. This is important because the feed,  
+leaderboard, and eventually profile stats all rely on these aggregated counts; if the aggregation logic is off by even one,  
+the UI will show the wrong number of medals for a drawing.
+
+### 3. testHasPending_FiltersBySenderAndReceiver()
+This test will check the pending friend request logic in FriendRequestServiceFirebase.hasPending(fromUid:toUid:). It sets up a 
+scenario where user A has a pending request to user B, and user C also exists in the system. The test will verify that 
+hasPending(fromUid: A, toUid: B) returns true, but hasPending(fromUid: C, toUid: B) returns false even though B does have a 
+pending request from someone else. This matters because we previously had a bug where “Pending” would show just because 
+someone had requested that user, not necessarily the currently signed-in user. Getting this right prevents confusing UI states 
+and duplicate/incorrect friend requests.
 
