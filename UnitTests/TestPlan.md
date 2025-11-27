@@ -1,0 +1,59 @@
+# UnitTests – Sprint Assignment 14
+This file provides an overview of each member’s plan for unit testing, as part of Sprint Assignment 14.  
+It’s just a short summary of what we expect to test and why it matters.
+
+---
+
+## Meidad Troper – Unit Tests Plan
+
+### 1. testCheckSignInStatus_WhenSignedIn()
+This test simulates a user signing in and checks if the sign-in status is reported correctly.  
+Since the project is a social media style app, getting this right is important for both privacy and overall UX.  
+If this fails, users might be signed in without knowing or the app might behave weirdly.
+
+### 2. testCheckSignInStatus_WhenSignedOut()
+This one checks that signing out actually works.  
+After a user signs out, the logic should report they are *not* signed in anymore.  
+If we try to sign out and the app still thinks the user is signed in, the test will fail.  
+Passing it means the signout flow is behaving like it should.
+
+### 3. testUsernameValidation_LengthCheck()
+Even though the username rules are simple right now, validation bugs can break the user flow fast.  
+I’ve had issues before where the text field stayed red for “too short” even when it wasn’t.  
+This test makes sure that the length logic is working right, and later we can build on it to check more rules.
+
+---
+
+## Kelvin Mathew – Unit Tests Plan
+
+### 1. testDrawingViewThemeIdentity()
+This test checks the theme system that the drawing view uses (like switching between a color background or a texture).  
+It makes sure IDs are created in a consistent way so the UI can loop over them without breaking, and that two themes with the same color are actually treated the same.  
+If this logic is wrong, the UI might reload wrong themes or just not update like it should.
+
+### 2. testStreakManagerLocalUpdate()
+This focuses on the streak system that runs fully on the device using UserDefaults.  
+It resets the stored streak, marks a drawing as completed “today,” and checks that the count goes up the right way.  
+Also tests that doing it twice doesn’t double-count.  
+It matters because the streak is shown to the user directly, and small bugs here can confuse or frustrate people fast.
+
+### 3. testDrawingPreviewViewInitialization()
+This just makes sure the preview view can be created with a normal item and not crash.  
+It feeds in a mock item and a simple binding, then checks that the view actually builds its body.  
+It’s one of those safety tests to make sure the UI won’t blow up when the user taps something.
+
+---
+
+## Vaidic Soni – Unit Tests Plan
+*(no tests added yet)*
+
+---
+
+## Priyanka Karki – Unit Tests Plan
+*(no tests added yet)*
+
+---
+
+## Jesse Flynn – Unit Tests Plan
+*(no tests added yet)*
+
