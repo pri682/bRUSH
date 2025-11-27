@@ -45,7 +45,21 @@ It’s one of those safety tests to make sure the UI won’t blow up when the us
 ---
 
 ## Vaidic Soni – Unit Tests Plan
-*(no tests added yet)*
+
+### 1. testFriendsFiltering_FullNameAndHandleSearch()
+This test ensures the friend search logic works correctly for both full names and handles.  
+It covers searching by name, searching by handle, and confirming that an empty search returns the full list.  
+If this filtering is incorrect, users may see incomplete or inaccurate search results in the friends list.
+
+### 2. testNotificationHistory_PersistenceAndRetrieval()
+This test validates storing and retrieving notification history using an isolated UserDefaults suite.  
+It checks that two saved notifications appear in the correct order (newest first) and verifies that cleanup works.  
+This matters because the notifications screen depends on consistent, predictable history storage to avoid missing or misordered entries.
+
+### 3. testPromptGenerator_DeterminismAndUniqueness()
+This test confirms that generating a prompt from the same seed always returns the same output and that different seeds produce different prompts.  
+It also checks that the result is never empty.  
+This is important because the prompt generator powers daily content, and inconsistent results could break prompt scheduling or user-facing features.
 
 ---
 
