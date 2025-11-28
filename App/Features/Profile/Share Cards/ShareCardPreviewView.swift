@@ -62,54 +62,90 @@ struct ShareCardPreviewView: View {
                 set: { _ in }
             )
             
-            ZStack {
-                TabView(selection: $currentPage) {
-                    CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(0)
-                    
-                    CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(1)
+            ZStack(alignment: .top) { // Align top so we can calculate positions accurately
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 0) {
+                        CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(0)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
                         
-                    CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(2)
+                        CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(1)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
                         
-                    CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
+                        CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(2)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
+                        
+                        CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(3)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
+                        
+                        CardTemplateFiveView(
+                            customization: customizationBinding,
+                            selectedDrawing: $selectedDrawing,
+                            showUsername: showUsername,
+                            showPrompt: showPrompt,
+                            userProfile: userProfile,
+                            onTapAddDrawing: {
+                                showDrawingPicker = true
+                            }
+                        )
                         .frame(height: cardHeight)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, verticalPadding)
-                        .tag(3)
-                    
-                    CardTemplateFiveView(
-                        customization: customizationBinding,
-                        selectedDrawing: $selectedDrawing,
-                        showUsername: showUsername,
-                        showPrompt: showPrompt,
-                        userProfile: userProfile,
-                        onTapAddDrawing: {
-                            showDrawingPicker = true
+                        .containerRelativeFrame(.horizontal)
+                        .id(4)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.7)
+                                .scaleEffect(phase.isIdentity ? 1 : 0.9)
                         }
-                    )
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(4)
+                    }
+                    .scrollTargetLayout()
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .padding(.top, 20)
-                .padding(.bottom, height * 0.25)
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: Binding<Int?>(
+                    get: { currentPage },
+                    set: { if let val = $0 { currentPage = val } }
+                ))
                 
                 if showActions {
-                    VStack {
+                    VStack(spacing: 0) {
                         Spacer()
+                            .frame(height: 20 + verticalPadding + cardHeight)
                         
                         HStack(spacing: 8) {
                             ForEach(0..<5) { index in
@@ -122,9 +158,7 @@ struct ShareCardPreviewView: View {
                                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
                             }
                         }
-                        .padding(.bottom, 24)
-                        
-
+                        .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
                         
                         GlassEffectContainer(spacing: 12.0) {
                             HStack(alignment: .top, spacing: 12) {
@@ -173,8 +207,9 @@ struct ShareCardPreviewView: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .padding(.bottom, height * 0.06)
                         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: canEditTemplateFive)
+                        
+                        Spacer(minLength: 0)
                     }
                 }
             }

@@ -119,6 +119,11 @@ struct HomeView: View {
                                                 .frame(width: cardWidth, height: geometry.size.height - (UIDevice.current.userInterfaceIdiom == .phone ? 90 : 0))
                                                 .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67)
                                                 .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
+                                                .scrollTransition { content, phase in
+                                                    content
+                                                        .opacity(phase.isIdentity ? 1 : 0.8)
+                                                        .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                                                }
                                                 .id(index)
                                             }
                                         }
