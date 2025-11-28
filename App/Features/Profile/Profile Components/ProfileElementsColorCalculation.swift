@@ -28,7 +28,7 @@ struct ProfileElementsColorCalculation {
     }
     
     /// Calculates the best contrasting text color (Black or White) and its corresponding shadow
-    /// based on the average luminance of the provided UIImage.
+    /// based on the average luminance of the BOTTOM HALF of the provided UIImage.
     ///
     /// - Parameter image: The UIImage to analyze.
     /// - Returns: A tuple containing the primary text Color and its contrasting shadow Color.
@@ -73,15 +73,16 @@ extension UIColor {
 }
 
 extension UIImage {
-    // Calculates the average color of the entire image efficiently using a CoreImage filter.
+    // Calculates the average color of the BOTTOM HALF of the image using a CoreImage filter.
     var averageColor: UIColor? {
         guard let ciImage = CIImage(image: self) else { return nil }
         
+        let extent = ciImage.extent
+        let bottomHalfRect = CGRect(x: extent.origin.x, y: extent.origin.y, width: extent.width, height: extent.height / 2.0)
+        
         let filter = CIFilter(name: "CIAreaAverage")
         filter?.setValue(ciImage, forKey: kCIInputImageKey)
-        
-        let extent = ciImage.extent
-        filter?.setValue(CIVector(cgRect: extent), forKey: kCIInputExtentKey)
+        filter?.setValue(CIVector(cgRect: bottomHalfRect), forKey: kCIInputExtentKey)
         
         guard let outputImage = filter?.outputImage else { return nil }
         

@@ -7,7 +7,16 @@ extension UIImage {
     private func averageColor() async -> UIColor? {
         guard let inputImage = CIImage(image: self) else { return nil }
         
-        let extentVector = CIVector(x: inputImage.extent.origin.x, y: inputImage.extent.origin.y, z: inputImage.extent.size.width, w: inputImage.extent.size.height)
+        let extent = inputImage.extent
+        let bottomHeight = extent.size.height * 0.3
+        
+        let extentVector = CIVector(
+            x: extent.origin.x,
+            y: extent.origin.y,
+            z: extent.size.width,
+            w: bottomHeight
+        )
+        
         guard let filter = CIFilter(name: "CIAreaAverage", parameters: [kCIInputImageKey: inputImage, kCIInputExtentKey: extentVector]) else { return nil }
         guard let outputImage = filter.outputImage else { return nil }
         

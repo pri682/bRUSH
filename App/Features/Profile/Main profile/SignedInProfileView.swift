@@ -37,12 +37,53 @@ struct SignedInProfileView: View {
     private func refreshMedalData() {
         guard canRefresh() else { return }
         
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        
         lastRefreshAttempt = Date()
         isRefreshingMedals = true
+        
         Task {
             await viewModel.refreshProfile()
-            lastMedalUpdate = Date()
-            isRefreshingMedals = false
+            
+            await MainActor.run {
+                lastMedalUpdate = Date()
+                isRefreshingMedals = false
+                
+                withAnimation(.spring()) {
+                    showRefreshToast = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation(.easeInOut) {
+                        showRefreshToast = false
+                    }
+                }
+            }
+        }
+    }
+    
+    private func updateBackgroundColor() {
+        guard let profile = viewModel.profile,
+              let bgName = profile.avatarBackground else { return }
+        
+        if let cachedColor = Self.colorCache[bgName] {
+            self.profileBackgroundColor = cachedColor
+            return
+        }
+        
+        guard let image = UIImage(named: bgName) else { return }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let color = image.bottomEdgeColor {
+                let swiftUIColor = Color(uiColor: color)
+                DispatchQueue.main.async {
+                    Self.colorCache[bgName] = swiftUIColor
+                    withAnimation(.easeIn(duration: 0.5)) {
+                        self.profileBackgroundColor = swiftUIColor
+                    }
+                }
+            }
         }
     }
     
