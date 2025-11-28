@@ -1,4 +1,6 @@
 import SwiftUI
+import CoreImage
+import UIKit
 
 struct SignedInProfileView: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -7,6 +9,10 @@ struct SignedInProfileView: View {
     @State private var lastMedalUpdate: Date? = nil
     @State private var isRefreshingMedals = false
     @State private var lastRefreshAttempt: Date? = nil
+    @State private var showRefreshToast = false
+    @State private var profileBackgroundColor: Color = Color(UIColor.systemBackground)
+    
+    private static var colorCache: [String: Color] = [:]
     
     private var isProfileLoaded: Bool {
         viewModel.profile != nil
@@ -20,8 +26,7 @@ struct SignedInProfileView: View {
     }
     
     private func needsUpdate(from date: Date) -> Bool {
-        let now = Date()
-        return now.timeIntervalSince(date) > 600
+        Date().timeIntervalSince(date) > 600
     }
     
     private func canRefresh() -> Bool {

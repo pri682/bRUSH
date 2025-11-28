@@ -26,17 +26,11 @@ struct AwardsStackCardView: View {
         GeometryReader { geometry in
             let cardWidth = geometry.size.width
             let cardHeight = geometry.size.height
-            
-            let isPad = UIDevice.current.userInterfaceIdiom == .pad || cardWidth > 600
-            
-            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)
+            let rowHeight = cardHeight / 3
             let radius = min(cardWidth, cardHeight) * 0.06
 
-            let fontFactorBase = cardWidth / 400
-            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)
-            
-            let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
-            let adjustedMedalSize = medalIconSize * medalScaleFactor
+            let fontFactor = cardWidth / 380.0
+            let adjustedMedalSize = medalIconSize * baseMedalScaleFactor
             
             let accumulatedTitle = isCurrentUser ? "Medals Received" : "Medals Received"
             let awardedTitle = isCurrentUser ? "Medals Given" : "Medals Given"
@@ -117,7 +111,7 @@ struct AwardsStackCardView: View {
             }
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: radius))
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
     }
 }
