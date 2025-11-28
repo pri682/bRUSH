@@ -411,19 +411,7 @@ struct EditAvatarView: View {
             default: break
             }
         }
-
-        if var profile = userProfile {
-            profile.avatarType = selectedAvatarType.rawValue
-            profile.avatarBackground = selectedBackground
-            profile.avatarBody = selectedBody
-            profile.avatarShirt = selectedShirt
-            profile.avatarEyes = selectedEyes
-            profile.avatarMouth = selectedMouth
-            profile.avatarHair = selectedHair
-            profile.avatarFacialHair = selectedFacialHair
-            userProfile = profile
-        }
-
+        
         onAvatarChange(currentAvatarParts)
     }
 
@@ -522,5 +510,6 @@ struct EditAvatarView: View {
         selectedMouth = state.mouth
         selectedHair = state.hair
         selectedFacialHair = state.facialHair
+        onAvatarChange(currentAvatarParts)
     }
 }
