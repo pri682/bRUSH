@@ -269,8 +269,8 @@ struct DrawingView: View {
                         isPromptPresented.toggle()
                     } label: {
                         Image(systemName: "lightbulb")
-                            .font(.title3)
-                            .frame(width: 44, height: 44)
+                            .font(.title)
+                            .frame(width: 54, height: 54)
                             .glassEffect(.regular.interactive())
                     }
                     .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
@@ -343,7 +343,7 @@ struct DrawingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { isThemePickerPresented = false }
+                    Button(role: .confirm) { isThemePickerPresented = false }
                 }
             }
         }
