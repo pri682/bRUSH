@@ -239,8 +239,8 @@ struct HomeView: View {
 
                             Spacer()
                         }
-                        .padding(.top, safeAreaInsetsTop())
-                        .padding(.bottom, 24)
+                        .padding(.top, safeAreaInsetsTop() + 6)
+                        .padding(.bottom, 18)
                         .background(
                             LinearGradient(
                                 gradient: Gradient(stops: [

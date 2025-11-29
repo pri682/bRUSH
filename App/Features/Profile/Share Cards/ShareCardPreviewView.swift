@@ -161,20 +161,22 @@ struct ShareCardPreviewView: View {
                         .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
                         
                         GlassEffectContainer(spacing: 12.0) {
-                            HStack(alignment: .top, spacing: 12) {
+                            HStack(alignment: .center, spacing: 12) {
                                     Button(action: {
                                         showShareMenu = true
                                     }) {
-                                        HStack(spacing: 8) {
+                                        HStack(alignment: .bottom, spacing: 8) {
                                             Image(systemName: "square.and.arrow.up")
                                                 .font(.system(size: 16, weight: .bold))
+                                                .padding(.bottom, 2)
                                                 .foregroundColor(.white)
                                             Text("Share")
                                                 .font(.system(size: 18, weight: .semibold))
                                                 .foregroundColor(.white)
                                         }
                                         .padding(.horizontal, 30)
-                                        .padding(.vertical, 16)
+                                        .padding(.top, 14)
+                                        .padding(.bottom, 16)
                                         .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
                                         .glassEffectID("shareButton", in: namespace)
                                     }

@@ -12,6 +12,7 @@ struct AvatarView: View {
     let facialHair: String?
     
     var includeSpacer: Bool = true
+    var innerPadding: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -90,6 +91,7 @@ struct AvatarView: View {
                         }
                     }
                 }
+                .padding(.vertical, innerPadding)
             }
         }
         .clipped()
