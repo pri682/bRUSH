@@ -33,9 +33,6 @@ struct ShareCardPreviewView: View {
     
     @Namespace private var namespace
     
-    @State private var rotationAngle: Double = -5
-    @State private var isAnimatingRotation = false
-    
     private var canEditTemplateFive: Bool {
         currentPage == 4
     }
@@ -69,11 +66,6 @@ struct ShareCardPreviewView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
                         CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
-                            .rotation3DEffect(
-                                .degrees(rotationAngle),
-                                axis: (x: 0, y: 1, z: 0),
-                                perspective: 0.3
-                            )
                             .frame(height: cardHeight)
                             .padding(.horizontal, horizontalPadding)
                             .padding(.vertical, verticalPadding)
@@ -86,11 +78,6 @@ struct ShareCardPreviewView: View {
                             }
                         
                         CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
-                            .rotation3DEffect(
-                                .degrees(rotationAngle),
-                                axis: (x: 0, y: 1, z: 0),
-                                perspective: 0.3
-                            )
                             .frame(height: cardHeight)
                             .padding(.horizontal, horizontalPadding)
                             .padding(.vertical, verticalPadding)
@@ -103,11 +90,6 @@ struct ShareCardPreviewView: View {
                             }
                         
                         CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
-                            .rotation3DEffect(
-                                .degrees(rotationAngle),
-                                axis: (x: 0, y: 1, z: 0),
-                                perspective: 0.3
-                            )
                             .frame(height: cardHeight)
                             .padding(.horizontal, horizontalPadding)
                             .padding(.vertical, verticalPadding)
@@ -120,11 +102,6 @@ struct ShareCardPreviewView: View {
                             }
                         
                         CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
-                            .rotation3DEffect(
-                                .degrees(rotationAngle),
-                                axis: (x: 0, y: 1, z: 0),
-                                perspective: 0.3
-                            )
                             .frame(height: cardHeight)
                             .padding(.horizontal, horizontalPadding)
                             .padding(.vertical, verticalPadding)
@@ -145,11 +122,6 @@ struct ShareCardPreviewView: View {
                             onTapAddDrawing: {
                                 showDrawingPicker = true
                             }
-                        )
-                        .rotation3DEffect(
-                            .degrees(rotationAngle),
-                            axis: (x: 0, y: 1, z: 0),
-                            perspective: 0.3
                         )
                         .frame(height: cardHeight)
                         .padding(.horizontal, horizontalPadding)
@@ -189,22 +161,20 @@ struct ShareCardPreviewView: View {
                         .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
                         
                         GlassEffectContainer(spacing: 12.0) {
-                            HStack(alignment: .center, spacing: 12) {
+                            HStack(alignment: .top, spacing: 12) {
                                     Button(action: {
                                         showShareMenu = true
                                     }) {
-                                        HStack(alignment: .bottom, spacing: 8) {
+                                        HStack(spacing: 8) {
                                             Image(systemName: "square.and.arrow.up")
                                                 .font(.system(size: 16, weight: .bold))
-                                                .padding(.bottom, 2)
                                                 .foregroundColor(.white)
                                             Text("Share")
                                                 .font(.system(size: 18, weight: .semibold))
                                                 .foregroundColor(.white)
                                         }
                                         .padding(.horizontal, 30)
-                                        .padding(.top, 14)
-                                        .padding(.bottom, 16)
+                                        .padding(.vertical, 16)
                                         .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
                                         .glassEffectID("shareButton", in: namespace)
                                     }
@@ -256,19 +226,6 @@ struct ShareCardPreviewView: View {
                 .zIndex(100)
             }
         }
-        .onAppear {
-            startAnimation()
-        }
-        .onChange(of: currentPage) { _ in
-            isAnimatingRotation = false
-            withAnimation(.default) {
-                rotationAngle = -5
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                startAnimation()
-            }
-        }
         .onDisappear {
             videoExporter.cancelExport()
         }
@@ -301,16 +258,9 @@ struct ShareCardPreviewView: View {
     
     // MARK: - Helper Functions
     
-    private func startAnimation() {
-        guard !isAnimatingRotation else { return }
-        isAnimatingRotation = true
-
-        withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
-            rotationAngle = 5
-        }
-    }
+    // MARK: - Helper Functions
     
-    
+    /// Returns the tint color for the share button based on current template
     private func buttonTintColor(for templateIndex: Int) -> Color {
         switch templateIndex {
         case 0:
