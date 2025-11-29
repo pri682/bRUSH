@@ -59,14 +59,23 @@ struct SignUpFlow: View {
             .padding()
             .navigationTitle(
                 viewModel.currentStep == .input ? "Create Account" : 
-                viewModel.currentStep == .username ? "Choose Display Name" : 
+                viewModel.currentStep == .username ? "Choose Username" :
                 "Welcome!"
             )
             .toolbar {
-                // Only show Cancel button during sign-up steps, not on welcome screen
-                if viewModel.currentStep != .complete {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Cancel") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if viewModel.currentStep == .username || viewModel.currentStep == .avatar {
+                        Button {
+                            viewModel.goBack()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                        }
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if viewModel.currentStep == .input {
+                        Button(role: .cancel) {
                             dismiss()
                         }
                     }

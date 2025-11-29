@@ -111,7 +111,17 @@ class SignUpViewModel: ObservableObject {
         currentStep = .avatar
     }
     
-    // MARK: - Step 3 Avatar Selection
+    func goBack() {
+        errorMessage = nil
+        switch currentStep {
+        case .username:
+            currentStep = .input
+        case .avatar:
+            currentStep = .username
+        default:
+            break
+        }
+    }
     
     func submitStep3() async { // wait for step 3 - avatar completion
         await completeSignUp()
