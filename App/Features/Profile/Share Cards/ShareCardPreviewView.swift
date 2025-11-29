@@ -42,12 +42,12 @@ struct ShareCardPreviewView: View {
             let height = geometry.size.height
             let width = geometry.size.width
             
-            let cardHeightFactor: CGFloat = 0.65
+            let cardHeightFactor: CGFloat = 0.7
             let cardHeight = height * cardHeightFactor
             let cardWidth = cardHeight * (2/3)
             
             let horizontalPadding = max(30, (width - cardWidth) / 2)
-            let verticalPadding: CGFloat = 50
+            let verticalPadding: CGFloat = 24
             
             let customizationBinding = Binding<CardCustomization>(
                 get: {
@@ -62,7 +62,9 @@ struct ShareCardPreviewView: View {
                 set: { _ in }
             )
             
-            ZStack(alignment: .top) { // Align top so we can calculate positions accurately
+            VStack(spacing: 20) {
+                
+                // MARK: - Layer 1: ScrollView
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
                         CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
@@ -144,8 +146,6 @@ struct ShareCardPreviewView: View {
                 
                 if showActions {
                     VStack(spacing: 0) {
-                        Spacer()
-                            .frame(height: 20 + verticalPadding + cardHeight)
                         
                         HStack(spacing: 8) {
                             ForEach(0..<5) { index in
@@ -158,41 +158,41 @@ struct ShareCardPreviewView: View {
                                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
                             }
                         }
-                        .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
+                        .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
                         
                         GlassEffectContainer(spacing: 12.0) {
                             HStack(alignment: .center, spacing: 12) {
-                                    Button(action: {
-                                        showShareMenu = true
-                                    }) {
-                                        HStack(alignment: .bottom, spacing: 8) {
-                                            Image(systemName: "square.and.arrow.up")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .padding(.bottom, 2)
-                                                .foregroundColor(.white)
-                                            Text("Share")
-                                                .font(.system(size: 18, weight: .semibold))
-                                                .foregroundColor(.white)
-                                        }
-                                        .padding(.horizontal, 30)
-                                        .padding(.top, 14)
-                                        .padding(.bottom, 16)
-                                        .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
-                                        .glassEffectID("shareButton", in: namespace)
+                                Button(action: {
+                                    showShareMenu = true
+                                }) {
+                                    HStack(alignment: .bottom, spacing: 8) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .padding(.bottom, 2)
+                                            .foregroundColor(.white)
+                                        Text("Share")
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(.white)
                                     }
-                                    .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
-                                        Button("Export as Image") {
-                                            exportImage()
-                                        }
-                                        
-                                        Button("Export as Video") {
-                                            exportVideo()
-                                        }
-                                        
-                                        Button("Cancel", role: .cancel) {}
+                                    .padding(.horizontal, 30)
+                                    .padding(.top, 14)
+                                    .padding(.bottom, 16)
+                                    .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
+                                    .glassEffectID("shareButton", in: namespace)
+                                }
+                                .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
+                                    Button("Export as Image") {
+                                        exportImage()
                                     }
+                                    
+                                    Button("Export as Video") {
+                                        exportVideo()
+                                    }
+                                    
+                                    Button("Cancel", role: .cancel) {}
+                                }
                                 .disabled(currentPage == 4 && selectedDrawing == nil)
-                                                                
+                                
                                 if canEditTemplateFive {
                                     Button(action: {
                                         showTemplate5Edit = true
@@ -216,13 +216,11 @@ struct ShareCardPreviewView: View {
                 }
             }
             
+            // MARK: - Overlays
             if videoExporter.isExporting {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
-                    
                     CustomExportAnimation(progress: videoExporter.progress)
-                    
-
                 }
                 .transition(.opacity)
                 .zIndex(100)
@@ -259,9 +257,7 @@ struct ShareCardPreviewView: View {
     }
     
     // MARK: - Helper Functions
-    
-    // MARK: - Helper Functions
-    
+        
     /// Returns the tint color for the share button based on current template
     private func buttonTintColor(for templateIndex: Int) -> Color {
         switch templateIndex {
