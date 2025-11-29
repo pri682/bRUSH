@@ -95,21 +95,33 @@ struct UserFeedItemView: View {
                         case .success(let image):
                             image
                                 .resizable()
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
                                 .modifier(RippleEffect(at: rippleOrigin, trigger: rippleCounter))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         case .failure:
                             Rectangle()
                                 .fill(Color(.secondarySystemBackground))
                                 .overlay(Image(systemName: "photo.fill").foregroundColor(.gray))
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         case .empty:
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         @unknown default:
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         }
                     }
 

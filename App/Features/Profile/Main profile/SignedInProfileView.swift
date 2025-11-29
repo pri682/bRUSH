@@ -275,7 +275,6 @@ struct SignedInProfileView: View {
                     .redacted(reason: isProfileLoaded ? [] : .placeholder)
                     .disabled(!isProfileLoaded)
                 }
-                .scrollDisabled(true)
                 .zIndex(1)
                 
                 if showRefreshToast {

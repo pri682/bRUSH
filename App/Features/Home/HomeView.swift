@@ -15,6 +15,7 @@ struct HomeView: View {
     @Namespace private var launchAnimation
     @State private var isShowingSplash = true
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.colorScheme) private var colorScheme
     
     @State private var didDismissCreate = false
     
@@ -75,27 +76,30 @@ struct HomeView: View {
     }
 
     var body: some View {
-            ZStack {
-                NavigationStack {
-                    ZStack {
-                        AnimatedMeshGradientBackground()
-                            .ignoresSafeArea()
-                            .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation, isSource: false)
-                            .opacity(isShowingSplash ? 0 : 1)
+        ZStack {
+            NavigationStack {
+                ZStack {
+                    AnimatedMeshGradientBackground()
+                        .ignoresSafeArea()
+                        .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
+                        .opacity(isShowingSplash ? 0 : 1)
 
-                        VStack(spacing: 0) {
-                            GeometryReader { geometry in
-                                let visibleHeight = geometry.size.height - safeAreaInsets.top
-                                
-                                let availablePageHeight = geometry.size.height
-                                
-                                ZStack(alignment: .center) {
-                                    ScrollView(.vertical) {
-                                        VStack {
-                                            ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                                let item = viewModel.feedItems[index]
-                                                let cardWidth = visibleHeight * (9 / 16)
+                    VStack(spacing: 0) {
+                        GeometryReader { geometry in
+                            let topPadding: CGFloat = safeAreaInsetsTop() + 34 + 24 + 22
+                            let bottomPadding: CGFloat = safeAreaInsetsBottom() + (UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
+                            let availableHeight = geometry.size.height - topPadding - bottomPadding
+                            
+                            let sidePadding: CGFloat = (UIDevice.current.userInterfaceIdiom == .pad ? 0 : 6)
+                            let cardWidth = availableHeight * (9.0 / 16.0) - sidePadding
+                            
+                            ZStack(alignment: .center) {
+                                ScrollView(.vertical) {
+                                    LazyVStack(spacing: 0) {
+                                        ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                            let item = viewModel.feedItems[index]
 
+                                            ZStack {
                                                 UserFeedItemView(
                                                     item: item,
                                                     prompt: viewModel.dailyPrompt,
@@ -116,291 +120,294 @@ struct HomeView: View {
                                                         }
                                                     }
                                                 )
-                                                .frame(width: cardWidth, height: geometry.size.height - (UIDevice.current.userInterfaceIdiom == .phone ? 90 : 0))
-                                                .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67)
-                                                .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
-                                                .scrollTransition { content, phase in
-                                                    content
-                                                        .opacity(phase.isIdentity ? 1 : 0.8)
-                                                        .scaleEffect(phase.isIdentity ? 1 : 0.9)
-                                                }
-                                                .id(index)
+                                                .frame(width: cardWidth, height: availableHeight)
+                                                .padding(.bottom, bottomPadding)
                                             }
-                                        }
-                                        .scrollTargetLayout()
-                                    }
-                                    .scrollTargetBehavior(.paging)
-                                    .scrollIndicators(.hidden)
-                                    .scrollPosition(id: $currentItemID)
-                                    .onChange(of: currentItemID) { oldValue, newValue in
-                                        if let newIndex = newValue {
-                                            withAnimation {
-                                                currentFeedIndex = newIndex
+                                            .containerRelativeFrame(.vertical)
+                                            .scrollTransition { content, phase in
+                                                content
+                                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
                                             }
+                                            .id(index)
                                         }
                                     }
-                                    .refreshable {
-                                        guard !viewModel.isLoadingFeed else { return }
-                                        isRefreshing = true
-                                        await reloadFeed(showOverlay: false)
-                                        isRefreshing = false
-                                        hasInitialLoadCompleted = true
+                                    .scrollTargetLayout()
+                                }
+                                .scrollTargetBehavior(.paging)
+                                .scrollBounceBehavior(.always)
+                                .scrollIndicators(.hidden)
+                                .ignoresSafeArea()
+                                .contentMargins(.top, topPadding, for: .scrollContent)
+                                .scrollPosition(id: $currentItemID)
+                                .onChange(of: currentItemID) { oldValue, newValue in
+                                    if let newIndex = newValue {
+                                        withAnimation {
+                                            currentFeedIndex = newIndex
+                                        }
                                     }
+                                }
+                                .refreshable {
+                                    guard !viewModel.isLoadingFeed else { return }
+                                    isRefreshing = true
+                                    await reloadFeed(showOverlay: false)
+                                    isRefreshing = false
+                                    hasInitialLoadCompleted = true
+                                }
 
-                                    if !viewModel.feedItems.isEmpty {
-                                        let itemCount = viewModel.feedItems.count
-                                        let capsuleWidth: CGFloat = 8
-                                        let verticalSpacing: CGFloat = capsuleWidth
-                                        
-                                        let topFeedPadding: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 39 : 67
-                                        let bottomFeedPadding: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70
-                                        
-                                        let contentHeightBetweenBars = availablePageHeight - topFeedPadding - bottomFeedPadding + 48
-                                        
-                                        let totalSpacing = CGFloat(max(0, itemCount - 1)) * verticalSpacing
-                                        let availableHeightForCapsules = contentHeightBetweenBars - totalSpacing
-                                        let capsuleHeight = max(4, availableHeightForCapsules / CGFloat(max(1, itemCount)))
+                                if !viewModel.feedItems.isEmpty {
+                                    let itemCount = viewModel.feedItems.count
+                                    let capsuleWidth: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 10 : 6
+                                    let verticalSpacing: CGFloat = capsuleWidth
+                                    
+                                    let contentHeightBetweenBars = availableHeight
+                                    
+                                    let totalSpacing = CGFloat(max(0, itemCount - 1)) * verticalSpacing
+                                    let availableHeightForCapsules = contentHeightBetweenBars - totalSpacing
+                                    let capsuleHeight = max(4, availableHeightForCapsules / CGFloat(max(1, itemCount)))
 
-                                        HStack {
-                                            Spacer()
-                                            VStack {
-                                                VStack(spacing: verticalSpacing) {
-                                                    ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                                        Button(action: {
-                                                            withAnimation(.spring()) {
-                                                                currentItemID = index
-                                                            }
-                                                        }) {
-                                                            Capsule()
-                                                                .fill(currentFeedIndex == index ? Color.red : Color.accentColor)
-                                                                .frame(width: capsuleWidth, height: capsuleHeight)
-                                                                .overlay(
-                                                                    Group {
-                                                                        if currentFeedIndex != index {
-                                                                            Capsule()
-                                                                                .inset(by: 0.4)
-                                                                                .stroke(Color.white.opacity(0.34), lineWidth: 1)
-                                                                        }
-                                                                    }
-                                                                )
+                                    HStack {
+                                        Spacer()
+                                        VStack {
+                                            VStack(spacing: verticalSpacing) {
+                                                ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                    Button(action: {
+                                                        withAnimation(.spring()) {
+                                                            currentItemID = index
                                                         }
+                                                    }) {
+                                                        Capsule()
+                                                            .fill(
+                                                                currentFeedIndex == index
+                                                                ? (colorScheme == .dark
+                                                                   ? Color(red: 0.65, green: 0.05, blue: 0.1)
+                                                                   : Color.red)
+                                                                : (colorScheme == .dark
+                                                                   ? Color(red: 0.6, green: 0.3, blue: 0.0)
+                                                                   : Color.accentColor)
+                                                            )
+                                                            .frame(width: capsuleWidth, height: capsuleHeight)
+                                                            .contentShape(Capsule())
+                                                            .frame(minWidth: (UIDevice.current.userInterfaceIdiom == .pad ? 30 : 24), alignment: .trailing)
+                                                            .padding(.trailing, 8)
                                                     }
                                                 }
-                                                .frame(maxHeight: contentHeightBetweenBars)
-                                                .clipped()
                                             }
-                                            .frame(height: availablePageHeight)
+                                            .frame(maxHeight: contentHeightBetweenBars)
+                                            .clipped()
                                         }
-                                        .padding(.trailing, 10)
-                                        .padding(.vertical, 24)
-                                        .frame(maxWidth: .infinity, alignment: .topTrailing)
-                                        .zIndex(1)
+                                        .frame(height: availableHeight)
+                                        .padding(.top, topPadding)
+                                        .padding(.bottom, bottomPadding)
                                     }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                                    .zIndex(1)
                                 }
-                                .frame(width: geometry.size.width, height: geometry.size.height)
                             }
+                            .frame(width: geometry.size.width, height: geometry.size.height)
                         }
+                    }
+                    .ignoresSafeArea()
+                    .opacity(isShowingSplash ? 0 : 1)
+
+                    if showSnow {
+                        VortexView(snowSystem) {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 20)
+                                .blur(radius: 5)
+                                .tag("circle")
+                        }
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                        .zIndex(2)
                         .opacity(isShowingSplash ? 0 : 1)
+                    }
 
-                        if showSnow {
-                            VortexView(snowSystem) {
-                                Circle()
-                                    .fill(.white)
-                                    .frame(width: 20)
-                                    .blur(radius: 5)
-                                    .tag("circle")
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            if !isShowingSplash {
+                                Image("brush_logo_2")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 34)
+                                    .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
+                                    .padding(.leading)
+                            } else {
+                                Spacer().frame(height: 34)
                             }
-                            .ignoresSafeArea()
-                            .allowsHitTesting(false)
-                            .zIndex(2)
-                            .opacity(isShowingSplash ? 0 : 1)
+
+                            Spacer()
                         }
-
-                        VStack(spacing: 0) {
-                            HStack(spacing: 12) {
-                                if !isShowingSplash {
-                                    Image("brush_logo_2")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 34)
-                                        .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
-                                        .padding(.leading)
-                                } else {
-                                    Spacer().frame(height: 34)
-                                }
-
-                                Spacer()
-                            }
-                            .padding(.top, safeAreaInsetsTop())
-                            .padding(.bottom, 24)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(stops: [
-                                        .init(color: Color(UIColor.systemBackground).opacity(0.85), location: 0),
-                                        .init(color: Color(UIColor.systemBackground).opacity(0.0), location: 1)
-                                    ]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                                .background(.ultraThinMaterial)
+                        .padding(.top, safeAreaInsetsTop())
+                        .padding(.bottom, 24)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(stops: [
+                                    .init(color: Color(UIColor.systemBackground).opacity(0.85), location: 0),
+                                    .init(color: Color(UIColor.systemBackground).opacity(0.0), location: 1)
+                                ]),
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
-                            .shadow(color: .black.opacity(0.05), radius: 1, y: 1)
-                        }
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .ignoresSafeArea(edges: .top)
-                        .zIndex(3)
-
-                        if (viewModel.isLoadingFeed && isInitialLoading) || isReloadingWithOverlay {
-                            VStack {
-                                ProgressView()
-                                    .padding()
-                                Text("Loading Feed...")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(.ultraThinMaterial)
-                            .zIndex(1)
+                        )
+                        .shadow(color: .black.opacity(0.05), radius: 1, y: 1)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .ignoresSafeArea(edges: .top)
+                    .zIndex(3)
+
+                    if (viewModel.isLoadingFeed && isInitialLoading) || isReloadingWithOverlay {
+                        VStack {
+                            ProgressView()
+                                .padding()
+                            Text("Loading Feed...")
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.ultraThinMaterial)
+                        .zIndex(1)
+                        .transition(.opacity)
+                    } else if viewModel.feedItems.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "scribble.variable")
+                                .font(.system(size: 44, weight: .bold))
+                                .foregroundColor(Color.black.opacity(0.4))
+                            Text("Be the first one to draw today!")
+                                .font(.headline)
+                                .foregroundColor(Color.black.opacity(0.4))
+                            Button {
+                                isPresentingCreate = true
+                            } label: {
+                                Text("Draw Now")
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(.glassProminent)
+                            .disabled(viewModel.hasAttemptedDrawing)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(AnimatedMeshGradientBackground().ignoresSafeArea())
+                        .zIndex(1)
+                        .opacity(isShowingSplash ? 0 : 1)
+                    }
+                    
+                    if actuallyShowStreakView {
+                        StreakUpdateView(isShowing: $actuallyShowStreakView)
+                            .zIndex(10)
                             .transition(.opacity)
-                        } else if viewModel.feedItems.isEmpty {
-                            VStack(spacing: 16) {
-                                Image(systemName: "scribble.variable")
-                                    .font(.system(size: 44, weight: .bold))
-                                    .foregroundColor(Color.black.opacity(0.4))
-                                Text("Be the first one to draw today!")
-                                    .font(.headline)
-                                    .foregroundColor(Color.black.opacity(0.4))
-                                Button {
-                                    isPresentingCreate = true
-                                } label: {
-                                    Text("Draw Now")
-                                        .padding(.horizontal)
-                                }
-                                .buttonStyle(.glassProminent)
-                                .disabled(viewModel.hasAttemptedDrawing)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(AnimatedMeshGradientBackground().ignoresSafeArea())
-                            .zIndex(1)
-                            .opacity(isShowingSplash ? 0 : 1)
-                        }
-                        
-                        if actuallyShowStreakView {
-                            StreakUpdateView(isShowing: $actuallyShowStreakView)
-                                .zIndex(10)
-                                .transition(.opacity)
-                        }
                     }
-                    .toolbar {
-                        ToolbarSpacer(.fixed)
-                        
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button(action: { withAnimation { showingNotifications.toggle() } }) {
-                                Image(systemName: "bell.fill")
-                                    .imageScale(.large)
-                                    .foregroundStyle(.accent)
-                                    .overlay(alignment: .topTrailing) {
-                                        if hasUnreadNotifications {
-                                            ZStack {
-                                                Circle()
-                                                    .fill(Color(uiColor: UIColor { trait in
-                                                        trait.userInterfaceStyle == .dark
-                                                            ? UIColor.secondarySystemBackground
-                                                            : UIColor.systemBackground
-                                                    }))
-                                                Circle().fill(Color(red: 1.0, green: 0.0, blue: 0.0))
-                                                    .frame(width: 7, height: 7)
-                                            }
-                                            .frame(width: 10, height: 10)
-                                            .offset(x: -1, y: 1)
+                }
+                .toolbar {
+                    ToolbarSpacer(.fixed)
+                    
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: { withAnimation { showingNotifications.toggle() } }) {
+                            Image(systemName: "bell.fill")
+                                .imageScale(.large)
+                                .foregroundStyle(.accent)
+                                .overlay(alignment: .topTrailing) {
+                                    if hasUnreadNotifications {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color(uiColor: UIColor { trait in
+                                                    trait.userInterfaceStyle == .dark
+                                                        ? UIColor.secondarySystemBackground
+                                                        : UIColor.systemBackground
+                                                }))
+                                            Circle().fill(Color(red: 1.0, green: 0.0, blue: 0.0))
+                                                .frame(width: 7, height: 7)
                                         }
+                                        .frame(width: 10, height: 10)
+                                        .offset(x: -1, y: 1)
                                     }
-                            }
-                            .popover(isPresented: $showingNotifications) {
-                                NotificationsDropdown()
-                                    .presentationCompactAdaptation(.popover)
+                                }
+                        }
+                        .popover(isPresented: $showingNotifications) {
+                            NotificationsDropdown()
+                                .presentationCompactAdaptation(.popover)
+                        }
+                    }
+                }
+                .toolbarBackground(.hidden, for:.navigationBar)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
+                            isShowingSplash = false
+                        }
+                    }
+                    
+                    updateNotificationStatus()
+                    isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
+                    
+                    if hasInitialLoadCompleted && !isRefreshing {
+                        Task { await reloadFeed(showOverlay: true) }
+                    }
+                    
+                    if showSnow {
+                        Task {
+                            try? await Task.sleep(nanoseconds: 15_000_000_000)
+                            await MainActor.run {
+                                withAnimation(.easeIn(duration: 2.0)) {
+                                    snowSystem.birthRate = 0
+                                }
                             }
                         }
                     }
-                    .toolbarBackground(.hidden, for:.navigationBar)
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
-                                isShowingSplash = false
-                            }
-                        }
-                        
+                }
+                .onChange(of: showingNotifications) { _, isShowing in
+                    if !isShowing {
                         updateNotificationStatus()
-                        isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
+                    }
+                }
+                .onChange(of: hasCompletedOnboarding) {
+                    isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
+                }
+                .onChange(of: showOnboarding) {
+                    isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
+                }
+                .onChange(of: isOnboardingPresented) {
+                    if !isOnboardingPresented {
+                        hasCompletedOnboarding = true
+                        showOnboarding = false
+                    }
+                }
+                .fullScreenCover(isPresented: $isPresentingCreate, onDismiss: {
+                    didDismissCreate = true
+                }) {
+                    NavigationStack {
+                        DrawingView(onSave: { newItem in
+                            dataModel.addItem(newItem)
+                            viewModel.hasPostedToday = true
+                        }, prompt: viewModel.dailyPrompt)
+                    }
+                }
+                .onChange(of: didDismissCreate) {
+                    if didDismissCreate {
+                        didDismissCreate = false
                         
-                        if hasInitialLoadCompleted && !isRefreshing {
-                            Task { await reloadFeed(showOverlay: true) }
-                        }
-                        
-                        if showSnow {
-                            Task {
-                                try? await Task.sleep(nanoseconds: 15_000_000_000)
-                                await MainActor.run {
-                                    withAnimation(.easeIn(duration: 2.0)) {
-                                        snowSystem.birthRate = 0
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .onChange(of: showingNotifications) { _, isShowing in
-                        if !isShowing {
-                            updateNotificationStatus()
-                        }
-                    }
-                    .onChange(of: hasCompletedOnboarding) {
-                        isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
-                    }
-                    .onChange(of: showOnboarding) {
-                        isOnboardingPresented = !hasCompletedOnboarding || showOnboarding
-                    }
-                    .onChange(of: isOnboardingPresented) {
-                        if !isOnboardingPresented {
-                            hasCompletedOnboarding = true
-                            showOnboarding = false
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isPresentingCreate, onDismiss: {
-                        didDismissCreate = true
-                    }) {
-                        NavigationStack {
-                            DrawingView(onSave: { newItem in
-                                dataModel.addItem(newItem)
-                                viewModel.hasPostedToday = true
-                            }, prompt: viewModel.dailyPrompt)
-                        }
-                    }
-                    .onChange(of: didDismissCreate) {
-                        if didDismissCreate {
-                            didDismissCreate = false
+                        Task {
+                            let didSavePost = viewModel.hasPostedToday
                             
-                            Task {
-                                let didSavePost = viewModel.hasPostedToday
-                                
-                                if !didSavePost {
-                                    await viewModel.markDrawingAttempted()
-                                }
-                                
-                                await reloadFeed(showOverlay: true)
-                                
-                                if didSavePost {
-                                    didJustPost = true
-                                }
+                            if !didSavePost {
+                                await viewModel.markDrawingAttempted()
+                            }
+                            
+                            await reloadFeed(showOverlay: true)
+                            
+                            if didSavePost {
+                                didJustPost = true
                             }
                         }
                     }
-                    .onChange(of: didJustPost) { _, didPost in
-                        if didPost {
-                             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                withAnimation(.spring) {
-                                    actuallyShowStreakView = true
-                                }
-                                didJustPost = false
+                }
+                .onChange(of: didJustPost) { _, didPost in
+                    if didPost {
+                         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            withAnimation(.spring) {
+                                actuallyShowStreakView = true
                             }
+                            didJustPost = false
                         }
                     }
                     .task {
@@ -414,32 +421,37 @@ struct HomeView: View {
                         isInitialLoading = false
                         hasInitialLoadCompleted = true
                     }
-                }
-
-                if isShowingSplash {
-                    ZStack {
-                        Color.clear.overlay(
-                            Image("blurred_background")
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        )
-                        .edgesIgnoringSafeArea(.all)
-                        .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation, isSource: true)
-                        
-                        GeometryReader { geo in
-                            Image("brush_shadow")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: geo.size.width * (horizontalSizeClass == .regular ? 0.49 : 0.745))
-                                .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
-                                .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                                .offset(y: geo.size.height * -0.022)
-                        }
-                    }
-                    .zIndex(5)
+                    await reloadFeed(showOverlay: true)
+                    isInitialLoading = false
+                    hasInitialLoadCompleted = true
                 }
             }
+
+            if isShowingSplash {
+                ZStack {
+                    Color.clear.overlay(
+                        Image("blurred_background")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    )
+                    .edgesIgnoringSafeArea(.all)
+                    .matchedGeometryEffect(id: "backgroundAnimation", in: launchAnimation)
+                    
+                    GeometryReader { geo in
+                        Image("brush_shadow")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geo.size.width * (horizontalSizeClass == .regular ? 0.49 : 0.745))
+                            .matchedGeometryEffect(id: "logoAnimation", in: launchAnimation)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                            .offset(y: geo.size.height * -0.022)
+                    }
+                }
+                .zIndex(5)
+            }
         }
+    }
+
     
     private func syncMedalUsageFromBackend() async {
         let usage = await AwardServiceFirebase.shared.fetchTodayUsage()
@@ -457,6 +469,13 @@ struct HomeView: View {
         return keyWindow?.safeAreaInsets.top ?? 0
     }
     
+    private func safeAreaInsetsBottom() -> CGFloat {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first
+        return keyWindow?.safeAreaInsets.bottom ?? 0
+    }
+
     private static func isWinter() -> Bool {
         let month = Calendar.current.component(.month, from: Date())
         return [11, 12, 1, 2].contains(month)
