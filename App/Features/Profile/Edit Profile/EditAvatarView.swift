@@ -181,15 +181,14 @@ struct EditAvatarView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
-                            Button {
+                            improvedOptionPreview(
+                                option: option,
+                                optionSize: optionSize,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight
+                            )
+                            .onTapGesture {
                                 updateSelection(option)
-                            } label: {
-                                improvedOptionPreview(
-                                    option: option,
-                                    optionSize: optionSize, // Use the new correct size
-                                    screenWidth: screenWidth,
-                                    screenHeight: screenHeight
-                                )
                             }
                         }
                     }
