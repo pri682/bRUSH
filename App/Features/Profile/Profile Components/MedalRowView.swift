@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MedalRowView: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let count: Int
     let imageName: String
@@ -48,12 +49,12 @@ struct MedalRowView: View {
                     if count >= 1_000 {
                         Text("\(count)")
                             .font(.system(size: 14 * fontScalingFactor * scaling))
-                            .foregroundColor(.black.opacity(0.5))
+                            .foregroundColor(colorScheme == .dark ? .white.opacity(0.7) : .black.opacity(0.5))
                     }
                     
                     Text(title)
                         .font(.system(size: 16 * fontScalingFactor * scaling))
-                        .foregroundColor(.black.opacity(0.65))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : .black.opacity(0.65))
                 }
                 .padding(.top, baseCountTopPadding * fontScalingFactor)
                 
@@ -62,11 +63,13 @@ struct MedalRowView: View {
                 // Medal Image
                 Image(imageName)
                     .resizable()
+                    .renderingMode(.original)
                     .aspectRatio(contentMode: .fit)
                     .frame(width: medalIconSize * scaling, height: medalIconSize * scaling)
                     .alignmentGuide(.top) { d in d[.top] }
                     .padding(.trailing, baseTrailingPadding * fontScalingFactor)
                     .padding(.top, baseMedalTopOffset)
+                    .brightness(colorScheme == .dark ? -0.1 : 0)
             }
             .padding(.leading, baseLeadingPadding * fontScalingFactor)
         }

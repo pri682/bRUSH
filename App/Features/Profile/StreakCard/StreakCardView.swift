@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StreakCardView: View {
+    @Environment(\.colorScheme) var colorScheme
     let streakCount: Int
     let totalDrawings: Int
     let memberSince: Date
@@ -8,19 +9,34 @@ struct StreakCardView: View {
 
     // Base icon scale
     private let baseIconScaleFactor: CGFloat = 1.8
-
+    
     // Colors
-    private let streakColor = Color(hex: "#ff6b35")! // Orange
-    private let streakBackgroundStart = Color(hex: "#ffe8e0")!
-    private let streakBackgroundEnd = Color(hex: "#ffb399")!
+    private let streakColor = Color(hex: "#ff6b35") ?? .orange
     
-    private let drawingsColor = Color(hex: "#4a90e2")! // Blue
-    private let drawingsBackgroundStart = Color(hex: "#e3f2fd")!
-    private let drawingsBackgroundEnd = Color(hex: "#90caf9")!
+    private var streakBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#5c2b1e") ?? .brown) : (Color(hex: "#ffe8e0") ?? .orange.opacity(0.2))
+    }
+    private var streakBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#8f432f") ?? .orange) : (Color(hex: "#ffb399") ?? .orange.opacity(0.5))
+    }
     
-    private let memberColor = Color(hex: "#9c27b0")! // Purple
-    private let memberBackgroundStart = Color(hex: "#f3e5f5")!
-    private let memberBackgroundEnd = Color(hex: "#ce93d8")!
+    private let drawingsColor = Color(hex: "#4a90e2") ?? .blue
+    
+    private var drawingsBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#1a3a5c") ?? .blue) : (Color(hex: "#e3f2fd") ?? .blue.opacity(0.2))
+    }
+    private var drawingsBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#2d5d8f") ?? .cyan) : (Color(hex: "#90caf9") ?? .blue.opacity(0.5))
+    }
+    
+    private let memberColor = Color(hex: "#9c27b0") ?? .purple
+    
+    private var memberBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#3d1a5c") ?? .purple) : (Color(hex: "#f3e5f5") ?? .purple.opacity(0.2))
+    }
+    private var memberBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#632d8f") ?? .pink) : (Color(hex: "#ce93d8") ?? .purple.opacity(0.5))
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -51,14 +67,7 @@ struct StreakCardView: View {
                     )
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
-                .overlay(
-                    Rectangle()
-                        .fill(Color.black.opacity(0.08))
-                        .frame(height: 2)
-                        .offset(y: rowHeight/2)
-                        .blur(radius: 1)
-                        .clipped()
-                )
+                .overlay(separatorOverlay(rowHeight: rowHeight))
                 
                 Divider().opacity(0.15)
 
@@ -80,14 +89,7 @@ struct StreakCardView: View {
                         endPoint: .trailing
                     )
                 )
-                .overlay(
-                    Rectangle()
-                        .fill(Color.black.opacity(0.08))
-                        .frame(height: 2)
-                        .offset(y: rowHeight/2)
-                        .blur(radius: 1)
-                        .clipped()
-                )
+                .overlay(separatorOverlay(rowHeight: rowHeight))
 
                 Divider().opacity(0.15)
 
@@ -116,9 +118,19 @@ struct StreakCardView: View {
             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
     }
+    
+    private func separatorOverlay(rowHeight: CGFloat) -> some View {
+        Rectangle()
+            .fill(Color.black.opacity(0.08))
+            .frame(height: 2)
+            .offset(y: rowHeight/2)
+            .blur(radius: 1)
+            .clipped()
+    }
 }
 
 struct StreakRowView: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let count: Any
     let subtitle: String?
@@ -143,16 +155,10 @@ struct StreakRowView: View {
         }
         
         let characterCount = numberString.count
-        
-        if characterCount <= 4 {
-            return baseSize
-        } else if characterCount <= 6 {
-            return baseSize * 0.85
-        } else if characterCount <= 8 {
-            return baseSize * 0.75
-        } else {
-            return baseSize * 0.65
-        }
+        if characterCount <= 4 { return baseSize }
+        else if characterCount <= 6 { return baseSize * 0.85 }
+        else if characterCount <= 8 { return baseSize * 0.75 }
+        else { return baseSize * 0.65 }
     }
     
     var body: some View {
@@ -161,34 +167,32 @@ struct StreakRowView: View {
                 let baseFontSize = (65 * fontScalingFactor) * 1.1
                 let dynamicFontSize = calculateFontSize(for: count, baseSize: baseFontSize)
                 
-                if let intCount = count as? Int {
-                    Text(intCount, format: .number.notation(.compactName))
-                        .font(.system(size: dynamicFontSize, weight: .bold))
-                        .foregroundColor(countColor)
-                    
-                    if intCount >= 1_000 {
-                        Text("\(intCount)")
-                            .font(.system(size: 14 * fontScalingFactor))
-                            .foregroundColor(.black.opacity(0.5))
+                Group {
+                    if let intCount = count as? Int {
+                        Text(intCount, format: .number.notation(.compactName))
+                        if intCount >= 1_000 {
+                            Text("\(intCount)")
+                                .font(.system(size: 14 * fontScalingFactor))
+                                .foregroundColor(colorScheme == .dark ? .white.opacity(0.5) : .black.opacity(0.5))
+                        }
+                    } else if let stringCount = count as? String {
+                        Text(stringCount)
+                    } else {
+                        Text("--")
                     }
-                } else if let stringCount = count as? String {
-                    Text(stringCount)
-                        .font(.system(size: dynamicFontSize, weight: .bold))
-                        .foregroundColor(countColor)
-                } else {
-                    Text("--")
-                        .font(.system(size: dynamicFontSize, weight: .bold))
-                        .foregroundColor(countColor)
                 }
+                .font(.system(size: dynamicFontSize, weight: .bold))
+                .foregroundColor(countColor)
+                .brightness(colorScheme == .dark ? 0.15 : 0)
                 
                 Text(title)
                     .font(.system(size: 16 * fontScalingFactor))
-                    .foregroundColor(.black.opacity(0.65))
+                    .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : .black.opacity(0.65))
                 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.system(size: 14 * fontScalingFactor))
-                        .foregroundColor(.black.opacity(0.5))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.6) : .black.opacity(0.5))
                 }
             }
             .padding(.top, baseCountTopPadding * fontScalingFactor)
@@ -199,8 +203,11 @@ struct StreakRowView: View {
                 Spacer()
                 Image(imageName)
                     .resizable()
+                    .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .frame(width: iconSize, height: iconSize)
+                    .foregroundColor(countColor)
+                    .brightness(colorScheme == .dark ? 0.3 : 0)
                 Spacer()
             }
             .padding(.trailing, baseTrailingPadding * fontScalingFactor)
