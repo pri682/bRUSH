@@ -142,10 +142,59 @@ For some reason, iPads had a bunch of issues. Mostly due to different aspect rat
 - Added Error Messages for things such as too long of a username, non-matching passwords, invalid email, etc... to allow better user exprienece.
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-139-add-better-error-messages)
 
+## Sprint 3:
+
+#### **KAN-145 — Add Human Avatar Options**
+- Added Human avatar options, allowing users to create themselves instead of the "crack addict" looking ones as the team called them, lol.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/src/KAN-145-human-avatars/)
+
+#### **KAN-152 — Add Unit Test for checking if user is signed in**
+- Added the first of 3 unit tests. This one checks the state of the app when user is signed in to see if it tracks correctly.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/79)
+
+#### **KAN-153 — Add Unit Test for sign out**
+- Added The second of 3 Unit tests. This one was for the signout state of the app.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/80)
+
+#### **KAN-154 — Add Unit Test to Test Password input length for error handling**
+- Added The third of 3 Unit tests (and last one). This one was for the input length in the password field during signup.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/81)
+
+#### **KAN-154 — Add Unit Test to Test Password input length for error handling**
+- Added The second of 3 Unit tests. This one was for the input length in the password field during signup.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/81)
+
+#### **KAN-157 — Add warning for password input field to ensure users know the minimum length is met**
+- Added small logic that turns the password field red during signup when the password typed doesn't meet the minimum requirement length wise.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/76)
+
+#### **KAN-158 — Ensure the Refresh Count button on the profile cards fits correctly for all screen sizes**
+- Updated the UI code for the "refresh stats" button, that makes sure it doesn't overlap the cards on iPad.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/83)
+
+#### **KAN-160 — Ensure the Gear Icon fits Better within the Profile Avatar View**
+- Updated the UI of the geer icon to ensure it is better fitting the color theme of the app and username text. This has been changed to liquid glass later on by Kelvin as we discussed it might be better.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/73)
+
+#### **KAN-185 — Increase AvatarModel readability and scale**
+- Updated the Avatar Model from having hardcoded array elements (for example "hair_1, hair_2, hair_3, etc...) to useing an array map that goes from 1 to however many items we have, since every avatar option already follows the same naming convension. this allows to simply update the # (size) the map goes to when adding new options, instead of having to manually hardcode the added options.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/82)
+
+#### **KAN-187 — Add Personalized Profile Share Cards**
+- Added a "shared cards" feature, which allows user to share pre-made, up-to-date cards showing their stats such as streak count, total drawings, total medals, or even upload their own drawing and export these as an image, to share on social media.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/98)
+
+#### **KAN-197 — Add a way to export the share cards as a video so it can be shared in a more "alive" way**
+- Added a way to export the share cards as a video as well (previously was just an image), which captures both the card AND the animated background. This allows users to share a much more "alive" and vibrant showing of their achivements.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/102)
+
+#### **KAN-200 — Add The Unit Tests plan**
+- Added the plan for the unit tests as was required to in sprint assingment 14.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/105)
+
+
 #### **Next Steps** 
-- Add Better Avatars (Human Versions Possibly).
-- Add a general state of being signed in across the app.
-- Error Handling on profile page logic.
+ Update the app and get it ready for possible app store publication, as per the team's discussion!! 
 
 ---
 
@@ -247,10 +296,67 @@ For some reason, iPads had a bunch of issues. Mostly due to different aspect rat
 - Added Deletion Animation to the Drawing Page.
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-141-drawing-deletion-animation)
 
+## Sprint 3:
+
+#### **KAN-149 — Sprint 2 Demo Fixes**
+- Fixed issues found during the Sprint 2 Demo. Many small changes in many files.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/67)
+
+#### **KAN-151 — Fix date mismatch in drawing uploads**
+- Fixed a bug where the uploaded drawings had the wrong date on them.
+This one does NOT have a branch since it was a hotfix. Dr lehr and I talked about this and settled the issue.
+
+#### **KAN-171 — Profile Updates**
+- Made dark mode more compatible for icons, stat cards, as well added a notch in avatar + fixed dark mode bugs in the editor.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/84)
+
+#### **KAN-172 — Friends and Leaderboard Updates**
+- Restructured the files to cleanly separate the backend from the UI, and added the current user to the leaderboard along with some visual fixes.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/70)
+
+#### **KAN-173 — Past Drawings Grid and Preview Updates**
+- Added a custom inner-shadow modifier for highlighting drawings, plus an average-color background with adaptive text.Also added single/multi share buttons and converted the old alerts into action sheets.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/71)
+
+#### **KAN-182 — Custom Animations**
+- I updated the animated mesh-gradient background for the feed and added a custom snow effect using the Vortex library, along with a new streak animation for daily drawings. I also refreshed the submission popup with a Lottie animation and created a custom launch-screen storyboard with responsive transitions for both iPhone and iPad.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/77)
+
+#### **KAN-183 — Feed and Drawing View Updates**
+- I improved feed performance with better caching, smoother scrolling, and new transitions, while expanding the profile and avatar features and fixing issues like side-indicator desync and medal limits. I also added new animations, faster notifications, and general styling refinements across the app.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/88)
+
+#### **KAN-184 — Upgrade Profile Sheet**
+- Updated the profile sheet with adaptive buttons and stat cards, made the Avatar View customizable as a mini PFP, and revamped the Add Friend view to show the profile sheet with an add option. I also prepped the system for future facial-hair options and a custom 3D avatar in the profile sheet.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/78)
+
+#### **KAN-188 — Restoring and Simplifying Friends Fetching**
+- I fixed the iPad profile-sheet scaling so everything renders correctly on large screens, restored the lost friend-fetching logic with a cleaner, more efficient approach, and polished the leaderboard with stable avatar placement, proper badge stacking, and full dark-mode support. I also improved loading behavior with cleaner redacted states and disabled interactions, and fully fixed profile deletion so friendships, requests, and sign-out all work correctly.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/93)
+
+#### **KAN-186 — Drawings Unit Tests**
+- Added unit tests for the drawings.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/97)
+
+#### **KAN-195 — Fixed Issue Where FriendsView Was Not Refreshing Automatically**
+- The friends tab now refreshes automatically when switching tabs (with pull-to-refresh supported), the friends view shows a real loading state, and feed blur logic correctly uses the streak’s last-completed date. Removing a friend from the profile sheet now updates both the feed and leaderboard just like the friends view.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/96)
+
+#### **KAN-196 — Sprint 3 Demo Fixes Pt. 1**
+- I rebuilt the card system so all text, sizes, and assets scale cleanly and stay consistent, overhauled the showcase and picker for better loading and export behavior, and fixed scrolling and indicator issues across the feed (including dark-mode quirks). I also cleaned up UI bugs by restoring redacted/avatar titles, fixing login layouts, updating notification badges, adding a leaderboard toast, and refreshing popovers.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/101)
+
+#### **KAN-199 — Documenting Feed Unit Tests**
+- Added the unit tests report as required in sprint assingment 14.
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/pull-requests/104)
+
+#### **KAN-189 — Sprint 3 Demo Fixes Pt. 2**
+- Fixing a few issues for the upcoming spring such as card scaling on iPad, spacing adjutments, better dark mode support, and updating small UI elements for better visibility
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/%7B57222da5-99b9-44b5-8ae7-38296988f7a4%7D/branch/KAN-189-sprint-3-demo-fixes-2)
+
+
 #### **Next Steps** 
-- Update Ripple Animation when clicking on a drawing.
-- Effects for metal awarding.
-- Update medal counts on firebase
+Research how to publish the app on the app store and fix any issues as (and if) they rise.
 
 ---
 
