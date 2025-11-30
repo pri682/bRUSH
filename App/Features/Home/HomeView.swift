@@ -87,7 +87,7 @@ struct HomeView: View {
                     VStack(spacing: 0) {
                         GeometryReader { geometry in
                             let topPadding: CGFloat = safeAreaInsetsTop() + 34 + 24 + 22
-                            let bottomPadding: CGFloat = safeAreaInsetsBottom() + (UIDevice.current.userInterfaceIdiom == .pad ? 0 : 70)
+                            let bottomPadding: CGFloat = safeAreaInsetsBottom() + (UIDevice.current.userInterfaceIdiom == .pad ? 22 : 70)
                             let availableHeight = geometry.size.height - topPadding - bottomPadding
                             
                             let sidePadding: CGFloat = (UIDevice.current.userInterfaceIdiom == .pad ? 0 : 6)

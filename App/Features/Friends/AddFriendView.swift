@@ -66,7 +66,6 @@ struct AddFriendView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(user.fullName).font(.body.weight(.semibold))
                                 Text("@\(user.handle)").font(.caption).foregroundStyle(.secondary)
-                                    .buttonStyle(.glassProminent)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {

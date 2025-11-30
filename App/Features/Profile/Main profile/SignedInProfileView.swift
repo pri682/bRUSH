@@ -93,7 +93,7 @@ struct SignedInProfileView: View {
             let screenHeight = geometry.size.height
             let isIpad = UIDevice.current.userInterfaceIdiom == .pad
             let isLandscape = screenWidth > screenHeight
-            let safeAreaBottom = geometry.safeAreaInsets.bottom
+            let safeAreaBottom = geometry.safeAreaInsets.bottom + (isIpad ? 30 : 0)
             let standardPadding = screenWidth * 0.05
             
             let headerHeight = screenHeight * 0.30
