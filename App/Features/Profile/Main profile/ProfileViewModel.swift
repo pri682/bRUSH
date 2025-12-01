@@ -11,6 +11,7 @@ class ProfileViewModel: ObservableObject {
     @Published var profile: UserProfile? = nil   // 🔥 New: Firestore profile
     @Published var errorMessage: String? = nil
     @Published var isLoadingProfile: Bool = false
+    @Published var isCheckingAuth: Bool = true
 
     private let auth = AuthService.shared
     private let db = Firestore.firestore()
@@ -22,6 +23,7 @@ class ProfileViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newUser in
                 self?.user = newUser
+                self?.isCheckingAuth = false
                 Task {
                     if let uid = newUser?.id {
                         await self?.loadProfile(uid: uid)
@@ -54,6 +56,22 @@ class ProfileViewModel: ObservableObject {
         do {
             let loadedProfile = try await UserService.shared.fetchProfile(uid: uid)
             timeoutTask.cancel() // Cancel timeout if profile loads successfully
+
+            // DEBUG: inspect loaded profile for avatar/facial fields
+            let mirror = Mirror(reflecting: loadedProfile)
+            let fields = mirror.children.compactMap { child in
+                guard let label = child.label else { return nil }
+                return "\(label)=\(String(describing: child.value))"
+            }.joined(separator: ", ")
+            print("[DEBUG] Loaded profile for uid=\(uid) -> \(fields)")
+
+            // Heuristic: warn if no avatar/hair-related keys found
+            let keyLabels = mirror.children.compactMap { $0.label?.lowercased() }
+            let avatarKeys = keyLabels.filter { $0.contains("hair") || $0.contains("beard") || $0.contains("facial") || $0.contains("avatar") }
+            if avatarKeys.isEmpty {
+                print("[WARN] Loaded profile for uid=\(uid) contains no avatar/hair keys. UI may not display facial hair.")
+            }
+
             await MainActor.run { 
                 self.profile = loadedProfile
                 self.isLoadingProfile = false
@@ -123,17 +141,13 @@ class ProfileViewModel: ObservableObject {
             try await auth.deleteUser()
             
             // Clear local state
-            await MainActor.run {
-                self.user = nil
-                self.profile = nil
-                self.email = ""
-                self.password = ""
-                LocalUserStorage.shared.clearProfile()
-            }
+            self.signOut()
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
             }
+            // Force sign out to ensure user is returned to login screen
+            self.signOut()
         }
     }
     

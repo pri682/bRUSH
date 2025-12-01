@@ -1,54 +1,65 @@
 import SwiftUI
 
 struct AwardsStackCardView: View {
+    @Environment(\.colorScheme) var colorScheme
     let cardTypeTitle: String
     let firstPlaceCount: Int
     let secondPlaceCount: Int
     let thirdPlaceCount: Int
     let medalIconSize: CGFloat
+    var isCurrentUser: Bool = false
 
-    // Base medal scale
     private let baseMedalScaleFactor: CGFloat = 1.8
 
-    // Colors
-    private let goldNumberColor = Color(hex: "#ff9c00")!
-    private let goldBackgroundStart = Color(hex: "#f8f1d5")!
-    private let goldBackgroundEnd = Color(hex: "#eadba7")!
+    private let goldNumberColor = Color(hex: "#ff9c00") ?? .yellow
+    private let goldNumberColorDark = Color(hex: "#FFC107") ?? .yellow
+    
+    private var goldBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#8B6914") ?? .yellow) : (Color(hex: "#f8f1d5") ?? .yellow.opacity(0.3))
+    }
+    private var goldBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#58420A") ?? .orange) : (Color(hex: "#eadba7") ?? .yellow.opacity(0.6))
+    }
     
     private let silverNumberColor = Color(red: 90/255, green: 80/255, blue: 70/255)
-    private let silverBackgroundStart = Color(hex: "#e2e4e3")!
-    private let silverBackgroundEnd = Color(hex: "#b1b6b2")!
+    private let silverNumberColorDark = Color(hex: "#E0E0E0") ?? .gray
     
-    private let bronzeNumberColor = Color(hex: "#8c5735")!
-    private let bronzeBackgroundStart = Color(hex: "#dcc3ad")!
-    private let bronzeBackgroundEnd = Color(hex: "#c98954")!
+    private var silverBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#696969") ?? .gray) : (Color(hex: "#e2e4e3") ?? .gray.opacity(0.3))
+    }
+    private var silverBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#404040") ?? .gray) : (Color(hex: "#b1b6b2") ?? .gray.opacity(0.6))
+    }
+    
+    private let bronzeNumberColor = Color(hex: "#8c5735") ?? .brown
+    private let bronzeNumberColorDark = Color(hex: "#E6BE8A") ?? .orange
+    
+    private var bronzeBackgroundStart: Color {
+        colorScheme == .dark ? (Color(hex: "#8D5524") ?? .brown) : (Color(hex: "#dcc3ad") ?? .brown.opacity(0.3))
+    }
+    private var bronzeBackgroundEnd: Color {
+        colorScheme == .dark ? (Color(hex: "#543310") ?? .orange) : (Color(hex: "#c98954") ?? .brown.opacity(0.6))
+    }
 
     var body: some View {
         GeometryReader { geometry in
             let cardWidth = geometry.size.width
             let cardHeight = geometry.size.height
-            
-            // Device / size detection
-            let isPad = UIDevice.current.userInterfaceIdiom == .pad || cardWidth > 600
-            
-            let rowHeight = cardHeight / 3 * (isPad ? 1.2 : 1.0)  // Give more height on iPad
+            let rowHeight = cardHeight / 3
             let radius = min(cardWidth, cardHeight) * 0.06
 
-            // Font & medal scaling
-            let fontFactorBase = cardWidth / 400
-            let fontFactor = fontFactorBase * (isPad ? 0.75 : 1.0)  // More conservative iPad scaling
+            let fontFactor = cardWidth / 380.0
+            let adjustedMedalSize = medalIconSize * baseMedalScaleFactor
             
-            // 🔧 Slightly smaller medals on iPad
-            let medalScaleFactor = baseMedalScaleFactor * (isPad ? 0.70 : 1.0)
-            let adjustedMedalSize = medalIconSize * medalScaleFactor
+            let accumulatedTitle = isCurrentUser ? "Medals Received" : "Medals Received"
+            let awardedTitle = isCurrentUser ? "Medals Given" : "Medals Given"
 
             VStack(spacing: 0) {
-                // MARK: - Gold
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: firstPlaceCount,
                     imageName: "gold_medal",
-                    countColor: goldNumberColor,
+                    countColor: colorScheme == .dark ? goldNumberColorDark : goldNumberColor,
                     medalIconSize: adjustedMedalSize,
                     fontScalingFactor: fontFactor
                 )
@@ -56,29 +67,20 @@ struct AwardsStackCardView: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [goldBackgroundStart, goldBackgroundEnd]),
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
                 .cornerRadius(radius, corners: [.topLeft, .topRight])
-                .overlay(
-                    // Gold section drop shadow
-                    Rectangle()
-                        .fill(Color.black.opacity(0.08))
-                        .frame(height: 2)
-                        .offset(y: rowHeight/2)
-                        .blur(radius: 1)
-                        .clipped()
-                )
+                .overlay(separatorOverlay(rowHeight: rowHeight))
                 
                 Divider().opacity(0.15)
 
-                // MARK: - Silver
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: secondPlaceCount,
                     imageName: "silver_medal",
-                    countColor: silverNumberColor,
+                    countColor: colorScheme == .dark ? silverNumberColorDark : silverNumberColor,
                     medalIconSize: adjustedMedalSize,
                     fontScalingFactor: fontFactor
                 )
@@ -86,28 +88,19 @@ struct AwardsStackCardView: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [silverBackgroundStart, silverBackgroundEnd]),
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
-                .overlay(
-                    // Silver section drop shadow
-                    Rectangle()
-                        .fill(Color.black.opacity(0.08))
-                        .frame(height: 2)
-                        .offset(y: rowHeight/2)
-                        .blur(radius: 1)
-                        .clipped()
-                )
+                .overlay(separatorOverlay(rowHeight: rowHeight))
 
                 Divider().opacity(0.15)
 
-                // MARK: - Bronze
                 MedalRowView(
-                    title: cardTypeTitle.contains("Accumulated") ? "Granted to You" : "Awarded to Friends",
+                    title: cardTypeTitle.contains("Accumulated") ? accumulatedTitle : awardedTitle,
                     count: thirdPlaceCount,
                     imageName: "bronze_medal",
-                    countColor: bronzeNumberColor,
+                    countColor: colorScheme == .dark ? bronzeNumberColorDark : bronzeNumberColor,
                     medalIconSize: adjustedMedalSize,
                     fontScalingFactor: fontFactor
                 )
@@ -115,19 +108,28 @@ struct AwardsStackCardView: View {
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [bronzeBackgroundStart, bronzeBackgroundEnd]),
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
                 .cornerRadius(radius, corners: [.bottomLeft, .bottomRight])
             }
+            .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: radius))
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
+    }
+    
+    private func separatorOverlay(rowHeight: CGFloat) -> some View {
+        Rectangle()
+            .fill(Color.black.opacity(0.08))
+            .frame(height: 2)
+            .offset(y: rowHeight/2)
+            .blur(radius: 1)
+            .clipped()
     }
 }
 
-// MARK: - Helpers
 extension Color {
     init?(hex: String) {
         let hexColor = hex.replacingOccurrences(of: "#", with: "")

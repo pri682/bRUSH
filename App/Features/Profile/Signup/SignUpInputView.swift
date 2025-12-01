@@ -8,8 +8,13 @@ struct SignUpInputView: View {
             Group {
                 // First Name
                 VStack(alignment: .leading, spacing: 4) {
-                    InputField(placeholder: "First Name (max 10 chars)", text: $viewModel.firstName, isSecure: false, hasError: viewModel.isFirstNameTooLong)
-                        .textContentType(.givenName)
+                    InputField(
+                        placeholder: "First Name (max 10 chars)",
+                        text: $viewModel.firstName,
+                        isSecure: false,
+                        hasError: viewModel.isFirstNameTooLong,
+                        textContentType: .givenName
+                    )
                     
                     if viewModel.isFirstNameTooLong {
                         Text("Too long. 10 max length")
@@ -19,18 +24,22 @@ struct SignUpInputView: View {
                 }
                 
                 // Last Name
-                InputField(placeholder: "Last Name", text: $viewModel.lastName, isSecure: false)
-                    .textContentType(.familyName)
+                InputField(
+                    placeholder: "Last Name",
+                    text: $viewModel.lastName,
+                    isSecure: false,
+                    textContentType: .familyName
+                )
 
                 // Email
                 VStack(alignment: .leading, spacing: 4) {
                     InputField(
-                        placeholder: "Email", 
-                        text: $viewModel.email, 
-                        isSecure: false, 
-                        hasError: !viewModel.email.isEmpty && !viewModel.isValidEmail
+                        placeholder: "Email",
+                        text: $viewModel.email,
+                        isSecure: false,
+                        hasError: !viewModel.email.isEmpty && !viewModel.isValidEmail,
+                        textContentType: .emailAddress
                     )
-                    .textContentType(.emailAddress)
                     
                     if !viewModel.email.isEmpty && !viewModel.isValidEmail {
                         Text("Invalid email address")
@@ -40,19 +49,31 @@ struct SignUpInputView: View {
                 }
                 
                 // Password
-                InputField(placeholder: "Password (min 6 chars)", text: $viewModel.password, isSecure: true)
-                    // ✨ THE FIX: Change to .password to disable strong password suggestion
-                    .textContentType(.password)
+                VStack(alignment: .leading, spacing: 4) {
+                    InputField(
+                        placeholder: "Password (min 6 chars)",
+                        text: $viewModel.password,
+                        isSecure: true,
+                        hasError: viewModel.isPasswordTooShort,
+                        textContentType: .newPassword
+                    )
+                    
+                    if viewModel.isPasswordTooShort {
+                        Text("Password must be at least 6 characters long")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
                 
                 // Confirm Password
                 VStack(alignment: .leading, spacing: 4) {
                     InputField(
-                        placeholder: "Confirm Password", 
-                        text: $viewModel.confirmPassword, 
+                        placeholder: "Confirm Password",
+                        text: $viewModel.confirmPassword,
                         isSecure: true,
-                        hasError: !viewModel.confirmPassword.isEmpty && !viewModel.passwordsMatch
+                        hasError: !viewModel.confirmPassword.isEmpty && !viewModel.passwordsMatch,
+                        textContentType: .newPassword
                     )
-                    .textContentType(.password)
                     
                     if !viewModel.confirmPassword.isEmpty && !viewModel.passwordsMatch {
                         Text("Passwords don't match")
@@ -67,13 +88,9 @@ struct SignUpInputView: View {
                 viewModel.submitStep1()
             }
             .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(Color.accentColor)
-            .cornerRadius(12) // Less rounded corners
             .disabled(!viewModel.isStep1Valid || viewModel.isLoading)
-            .padding(.top, 16)
+            .buttonStyle(.glassProminent)
         }
     }
 }

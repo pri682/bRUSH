@@ -4,71 +4,72 @@ struct SignUpUsernameView: View {
     @ObservedObject var viewModel: SignUpViewModel
     
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Your display name is how other users will see you.")
+        VStack(spacing: 24) {
+            Spacer()
+            
+            Text("Your username is how other users will find you.")
                 .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            // Display Name Input Field
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 InputField(
-                    placeholder: "Display Name (3-15 chars, letters/numbers/_ only)",
+                    placeholder: "Username",
                     text: $viewModel.displayName,
                     isSecure: false,
-                    hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
+                    hasError: validationMessage != nil,
+                    textContentType: .username
                 )
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
                 
-                if viewModel.isDisplayNameTooLong {
-                    Text("Too long. 15 max length")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                } else if viewModel.isDisplayNameInvalidFormat {
-                    Text("Invalid characters. Only letters, numbers, and _ allowed")
-                        .font(.caption)
-                        .foregroundColor(.red)
+                Group {
+                    if let error = validationMessage {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption2)
+                            Text(error)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundStyle(.red)
+                    } else {
+                        Text("3-15 characters. Letters, numbers, and underscores only.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .padding(.leading, 4)
+                .animation(.easeInOut(duration: 0.2), value: validationMessage)
             }
-            // 🗑️ REMOVED: .onChange logic, as validation is no longer required on type
-            
-            // Display error message for validation issues
-            if !viewModel.displayName.isEmpty && !viewModel.isStep2Valid {
-                if viewModel.displayName.count < 3 {
-                    Text("Display name must be at least 3 characters.")
-                        .foregroundColor(.red)
-                } else if viewModel.displayName.count > 15 {
-                    Text("Display name must be 15 characters or less.")
-                        .foregroundColor(.red)
-                } else {
-                    Text("Display name can only contain letters, numbers, and underscores.")
-                        .foregroundColor(.red)
-                }
-            }
-            
-            // Display general error message from ViewModel
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-            }
-
-            // 🗑️ REMOVED: All status indicators related to checking unique name
 
             Button("Next: Create Avatar") {
-                // Calls the updated submitStep2() in the ViewModel (no longer async)
                 viewModel.submitStep2()
             }
             .font(.headline)
-            .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(Color.accentColor)
-            .cornerRadius(6) // Less rounded corners
-            .disabled(
-                !viewModel.isStep2Valid ||
-                viewModel.isLoading
-            )
-            .padding(.top, 16)
+            .disabled(!viewModel.isStep2Valid || viewModel.isLoading)
+            .buttonStyle(.glassProminent)
+            .padding(.top, 8)
+            
+            Spacer()
         }
-        .padding(.horizontal) // Add padding to make the view look good
+        .padding(.horizontal)
+    }
+    
+    private var validationMessage: String? {
+        if viewModel.displayName.isEmpty { return nil }
+        
+        if viewModel.isDisplayNameTooLong {
+            return "Too long. Maximum 15 characters."
+        }
+        if viewModel.isDisplayNameInvalidFormat {
+            return "Invalid format. Letters, numbers, and '_' only."
+        }
+        if viewModel.displayName.count < 3 {
+            return "Too short. Minimum 3 characters."
+        }
+        
+        return viewModel.errorMessage
     }
 }

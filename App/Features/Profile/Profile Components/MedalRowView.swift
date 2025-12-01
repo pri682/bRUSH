@@ -1,7 +1,7 @@
 import SwiftUI
 
-// MARK: - MedalRowView
 struct MedalRowView: View {
+    @Environment(\.colorScheme) var colorScheme
     let title: String
     let count: Int
     let imageName: String
@@ -16,29 +16,10 @@ struct MedalRowView: View {
     
     // MARK: - Number Formatting Functions
     
-    private func formatNumber(_ number: Int) -> (display: String, subtitle: String?) {
-        if number == -1 {
-            return ("--", nil)
-        }
-        
-        if number >= 1_000_000 {
-            let millions = Double(number) / 1_000_000
-            let display = millions.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(millions))M" : String(format: "%.1fM", millions)
-            return (display, "\(number)")
-        } else if number >= 1_000 {
-            let thousands = Double(number) / 1_000
-            let display = thousands.truncatingRemainder(dividingBy: 1) == 0 ? "\(Int(thousands))K" : String(format: "%.1fK", thousands)
-            return (display, "\(number)")
-        } else {
-            return ("\(number)", nil)
-        }
-    }
-    
     private func calculateFontSize(for number: Int, baseSize: CGFloat, scaling: CGFloat) -> CGFloat {
-        let numberString = "\(number)"
-        let characterCount = numberString.count
+        let formatted = number.formatted(.number.notation(.compactName))
+        let characterCount = formatted.count
         
-        // Scale down font size based on character count
         if characterCount <= 4 {
             return baseSize
         } else if characterCount <= 6 {
@@ -58,24 +39,22 @@ struct MedalRowView: View {
             HStack(alignment: .top) {
                 // Count + Title
                 VStack(alignment: .leading, spacing: 2 * fontScalingFactor) {
-                    let formattedNumber = formatNumber(count)
                     let baseFontSize = (65 * fontScalingFactor * scaling) * 1.1
                     let dynamicFontSize = calculateFontSize(for: count, baseSize: baseFontSize, scaling: scaling)
                     
-                    Text(formattedNumber.display)
+                    Text(count.formatted(.number.notation(.compactName)))
                         .font(.system(size: dynamicFontSize, weight: .bold))
                         .foregroundColor(countColor)
                     
-                    // Show subtitle if we have an abbreviated number
-                    if let subtitle = formattedNumber.subtitle {
-                        Text(subtitle)
+                    if count >= 1_000 {
+                        Text("\(count)")
                             .font(.system(size: 14 * fontScalingFactor * scaling))
-                            .foregroundColor(.black.opacity(0.5))
+                            .foregroundColor(colorScheme == .dark ? .white.opacity(0.7) : .black.opacity(0.5))
                     }
                     
                     Text(title)
                         .font(.system(size: 16 * fontScalingFactor * scaling))
-                        .foregroundColor(.black.opacity(0.65))
+                        .foregroundColor(colorScheme == .dark ? .white.opacity(0.8) : .black.opacity(0.65))
                 }
                 .padding(.top, baseCountTopPadding * fontScalingFactor)
                 
@@ -84,11 +63,13 @@ struct MedalRowView: View {
                 // Medal Image
                 Image(imageName)
                     .resizable()
+                    .renderingMode(.original)
                     .aspectRatio(contentMode: .fit)
                     .frame(width: medalIconSize * scaling, height: medalIconSize * scaling)
                     .alignmentGuide(.top) { d in d[.top] }
                     .padding(.trailing, baseTrailingPadding * fontScalingFactor)
                     .padding(.top, baseMedalTopOffset)
+                    .brightness(colorScheme == .dark ? -0.1 : 0)
             }
             .padding(.leading, baseLeadingPadding * fontScalingFactor)
         }

@@ -6,10 +6,10 @@ struct AnimatedSketchView: View {
         "burger","soda","boot","banana","home","cat","giraffe",
         "dog","sunglasses","plant","hand","dove","casino","console",
         "ball","football","laugh", "bike", "rainbow", "donut", "brush",
-        "Pencil", "flower", "sloth", "fire", "frog", "badge", "drumsticks",
+        "pencil", "flower", "sloth", "fire", "frog", "badge", "drumstick",
         "idea", "fork", "skincare", "star", "tree", "wind", "tucan", "bird",
-        "moon", "trophie", "pizza", "flash", "dino", "car", "diamond", "roller",
-        "bucket", "snowman", "chick", "brain", "prey", "bee", "rocket", "dolphin",
+        "moon", "trophy", "pizza", "flash", "dino", "car", "diamond", "roller",
+        "bucket", "snowman", "chick", "brain", "pray", "bee", "rocket", "dolphin",
         "drum", "trumpet", "camera", "cafe", "summer", "zzz", "lovehands", "planetring",
         "earth", "helicopter"
         
@@ -41,7 +41,7 @@ struct AnimatedSketchView: View {
                         .rotationEffect(.degrees(sketch.rotation))
                         .position(x: sketch.x, y: sketch.y)
                         .opacity(sketch.opacity)
-                        .foregroundColor(sketch.color)
+                        .colorMultiply(.white)
                         .animation(.easeInOut(duration: fadeInDuration), value: sketch.opacity)
                 }
             }
@@ -67,7 +67,7 @@ struct AnimatedSketchView: View {
     }
     
     private func startDrawingIcons() {
-        let totalCols = max(1, Int((canvasSize.width - colSpacing) / (iconSize + colSpacing)))
+        let totalCols = max(1, Int((canvasSize.width + colSpacing) / (iconSize + colSpacing)))
         let totalRows = max(1, Int((canvasSize.height - rowSpacing) / (iconSize + rowSpacing)))
         
         var currentCol = 0
@@ -76,11 +76,13 @@ struct AnimatedSketchView: View {
         func drawNextIcon() {
             guard !cancelAnimation else { return }
             guard currentRow < totalRows else { return }
-            
-            let x = CGFloat(currentCol) * (iconSize + colSpacing) + iconSize/2 + colSpacing/2
-            let y = CGFloat(currentRow) * (iconSize + rowSpacing) + iconSize/2 + rowSpacing/2
-            
-            // Pick a random image, avoiding recent duplicates
+
+            let actualColSpacing = (canvasSize.width - CGFloat(totalCols) * iconSize) / CGFloat(max(totalCols - 1, 1))
+            let actualRowSpacing = (canvasSize.height - CGFloat(totalRows) * iconSize) / CGFloat(max(totalRows - 1, 1))
+
+            let x = CGFloat(currentCol) * (iconSize + actualColSpacing) + iconSize / 2
+            let y = CGFloat(currentRow) * (iconSize + actualRowSpacing) + iconSize / 2
+
             let imageName = getNonRepeatingIcon()
             
             let sketch = Sketch(

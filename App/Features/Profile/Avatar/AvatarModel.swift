@@ -1,16 +1,39 @@
 import Foundation
 
+enum AvatarType: String, CaseIterable, Codable {
+    case fun = "fun"
+    case personal = "personal"
+    
+    var displayName: String {
+        switch self {
+        case .fun: return "Fun"
+        case .personal: return "Personal"
+        }
+    }
+}
+
 struct AvatarParts: Codable, Equatable {
+    var avatarType: AvatarType
     var background: String
-    var face: String?
+    var body: String?
+    var shirt: String?
     var eyes: String?
     var mouth: String?
     var hair: String?
+    var facialHair: String?
     
-    // Default avatar - empty face
+    // For fun avatars (alien) - these map to the old face/eyes/mouth/hair system
+    var face: String? {
+        get { body } // Map body to face for fun avatars
+        set { body = newValue }
+    }
+    
+    // Default avatar - empty body
     static let `default` = AvatarParts(
+        avatarType: .personal,
         background: "background_1",
-        face: nil,
+        body: nil,
+        shirt: nil,
         eyes: nil,
         mouth: nil,
         hair: nil
@@ -19,9 +42,28 @@ struct AvatarParts: Codable, Equatable {
 
 // Available avatar options
 struct AvatarOptions {
-    static let backgrounds = ["background_1", "background_2", "background_3", "background_4" , "background_5" , "background_6", "background_7", "background_8"]
-    static let faces = ["face_1", "face_2", "face_3", "face_4", "face_5", "face_6", "face_7", "face_8", "face_9", "face_10", "face_11", "face_12", "face_13", "face_14", "face_15", "face_16"]
-    static let eyes = ["eyes_1", "eyes_2", "eyes_3", "eyes_4", "eyes_5", "eyes_6", "eyes_7", "eyes_8", "eyes_9", "eyes_10"]
-    static let mouths = ["mouth_1", "mouth_2", "mouth_3", "mouth_4", "mouth_5", "mouth_6", "mouth_7", "mouth_8", "mouth_9", "mouth_10", "mouth_11"]
-    static let hairs = ["hair_1", "hair_2", "hair_3", "hair_4", "hair_5", "hair_6"]
+    // Personal avatar options (human)
+    static let personalBackgrounds = (1...21).map { "background_\($0)" }
+    static let personalBodies = (1...7).map { "body_\($0)" }
+    static let personalShirts = (1...16).map { "shirt_\($0)" }
+    static let personalEyes = (1...7).map { "eyes_\($0)" }
+    static let personalMouths = (1...8).map { "mouth_\($0)" }
+    static let personalHairs = (1...56).map { "hair_\($0)" }
+    static let personalFacialHairs = (1...10).map { "facial_hair_\($0)" } // Facial Hair
+
+    
+    // Fun avatar options (alien) - using actual fun_ prefixed files
+    static let funBackgrounds = (1...21).map { "background_\($0)" }
+    static let funFaces = (1...16).map { "fun_face_\($0)" }
+    static let funEyes = (1...10).map { "fun_eyes_\($0)" }
+    static let funMouths = (1...11).map { "fun_mouth_\($0)" }
+    static let funHairs = (1...6).map { "fun_hair_\($0)" }
+    
+    // Legacy support - these will be deprecated
+    static let backgrounds = personalBackgrounds
+    static let bodies = personalBodies
+    static let shirts = personalShirts
+    static let eyes = personalEyes
+    static let mouths = personalMouths
+    static let hairs = personalHairs
 }

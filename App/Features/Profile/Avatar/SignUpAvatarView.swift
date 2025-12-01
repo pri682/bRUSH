@@ -1,377 +1,479 @@
 import SwiftUI
 
 struct SignUpAvatarView: View {
-    @ObservedObject var viewModel: SignUpViewModel // observed for changes
+    @ObservedObject var viewModel: SignUpViewModel
+    @State private var selectedAvatarType: AvatarType = .personal
     @State private var selectedBackground = "background_1"
-    @State private var selectedFace: String? = nil // if nill, its empty for that field...
+    @State private var selectedBody: String? = nil
+    @State private var selectedShirt: String? = nil
     @State private var selectedEyes: String? = nil
     @State private var selectedMouth: String? = nil
     @State private var selectedHair: String? = nil
-    @State private var selectedCategory = 0 // 0: Background, 1: Face, 2: Eyes, 3: Mouth, 4: Hair
-    
-    // Undo/Redo functionality
+    @State private var selectedFacialHair: String? = nil
+    @State private var selectedCategory = 0
+
+    // Undo/Redo
     @State private var history: [AvatarParts] = []
     @State private var currentHistoryIndex = -1
-    
-    private let categories = ["Face", "Eyes", "Mouth", "Hair", "Background"]
-    
+
+    private static let removeOptionId = "__REMOVE__"
+
+    private var categories: [String] {
+        switch selectedAvatarType {
+        case .personal:
+            return ["Body", "Shirt", "Eyes", "Mouth", "Hair", "Facial Hair", "Background"]
+        case .fun:
+            return ["Face", "Eyes", "Mouth", "Hair", "Background"]
+        }
+    }
+
     var body: some View {
         GeometryReader { geometry in
-            let screenWidth = geometry.size.width // get screen width
-            let screenHeight = geometry.size.height // get screen height
-            let isIpad = UIDevice.current.userInterfaceIdiom == .pad // is it an iPad?
+            let screenWidth = geometry.size.width
+            let screenHeight = geometry.size.height
+            let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+
+            let avatarSize = min(screenWidth * 0.6, screenHeight * 0.35)
             
-            // Dynamic sizing based on screen
-            let avatarSize = min(screenWidth * 0.7, screenHeight * 0.4)
-            let optionSize = screenWidth * 0.2
-            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
-            let columns = Array(repeating: GridItem(.flexible(), spacing: screenWidth * 0.03), count: columnsCount)
+            // **CRITICAL FIX: Correct math for option size**
             let horizontalPadding = screenWidth * 0.05
+            let columnsCount = isIpad ? 6 : (screenWidth > 400 ? 4 : 3)
+            let gridSpacing = screenWidth * 0.03
+            let columns = Array(repeating: GridItem(.flexible(), spacing: gridSpacing), count: columnsCount)
             
+            // Calculate total horizontal space used by padding and spacing
+            let totalPadding = horizontalPadding * 2
+            let totalSpacing = gridSpacing * CGFloat(columnsCount - 1)
+            
+            // The remaining width is divided by the number of columns
+            let availableWidth = screenWidth - totalPadding - totalSpacing
+            let optionSize = availableWidth / CGFloat(columnsCount) // This is the new, correct size
+
             VStack(spacing: 0) {
-                // Navigation Bar with Undo/Redo
+                // --- Header Bar ---
                 HStack {
-                    // Undo/Redo buttons
                     HStack(spacing: screenWidth * 0.03) {
-                        Button {
-                            undo()
-                        } label: {
+                        Button(action: undo) {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canUndo ? .blue : .gray) // if can undo blue, else grey
-                        }
-                        .disabled(!canUndo)
-                        
-                        Button {
-                            redo()
-                        } label: {
+                                .foregroundColor(canUndo ? .blue : .gray)
+                        }.disabled(!canUndo)
+
+                        Button(action: redo) {
                             Image(systemName: "arrow.uturn.forward")
                                 .font(.system(size: screenWidth * 0.04, weight: .medium))
-                                .foregroundColor(canRedo ? .blue : .gray) // if can undo blue, else grey
-                        }
-                        .disabled(!canRedo)
+                                .foregroundColor(canRedo ? .blue : .gray)
+                        }.disabled(!canRedo)
                     }
-                    
+
                     Spacer()
-                    
+
                     Text("Create Yourself")
                         .font(.system(size: screenWidth * 0.05, weight: .bold))
-                    
+
                     Spacer()
-                    
-                    
-                    // Done/Next Button with green background and check icon
+
                     Button {
                         saveToHistory()
                         viewModel.selectedAvatar = AvatarParts(
-                            // THIS LOGIC SAVES OUR SELECTIONS
+                            avatarType: selectedAvatarType,
                             background: selectedBackground,
-                            face: selectedFace,
+                            body: selectedBody,
+                            shirt: selectedShirt,
                             eyes: selectedEyes,
                             mouth: selectedMouth,
-                            hair: selectedHair
+                            hair: selectedHair,
+                            facialHair: selectedFacialHair
                         )
-                        Task {
-                            await viewModel.submitStep3() // submit changes to firebase
-                            // Technically this actually sends the data back to signupViewModel, which
-                            // completes the signup an writes the FULL UPDATE to firebase
-                            // all in one write.
-                        }
+                        Task { await viewModel.submitStep3() }
                     } label: {
                         HStack(spacing: screenWidth * 0.015) {
-                            Image(systemName: selectedCategory == categories.count - 1 ? "checkmark" : "arrow.right")
+                            Image(systemName: "checkmark")
                                 .font(.system(size: screenWidth * 0.035, weight: .semibold))
-                            Text(selectedCategory == categories.count - 1 ? "Done" : "Next")
+                            Text("Done")
                                 .font(.system(size: screenWidth * 0.04, weight: .semibold))
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, screenWidth * 0.04)
-                        .padding(.vertical, screenWidth * 0.02)
-                        .background(Color.green)
-                        .clipShape(RoundedRectangle(cornerRadius: 6)) // Less rounded corners
                     }
+                    .buttonStyle(.glassProminent)
+                    .tint(Color.green)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, screenHeight * 0.02)
-            
-                Spacer()
-                
-                // Large Avatar Preview
-                AvatarView(
-                    background: selectedBackground,
-                    face: selectedFace,
-                    eyes: selectedEyes,
-                    mouth: selectedMouth,
-                    hair: selectedHair
-                )
-                .frame(width: avatarSize, height: avatarSize)
-                .padding(.bottom, screenHeight * 0.05)
-                
-                // Enhanced Category Selection - Horizontal Scroll with Auto-scroll
-                ScrollViewReader { proxy in
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 0) {
-                            ForEach(0..<categories.count, id: \.self) { index in
-                                Button {
-                                    selectedCategory = index
-                                    // Auto-scroll to center the selected category
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        proxy.scrollTo(index, anchor: .center)
-                                    }
-                                } label: {
-                                    VStack(spacing: 4) {
-                                        Text(categories[index])
-                                            .font(.system(size: screenWidth * 0.04, weight: .bold))
-                                            .foregroundColor(selectedCategory == index ? .blue : .gray)
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                            .frame(minWidth: screenWidth * 0.2)
-                                        
-                                        // Underline indicator
-                                        Rectangle()
-                                            .fill(selectedCategory == index ? Color.blue : Color.clear)
-                                            .frame(height: 3)
-                                            .frame(width: screenWidth * 0.15)
-                                    }
-                                    .padding(.horizontal, screenWidth * 0.02)
-                                    .padding(.vertical, screenHeight * 0.01)
-                                }
-                                .id(index)
-                            }
+                .padding(.bottom, screenHeight * 0.01)
+
+                HStack(spacing: 5) {
+                    ForEach(AvatarType.allCases, id: \.self) { avatarType in
+                        Button {
+                            saveToHistory()
+                            selectedAvatarType = avatarType
+                            resetSelections()
+                        } label: {
+                            Text(avatarType.displayName)
+                                .font(.system(size: screenWidth * 0.04, weight: .medium))
+                                .foregroundColor(selectedAvatarType == avatarType ? .white : .gray)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, screenHeight * 0.015)
+                                .background(
+                                    RoundedRectangle(cornerRadius: screenWidth * 0.02)
+                                        .fill(selectedAvatarType == avatarType ? Color.accentColor : Color(.systemGray6))
+                                )
                         }
-                        .padding(.horizontal, horizontalPadding)
                     }
                 }
+                .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, screenHeight * 0.02)
-            
-                // Options Grid - Vertical Scroll
+                .animation(.easeInOut(duration: 0.3), value: selectedAvatarType)
+
+                AvatarView(
+                    avatarType: selectedAvatarType,
+                    background: selectedBackground,
+                    avatarBody: selectedBody,
+                    shirt: selectedShirt,
+                    eyes: selectedEyes,
+                    mouth: selectedMouth,
+                    hair: selectedHair,
+                    facialHair: selectedFacialHair,
+                    includeSpacer: false
+                )
+                .frame(width: avatarSize, height: avatarSize)
+                .padding(.bottom, screenHeight * 0.03)
+
+                // --- Category Selector ---
+                categorySelector(screenWidth: screenWidth, screenHeight: screenHeight, horizontalPadding: horizontalPadding)
+
+                // --- Options Grid ---
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: screenWidth * 0.04) {
                         ForEach(currentOptions, id: \.self) { option in
-                            Button {
+                            improvedOptionPreview(
+                                option: option,
+                                optionSize: optionSize,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight
+                            )
+                            .onTapGesture {
                                 updateSelection(option)
-                            } label: {
-                                VStack(spacing: screenHeight * 0.015) {
-                                    // Preview of the option
-                                    ZStack {
-                                        if selectedCategory == 0 {
-                                            // Face preview
-                                            Image(option)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: optionSize, height: optionSize)
-                                        } else if selectedCategory == 1 {
-                                            // Eyes preview on face
-                                            ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else if selectedCategory == 2 {
-                                            // Mouth preview on face
-                                            ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let eyes = selectedEyes {
-                                                    Image(eyes)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else if selectedCategory == 3 {
-                                            // Hair preview on full avatar
-                                            ZStack {
-                                                if let face = selectedFace {
-                                                    Image(face)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let eyes = selectedEyes {
-                                                    Image(eyes)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                if let mouth = selectedMouth {
-                                                    Image(mouth)
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: optionSize, height: optionSize)
-                                                }
-                                                Image(option)
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: optionSize, height: optionSize)
-                                            }
-                                        } else {
-                                            // Background preview
-                                            Image(option)
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: optionSize, height: optionSize)
-                                        }
-                                    }
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .stroke(isSelected(option) ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
-                                    )
-                                    .background(
-                                        RoundedRectangle(cornerRadius: screenWidth * 0.03)
-                                            .fill(isSelected(option) ? Color.blue.opacity(0.1) : Color.clear)
-                                    )
-                                    
-                                    // Selection indicator
-                                    Circle()
-                                        .fill(isSelected(option) ? Color.blue : Color.clear)
-                                        .frame(width: screenWidth * 0.03, height: screenWidth * 0.03)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.blue, lineWidth: isSelected(option) ? 0 : 2)
-                                        )
-                                }
                             }
                         }
                     }
                     .padding(.horizontal, horizontalPadding)
+                    .padding(.top, 3)
+                    .padding(.bottom, 30)
                 }
-                .frame(maxHeight: screenHeight * 0.4)
-            
-                Spacer()
-                
-                // REMOVED FOR NOW!! Skip Button
-//                Button("Skip for Now") {
-//                    Task {
-//                        await viewModel.skipPhotoStep()
-//                    }
-//                }
-                
-                .foregroundColor(.gray)
-                .font(.system(size: screenWidth * 0.04))
-                .padding(.bottom, screenHeight * 0.04)
             }
-            .background(Color.white)
-            .navigationBarHidden(true)
-            .onAppear {
-                initializeHistory()
-            }
+            .onAppear { initializeHistory() }
         }
     }
-    
+
+    // MARK: - Subviews (Unchanged)
+
+    private func categorySelector(screenWidth: CGFloat, screenHeight: CGFloat, horizontalPadding: CGFloat) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(0..<categories.count, id: \.self) { index in
+                        Button {
+                            selectedCategory = index
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                proxy.scrollTo(index, anchor: .center)
+                            }
+                        } label: {
+                            VStack(spacing: 4) {
+                                Text(categories[index])
+                                    .font(.system(size: screenWidth * 0.04, weight: .bold))
+                                    .foregroundColor(selectedCategory == index ? .accentColor : .gray)
+                                    .frame(minWidth: screenWidth * 0.2)
+                                Rectangle()
+                                    .fill(selectedCategory == index ? Color.accentColor : Color.clear)
+                                    .frame(height: 3)
+                                    .frame(width: screenWidth * 0.15)
+                            }
+                            .padding(.horizontal, screenWidth * 0.02)
+                            .padding(.vertical, screenHeight * 0.01)
+                        }
+                        .id(index)
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+            }
+        }
+        .padding(.bottom, screenHeight * 0.02)
+    }
+
+    @ViewBuilder
+    private func improvedOptionPreview(option: String, optionSize: CGFloat, screenWidth: CGFloat, screenHeight: CGFloat) -> some View {
+        let cornerRadius = screenWidth * 0.03
+        let categoryName = (selectedCategory >= 0 && selectedCategory < categories.count) ? categories[selectedCategory] : "Background"
+        
+        let isBackgroundCategory = categoryName.lowercased().contains("background")
+        let isBodyOrFaceCategory = categoryName.lowercased().contains("body") || categoryName.lowercased().contains("face")
+        let isShirtCategory = categoryName.lowercased().contains("shirt")
+        let isEyesCategory = categoryName.lowercased().contains("eyes")
+        let isMouthCategory = categoryName.lowercased().contains("mouth")
+        let isHairCategory = categoryName.lowercased().contains("hair")
+        let isFacialHairCategory = categoryName.lowercased().contains("facial hair")
+        
+        ZStack {
+            if option == Self.removeOptionId {
+                VStack {
+                    Image(systemName: "circle.slash.fill")
+                        .font(.system(size: optionSize * 0.5, weight: .bold))
+                        .foregroundColor(.orange)
+                    Text("None")
+                        .font(.system(size: screenWidth * 0.035, weight: .medium))
+                        .foregroundColor(.gray)
+                }
+                .frame(width: optionSize, height: optionSize)
+                .background(Color(.systemGray6))
+            } else if isBackgroundCategory {
+                Image(option)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: optionSize, height: optionSize)
+                    .clipped()
+            } else {
+                let baseLayer: String? = isBodyOrFaceCategory ? option : selectedBody
+                let shirtLayer: String? = isShirtCategory ? option : selectedShirt
+                let eyesLayer: String? = isEyesCategory ? option : selectedEyes
+                let mouthLayer: String? = isMouthCategory ? option : selectedMouth
+                let hairLayer: String? = isHairCategory ? option : selectedHair
+                let facialHairLayer: String? = isFacialHairCategory ? option : selectedFacialHair
+                
+                if let base = baseLayer {
+                    Image(base)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                } else {
+                    Color.clear.frame(width: optionSize, height: optionSize)
+                }
+                
+                if selectedAvatarType == .personal, let shirt = shirtLayer {
+                    Image(shirt)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                
+                if let eyes = eyesLayer {
+                    Image(eyes)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+
+                if selectedAvatarType == .personal, let facialHair = facialHairLayer {
+                    Image(facialHair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                
+                if let mouth = mouthLayer {
+                    Image(mouth)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+                
+                if let hair = hairLayer {
+                    Image(hair)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: optionSize, height: optionSize)
+                }
+            }
+        }
+        .frame(width: optionSize, height: optionSize)
+        .background(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(isSelected(option) ? Color.accentColor.opacity(0.1) : Color.clear)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(isSelected(option) ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: isSelected(option) ? 3 : 1)
+        )
+    }
+
+    // MARK: - Logic (Unchanged)
     private var currentOptions: [String] {
-        switch selectedCategory {
-        case 0: return AvatarOptions.faces
-        case 1: return AvatarOptions.eyes
-        case 2: return AvatarOptions.mouths
-        case 3: return AvatarOptions.hairs
-        case 4: return AvatarOptions.backgrounds
-        default: return []
+        let options: [String]
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: options = AvatarOptions.personalBodies
+            case 1: options = AvatarOptions.personalShirts
+            case 2: options = AvatarOptions.personalEyes
+            case 3: options = AvatarOptions.personalMouths
+            case 4: options = AvatarOptions.personalHairs
+            case 5: options = AvatarOptions.personalFacialHairs
+            case 6: options = AvatarOptions.personalBackgrounds
+            default: return []
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: options = AvatarOptions.funFaces
+            case 1: options = AvatarOptions.funEyes
+            case 2: options = AvatarOptions.funMouths
+            case 3: options = AvatarOptions.funHairs
+            case 4: options = AvatarOptions.funBackgrounds
+            default: return []
+            }
+        }
+
+        if categories[selectedCategory].lowercased() != "background" {
+            return [Self.removeOptionId] + options
+        } else {
+            return options
         }
     }
-    
+
+    private func resetSelections() {
+        selectedBody = nil
+        selectedShirt = nil
+        selectedEyes = nil
+        selectedMouth = nil
+        selectedHair = nil
+        selectedFacialHair = nil
+        selectedCategory = 0
+    }
+
     private func updateSelection(_ option: String) {
         saveToHistory()
-        
-        switch selectedCategory {
-        case 0: selectedFace = option
-        case 1: selectedEyes = option
-        case 2: selectedMouth = option
-        case 3: selectedHair = option
-        case 4: selectedBackground = option
-        default: break
+        let newValue: String? = (option == Self.removeOptionId) ? nil : option
+
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: selectedBody = newValue
+            case 1: selectedShirt = newValue
+            case 2: selectedEyes = newValue
+            case 3: selectedMouth = newValue
+            case 4: selectedHair = newValue
+            case 5: selectedFacialHair = newValue
+            case 6: selectedBackground = option
+            default: break
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: selectedBody = newValue
+            case 1: selectedEyes = newValue
+            case 2: selectedMouth = newValue
+            case 3: selectedHair = newValue
+            case 4: selectedBackground = option
+            default: break
+            }
         }
     }
-    
+
     private func isSelected(_ option: String) -> Bool {
-        switch selectedCategory {
-        case 0: return selectedFace == option
-        case 1: return selectedEyes == option
-        case 2: return selectedMouth == option
-        case 3: return selectedHair == option
-        case 4: return selectedBackground == option
-        default: return false
+        if option == Self.removeOptionId {
+            switch selectedAvatarType {
+            case .personal:
+                switch selectedCategory {
+                case 0: return selectedBody == nil
+                case 1: return selectedShirt == nil
+                case 2: return selectedEyes == nil
+                case 3: return selectedMouth == nil
+                case 4: return selectedHair == nil
+                case 5: return selectedFacialHair == nil
+                case 6: return false
+                default: return false
+                }
+            case .fun:
+                switch selectedCategory {
+                case 0: return selectedBody == nil
+                case 1: return selectedEyes == nil
+                case 2: return selectedMouth == nil
+                case 3: return selectedHair == nil
+                case 4: return false
+                default: return false
+                }
+            }
+        }
+        
+        switch selectedAvatarType {
+        case .personal:
+            switch selectedCategory {
+            case 0: return selectedBody == option
+            case 1: return selectedShirt == option
+            case 2: return selectedEyes == option
+            case 3: return selectedMouth == option
+            case 4: return selectedHair == option
+            case 5: return selectedFacialHair == option
+            case 6: return selectedBackground == option
+            default: return false
+            }
+        case .fun:
+            switch selectedCategory {
+            case 0: return selectedBody == option
+            case 1: return selectedEyes == option
+            case 2: return selectedMouth == option
+            case 3: return selectedHair == option
+            case 4: return selectedBackground == option
+            default: return false
+            }
         }
     }
+
+    // MARK: - Undo/Redo (Unchanged)
     
-    // MARK: - Undo/Redo functionality
-    
-    private var canUndo: Bool {
-        return currentHistoryIndex > 0
-    }
-    
-    private var canRedo: Bool {
-        return currentHistoryIndex < history.count - 1
-    }
-    
-    private func initializeHistory() {
-        let initialAvatar = AvatarParts(
+    private var canUndo: Bool { currentHistoryIndex > 0 }
+    private var canRedo: Bool { currentHistoryIndex < history.count - 1 }
+
+    private var currentAvatarParts: AvatarParts {
+        AvatarParts(
+            avatarType: selectedAvatarType,
             background: selectedBackground,
-            face: selectedFace,
+            body: selectedBody,
+            shirt: selectedShirt,
             eyes: selectedEyes,
             mouth: selectedMouth,
-            hair: selectedHair
+            hair: selectedHair,
+            facialHair: selectedFacialHair
         )
-        history = [initialAvatar]
+    }
+
+    private func initializeHistory() {
+        let initial = currentAvatarParts
+        history = [initial]
         currentHistoryIndex = 0
     }
-    
+
     private func saveToHistory() {
-        let currentAvatar = AvatarParts(
-            background: selectedBackground,
-            face: selectedFace,
-            eyes: selectedEyes,
-            mouth: selectedMouth,
-            hair: selectedHair
-        )
-        
-        // Remove any history after current index
+        let state = currentAvatarParts
         history = Array(history.prefix(currentHistoryIndex + 1))
-        
-        // Add new state
-        history.append(currentAvatar)
+        history.append(state)
         currentHistoryIndex = history.count - 1
-        
-        // Limit history size
+
         if history.count > 20 {
             history.removeFirst()
             currentHistoryIndex -= 1
         }
     }
-    
+
     private func undo() {
         guard canUndo else { return }
         currentHistoryIndex -= 1
         applyHistoryState()
     }
-    
+
     private func redo() {
         guard canRedo else { return }
         currentHistoryIndex += 1
         applyHistoryState()
     }
-    
+
     private func applyHistoryState() {
         let state = history[currentHistoryIndex]
+        selectedAvatarType = state.avatarType
         selectedBackground = state.background
-        selectedFace = state.face
+        selectedBody = state.body
+        selectedShirt = state.shirt
         selectedEyes = state.eyes
         selectedMouth = state.mouth
         selectedHair = state.hair
+        selectedFacialHair = state.facialHair
     }
 }

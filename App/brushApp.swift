@@ -1,27 +1,20 @@
-//
-//  brushApp.swift
-//  brush
-//
-//  Created by Meidad Troper on 9/25/25.
-//
-
 import SwiftUI
-import PencilKit // Keep this if any of your files in the *current* module use PencilKit
+import PencilKit
 import UserNotifications
 import FirebaseCore
 
 @main
 struct brushApp: App {
-    // Assuming DataModel and NotificationManager are defined elsewhere and ready to use
+    
     @StateObject var dataModel = DataModel()
     
     init() {
         if FirebaseApp.app() == nil {
-                    FirebaseApp.configure()
-                }
-        // Request notification permission as soon as the app launches
+            FirebaseApp.configure()
+        }
+        
         NotificationManager.shared.requestPermission()
-        NotificationManager.shared.scheduleDailyReminders(hour: 20, minute: 0)
+        NotificationManager.shared.scheduleNextReminder()
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
     
@@ -41,7 +34,6 @@ struct brushApp: App {
                     DrawingsGridView()
                 }
                 .tabItem {
-                    // It's best to move this custom Vstack to a reusable struct
                     VStack {
                         Image(systemName: "pencil.and.outline")
                             .overlay(
@@ -49,11 +41,11 @@ struct brushApp: App {
                                     .stroke(Color.accentColor, lineWidth: 2)
                                     .frame(width: 32, height: 32)
                             )
-                          Text("Drawings")
+                        Text("Drawings")
                     }
                 }
                 
-                // 2. Friends Tab
+                // 3. Friends Tab
                 NavigationStack {
                     FriendsView()
                 }
@@ -61,19 +53,15 @@ struct brushApp: App {
                     Label("Friends", systemImage: "person.2")
                 }
                 
-                // 4. Profile Tab - UNCOMMENTED AND CORRECTED
+                // 4. Profile Tab
                 NavigationStack {
                     ProfileView() // Assuming ProfileView exists
-                } // <-- THIS CLOSING BRACE WAS MISSING/COMMENTED
+                }
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }
-            } // <-- CLOSES TabView
+            }
             .environmentObject(dataModel) // Inject the DataModel
-        } // <-- CLOSES WindowGroup
-    } // <-- CLOSES body
-} // <-- CLOSES struct brushApp
-
-// Note: You must define placeholder views for HomeView, FriendsView, etc.,
-// and the DataModel and NotificationManager to make this compile fully.
-// The code above focuses on correcting the syntax error.
+        }
+    }
+}

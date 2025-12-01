@@ -37,6 +37,13 @@ struct GridItemView: View {
         }
         .frame(width: size, height: size * (16 / 9))
         .clipShape(.rect(cornerRadius: 8.0))
+        .innerShadow(
+            using: .rect(cornerRadius: 8.0),
+            angle: .degrees(135),
+            color: Color.black.opacity(0.4),
+            width: 4,
+            blur: 4
+        )
         .matchedGeometryEffect(id: item.id, in: namespace)
         .overlay {
             if isSelected {
@@ -51,4 +58,3 @@ struct GridItemView: View {
         }
     }
 }
-

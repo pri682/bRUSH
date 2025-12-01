@@ -7,6 +7,9 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = 0
     @State private var showingDeleteConfirmation = false
+    
+    @State private var showingAvatarEditor = false
+    
     @State private var currentAvatarParts: AvatarParts?
     @State private var originalAvatarParts: AvatarParts?
 
@@ -17,22 +20,26 @@ struct EditProfileView: View {
             wrappedValue: EditProfileViewModel(userProfile: userProfile.wrappedValue!)
         )
         
-        // Store original avatar state for cancel functionality
         if let profile = userProfile.wrappedValue {
+            let avatarType = AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal
             _originalAvatarParts = State(initialValue: AvatarParts(
+                avatarType: avatarType,
                 background: profile.avatarBackground ?? "background_1",
-                face: profile.avatarFace,
+                body: profile.avatarBody,
+                shirt: profile.avatarShirt,
                 eyes: profile.avatarEyes,
                 mouth: profile.avatarMouth,
-                hair: profile.avatarHair
+                hair: profile.avatarHair,
+                facialHair: profile.avatarFacialHair
             ))
         }
     }
 
     var body: some View {
+        let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+        
         NavigationView {
             VStack(spacing: 0) {
-                // Custom Tab Bar
                 HStack(spacing: 0) {
                     ForEach(0..<2) { index in
                         Button {
@@ -55,20 +62,17 @@ struct EditProfileView: View {
                 }
                 .background(Color(.systemGray6))
                 
-                // Tab Content
                 TabView(selection: $selectedTab) {
-                    // Profile Information Tab
                     VStack(alignment: .leading, spacing: 0) {
-                        // First Name
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your first name (max 10 chars)",
-                                text: $viewModel.firstName,
-                                isSecure: false,
-                                hasError: viewModel.isFirstNameTooLong
-                            )
+                             InputField(
+                                 placeholder: "Enter your first name (max 10 chars)",
+                                 text: $viewModel.firstName,
+                                 isSecure: false,
+                                 hasError: viewModel.isFirstNameTooLong
+                             )
                             .autocapitalization(.words)
                             
                             if viewModel.isFirstNameTooLong {
@@ -84,16 +88,15 @@ struct EditProfileView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        // Username
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Username")
                                 .font(.headline)
-                            InputField(
-                                placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
-                                text: $viewModel.displayName,
-                                isSecure: false,
-                                hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
-                            )
+                             InputField(
+                                 placeholder: "Enter your username (3-15 chars, letters/numbers/_ only)",
+                                 text: $viewModel.displayName,
+                                 isSecure: false,
+                                 hasError: viewModel.isDisplayNameTooLong || viewModel.isDisplayNameInvalidFormat
+                             )
                             .autocapitalization(.none)
                             .textInputAutocapitalization(.never)
                             
@@ -114,7 +117,6 @@ struct EditProfileView: View {
                         .padding(.horizontal)
                         .padding(.top, 16)
                         
-                        // Account Actions Section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Account Actions")
                                 .font(.system(size: 16, weight: .medium))
@@ -122,7 +124,6 @@ struct EditProfileView: View {
                                 .padding(.horizontal)
                             
                             VStack(spacing: 0) {
-                                // Sign Out Button
                                 Button(action: { profileViewModel.signOut() }) {
                                     HStack {
                                         Text("Sign Out")
@@ -141,7 +142,6 @@ struct EditProfileView: View {
                                 Divider()
                                     .padding(.horizontal, 16)
                                 
-                                // Delete Profile Button
                                 Button {
                                     showingDeleteConfirmation = true
                                 } label: {
@@ -181,47 +181,75 @@ struct EditProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .tag(0)
                     
-                    // Avatar Tab
-                    EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
-                        currentAvatarParts = avatarParts
-                    })
-                        .tag(1)
-                        .onAppear {
-                            // Initialize with current avatar parts
-                            if let profile = userProfile {
-                                currentAvatarParts = AvatarParts(
-                                    background: profile.avatarBackground ?? "background_1",
-                                    face: profile.avatarFace,
-                                    eyes: profile.avatarEyes,
-                                    mouth: profile.avatarMouth,
-                                    hair: profile.avatarHair
-                                )
+                    if isIpad {
+                        VStack(spacing: 24) {
+                            Spacer()
+                            AvatarView(
+                                avatarType: AvatarType(rawValue: userProfile?.avatarType ?? "personal") ?? .personal,
+                                background: userProfile?.avatarBackground ?? "background_1",
+                                avatarBody: userProfile?.avatarBody,
+                                shirt: userProfile?.avatarShirt,
+                                eyes: userProfile?.avatarEyes,
+                                mouth: userProfile?.avatarMouth,
+                                hair: userProfile?.avatarHair,
+                                facialHair: userProfile?.avatarFacialHair
+                            )
+                            .frame(width: 200, height: 200)
+                            .padding()
+                            
+                            Button {
+                                showingAvatarEditor = true
+                            } label: {
+                                Text("Edit Avatar")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(12)
                             }
+                            .padding(.horizontal, 40)
+                            
+                            Spacer()
                         }
+                        .tag(1)
+                        
+                    } else {
+                        EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
+                            currentAvatarParts = avatarParts
+                        }, isPresentedModally: false)
+                        .tag(1)
+                    }
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+            }
+            .fullScreenCover(isPresented: $showingAvatarEditor) {
+                EditAvatarView(userProfile: $userProfile, onAvatarChange: { avatarParts in
+                    currentAvatarParts = avatarParts
+                }, isPresentedModally: true)
             }
             .navigationTitle("Edit Profile")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) {
-                        // Revert avatar changes to original state
                         if let original = originalAvatarParts, var profile = userProfile {
+                            profile.avatarType = original.avatarType.rawValue
                             profile.avatarBackground = original.background
-                            profile.avatarFace = original.face
+                            profile.avatarBody = original.body
+                            profile.avatarShirt = original.shirt
                             profile.avatarEyes = original.eyes
                             profile.avatarMouth = original.mouth
                             profile.avatarHair = original.hair
+                            profile.avatarFacialHair = original.facialHair
                             userProfile = profile
                         }
                         
-                        // Revert profile information changes to original state
                         if let originalProfile = profileViewModel.profile {
                             viewModel.firstName = originalProfile.firstName
                             viewModel.displayName = originalProfile.displayName
                         }
                         
-                        dismiss() 
+                        dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -229,13 +257,11 @@ struct EditProfileView: View {
                         Task {
                             var success = true
                             
-                            // Always save profile information if there are changes
                             if let originalProfile = userProfile,
-                               (viewModel.firstName != originalProfile.firstName || 
+                               (viewModel.firstName != originalProfile.firstName ||
                                 viewModel.displayName != originalProfile.displayName) {
                                 success = await viewModel.saveChanges()
                                 if success {
-                                    // Push changes back into parent binding
                                     if var updated = userProfile {
                                         updated.firstName = viewModel.firstName
                                         updated.displayName = viewModel.displayName
@@ -244,18 +270,21 @@ struct EditProfileView: View {
                                 }
                             }
                             
-                            // Always save avatar changes regardless of current tab
-                            // Get current avatar state from userProfile (which gets updated in real-time for preview)
-                            if let profile = userProfile {
-                                let avatarParts = AvatarParts(
-                                    background: profile.avatarBackground ?? "background_1",
-                                    face: profile.avatarFace,
-                                    eyes: profile.avatarEyes,
-                                    mouth: profile.avatarMouth,
-                                    hair: profile.avatarHair
-                                )
+                            if let avatarParts = currentAvatarParts {
                                 let avatarSuccess = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
                                 success = success && avatarSuccess
+                                
+                                if avatarSuccess, var profile = userProfile {
+                                    profile.avatarType = avatarParts.avatarType.rawValue
+                                    profile.avatarBackground = avatarParts.background
+                                    profile.avatarBody = avatarParts.body
+                                    profile.avatarShirt = avatarParts.shirt
+                                    profile.avatarEyes = avatarParts.eyes
+                                    profile.avatarMouth = avatarParts.mouth
+                                    profile.avatarHair = avatarParts.hair
+                                    profile.avatarFacialHair = avatarParts.facialHair
+                                    userProfile = profile
+                                }
                             }
                             
                             if success {

@@ -4,57 +4,128 @@ struct FriendsView: View {
     @StateObject private var vm = FriendsViewModel()
     @State private var showAddSheet = false
     @State private var showLeaderboard = false
-    @State private var showRemoveConfirm = false
-    @State private var pendingRemoval: Friend? = nil
+    @State private var isInitiallyLoading = true
+    
+    enum FriendsTab: String, CaseIterable {
+        case friends = "Friends"
+        case requests = "Requests"
+    }
+    @State private var selectedTab: FriendsTab = .friends
+    
+    var filteredRequests: [FriendRequest] {
+        guard !vm.searchText.isEmpty else { return vm.requests }
+        return vm.requests.filter {
+            $0.fromName.lowercased().contains(vm.searchText.lowercased()) ||
+            $0.handle.lowercased().contains(vm.searchText.lowercased())
+        }
+    }
     
     var body: some View {
         NavigationStack {
-            List {
-                if !vm.requests.isEmpty && vm.searchText.isEmpty {
-                    Section("Friend Requests") {
-                        ForEach(vm.requests) { req in
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(req.fromName).font(.headline)
-                                    Text(req.handle).foregroundStyle(.secondary).font(.caption)
-                                }
+            VStack(spacing: 0) {
+                // Header section with background
+                VStack(spacing: 12) {
+                    Picker("View", selection: $selectedTab) {
+                        ForEach(FriendsTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+
+                List {
+                    if selectedTab == .friends {
+                        // LOADING STATE
+                        if isInitiallyLoading && vm.friends.isEmpty {
+                            HStack {
                                 Spacer()
-                                Button("Accept") { vm.accept(req) }
-                                    .buttonStyle(.borderedProminent)
-                                Button("Decline") { vm.decline(req) }
-                                    .buttonStyle(.bordered)
+                                ProgressView("Loading friends...")
+                                Spacer()
                             }
-                            .padding(.vertical, 4)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .padding(.vertical, 20)
+                        }
+                        else if vm.filteredFriends.isEmpty {
+                            if vm.searchText.isEmpty {
+                                ContentUnavailableView {
+                                    Label("No friends yet", systemImage: "person.2.slash")
+                                } description: {
+                                    Text("Add some friends to start competing!")
+                                }
+                                .listRowBackground(Color.clear)
+                            } else {
+                                Text("No friends found for \"\(vm.searchText)\"")
+                                    .foregroundStyle(.secondary)
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                        else {
+                            // Group users in a section to club them together with dividers
+                            Section {
+                                ForEach(vm.filteredFriends, id: \.uid) { profile in
+                                    friendRow(profile)
+                                }
+                                .onDelete(perform: deleteFriends)
+                            }
+                        }
+                        
+                    } else if selectedTab == .requests {
+                        if isInitiallyLoading && vm.requests.isEmpty {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                        }
+                        else if filteredRequests.isEmpty {
+                            if vm.searchText.isEmpty {
+                                ContentUnavailableView {
+                                    Label("No requests", systemImage: "envelope.open")
+                                } description: {
+                                    Text("You're all caught up.")
+                                }
+                                .listRowBackground(Color.clear)
+                            } else {
+                                Text("No requests found for \"\(vm.searchText)\"")
+                                    .foregroundStyle(.secondary)
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                        else {
+                            Section {
+                                ForEach(filteredRequests) { req in
+                                    requestRow(req)
+                                }
+                            }
                         }
                     }
                 }
-                Section("Friends (\(vm.filteredFriends.count))") {
-                    ForEach(vm.filteredFriends) { friend in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(friend.name).font(.headline)
-                            Text(friend.handle).foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 2)
-                        .contentShape(Rectangle())
-                        .onTapGesture { vm.openProfile(for: friend) }
-                    }
-                    .onDelete { indexSet in
-                        let uids = indexSet.compactMap { idx in
-                            vm.filteredFriends[safe: idx]?.uid
-                        }
-                        vm.removeLocally(uids: uids)
-                        Task { await vm.removeRemote(uids: uids) }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.visible)
+                .refreshable {
+                    await vm.refreshAllData()
+                }
+            }
+            .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                Task {
+                    await vm.refreshAllData()
+                    withAnimation {
+                        isInitiallyLoading = false
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationBarTitleDisplayMode(.large)
-            .onAppear { vm.loadMyProfileData(); vm.refreshFriends(); vm.refreshIncoming(); vm.loadLeaderboard(); vm.resetSessionData() }
-            .searchable(text: $vm.searchText, prompt: "Search friends")
             .navigationTitle("Friends")
+            .searchable(text: $vm.searchText, prompt: "Search \(selectedTab.rawValue)")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        vm.loadLeaderboard()
                         withAnimation { showLeaderboard.toggle() }
                     } label: {
                         Image(systemName: "trophy")
@@ -76,18 +147,13 @@ struct FriendsView: View {
             .sheet(isPresented: $showAddSheet) {
                 AddFriendView(vm: vm)
             }
-            .sheet(isPresented: $vm.showingProfile) {
+            .sheet(isPresented: Binding(
+                get: { vm.showingProfile && !showLeaderboard },
+                set: { vm.showingProfile = $0 }
+            )) {
                 if let p = vm.selectedProfile {
-                    FriendProfileSheet(
-                        profile: p,
-                        onConfirmRemove: { uid in
-                            if let f = vm.friends.first(where: { $0.uid == uid}) {
-                                vm.remove(friend: f)
-                            }
-                        }
-                    )
+                    FriendProfileSheet(vm: vm, profile: p)
                 } else {
-                    // Fallback while loading
                     VStack(spacing: 12) {
                         ProgressView()
                         Text("Loading profile…")
@@ -102,222 +168,80 @@ struct FriendsView: View {
         }
     }
     
-    private struct LeaderboardBarRow: View {
-        let rank: Int
-        let fullName: String
-        let handle: String
-        let points: Int
-        let maxPoints: Int
-        var useColor: Bool
-        
-        @Environment(\.colorScheme) private var scheme
-        
-        var ratio: CGFloat {
-            guard maxPoints > 0 else { return 0 }
-            return CGFloat(points) / CGFloat(maxPoints)
-        }
-        
-        // Simple color scheme: top 1–3 get distinct tints; others use accent/gray.
-        var barColor: Color {
-            if !useColor {
-                return .accentColor   // neutral-but-on-brand
-            } else {
-                switch rank {
-                case 1: return.yellow     // 🥇
-                case 2: return.gray         // 🥈
-                case 3: return.brown       // 🥉
-                default: return.blue        // everyone else
-                }
+    @ViewBuilder
+    private func friendRow(_ profile: UserProfile) -> some View {
+        HStack(spacing: 12) {
+            AvatarView(
+                avatarType: AvatarType(rawValue: profile.avatarType) ?? .personal,
+                background: profile.avatarBackground ?? "background_1",
+                avatarBody: profile.avatarBody,
+                shirt: profile.avatarShirt,
+                eyes: profile.avatarEyes,
+                mouth: profile.avatarMouth,
+                hair: profile.avatarHair,
+                facialHair: profile.avatarFacialHair,
+                includeSpacer: false
+            )
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.gray.opacity(0.2), lineWidth: 1))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                let name = [profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                Text(name.isEmpty ? profile.displayName : name)
+                    .font(.headline)
+                Text("@\(profile.displayName)")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
             }
+            Spacer()
         }
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 6) {
-                // Title line
-                HStack(spacing: 8) {
-                    Text("\(rank)")
-                        .font(.system(.subheadline, design: .monospaced)).bold()
-                        .frame(width: 22, alignment: .trailing)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(fullName).font(.subheadline).bold()
-                        Text(handle).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Spacer(minLength: 8)
-                }
-                
-                // Bar line
-                GeometryReader { geo in
-                    let fullW = geo.size.width
-                    let barW = max(0, min(fullW, fullW * ratio))
-                    
-                    ZStack(alignment: .leading) {
-                        // Track
-                        Capsule()
-                            .fill(scheme == .dark ? Color.white.opacity(0.10)
-                                  : Color.black.opacity(0.08))
-                        
-                        // Fill
-                        Capsule()
-                            .fill(barColor)
-                            .frame(width: barW)
-                        
-                        // Points label in bar, right aligned
-                        HStack {
-                            Spacer()
-                            Text("\(points)")
-                                .font(.caption).bold()
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .foregroundStyle( // readable on both light/dark & colors
-                                    useColor ? Color.black : (scheme == .dark ? .white : .black)
-                                )
-                                .padding(.trailing, 4)
-                        }
-                    }
-                }
-                .frame(height: 24)
-            }
-            .animation(.easeOut(duration: 0.22), value: points)
-        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
+        .onTapGesture { vm.openProfile(for: profile) }
     }
-    private struct LeaderboardSheet: View {
-        @ObservedObject var vm: FriendsViewModel
-        @Environment(\.dismiss) private var dismiss
-        
-        var body: some View {
-            NavigationStack {
-                List {
-                    Section {
-                        let maxPoints = vm.leaderboard.map(\.points).max() ?? 0
-                        
-                        if vm.isLoadingLeaderboard {
-                            HStack {
-                                ProgressView()
-                                Text("Loading leaderboard…")
-                            }
-                        } else if let err = vm.leaderboardError {
-                            Text(err).foregroundStyle(.red)
-                        } else if vm.leaderboard.isEmpty {
-                            Text("No friend rankings yet.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(Array(vm.leaderboard.enumerated()), id: \.1.id) { index, entry in
-                                LeaderboardBarRow(
-                                    rank: index + 1,
-                                    fullName: entry.fullName,
-                                    handle: entry.handle,
-                                    points: entry.points,
-                                    maxPoints: maxPoints,
-                                    useColor: false // change to true to use colored bars
-                                )
-                                .padding(.vertical, 2)
-                            }
-                        }
-                    } header: {
-                        HStack {
-                            Text("Friends Leaderboard")
-                            Spacer()
-                            Button {
-                                vm.loadLeaderboard()
-                            } label: {
-                                Label("Refresh", systemImage: "arrow.clockwise")
-                            }
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                }
-                .listStyle(.insetGrouped)
-                .listSectionSpacing(.compact)
-                .navigationTitle("Leaderboard")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(role: .cancel) { dismiss() }
-                    }
-                }
-                // refresh when sheet opens
-                .onAppear { vm.loadLeaderboard() }
-                // If friend list loads/changes while the sheet is open, refresh
-                .onChange(of: vm.friendIds) { vm.loadLeaderboard() }
+    
+    @ViewBuilder
+    private func requestRow(_ req: FriendRequest) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(req.fromName).font(.headline)
+                Text(req.handle).foregroundStyle(.secondary).font(.caption)
             }
-            .presentationDetents([.medium, .large])
-            .presentationBackground(Color(.systemBackground))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                vm.openProfile(for: req)
+            }
+            
+            Spacer()
+            
+            if vm.searchText.isEmpty {
+                Button("Accept") {
+                    Task { await vm.accept(req) }
+                }
+                .buttonStyle(.glassProminent)
+                
+                Button("Decline") {
+                    Task { await vm.decline(req) }
+                }
+                .buttonStyle(.glass)
+            }
         }
+        .padding(.vertical, 6)
+    }
+    
+    private func deleteFriends(at offsets: IndexSet) {
+        let profilesToDelete = offsets.compactMap { idx in
+            vm.filteredFriends[safe: idx]
+        }
+        let uids = profilesToDelete.map { $0.uid }
+        vm.removeLocally(uids: uids)
+        Task { await vm.removeRemote(uids: uids) }
     }
 }
-    private struct FriendProfileSheet: View {
-        let profile: UserProfile
-        var onConfirmRemove: (String) -> Void = { _ in }
-        
-        @Environment(\.dismiss) private var dismiss
-        @State private var confirmRemove = false
-        
-        var body: some View {
-            VStack(spacing: 16) {
-                // Avatar stub (swap for avatar pieces later)
-                Circle()
-                    .frame(width: 72, height: 72)
-                    .overlay(Text(profile.displayName.prefix(1)).font(.title))
-                    .accessibilityHidden(true)
-                
-                VStack(spacing: 2) {
-                    Text([profile.firstName, profile.lastName].filter { !$0.isEmpty }.joined(separator: " "))
-                        .font(.title3).bold()
-                    Text("@\(profile.displayName)")
-                        .foregroundStyle(.secondary)
-                        .font(.callout)
-                }
-                
-                // Quick stats row
-                HStack(spacing: 24) {
-                    Stat("Gold", profile.goldMedalsAccumulated)
-                    Stat("Silver", profile.silverMedalsAccumulated)
-                    Stat("Bronze", profile.bronzeMedalsAccumulated)
-                }
-                
-                // Actions
-                HStack(spacing: 12) {
-                    Button("Close") { dismiss() }
-                        .buttonStyle(.bordered)
-                    
-                    Button(role: .destructive) {
-                        confirmRemove = true
-                    } label: {
-                        Label("Remove Friend", systemImage: "person.fill.xmark")
-                    }
-                    .buttonStyle(.bordered)
-                }
-                .padding(.top, 4)
-            }
-            .padding()
-            .presentationDetents([.height(300)])
-            .presentationBackground(Color(.systemBackground)) // opaque profile sheet
-            
-            .confirmationDialog(
-                "Remove \(profile.displayName) as a friend?",
-                isPresented: $confirmRemove,
-                titleVisibility: .visible
-            ) {
-                Button("Remove", role: .destructive) {
-                    onConfirmRemove(profile.uid)
-                    dismiss()
-                }
-                Button("Cancel", role: .cancel) {}
-            }
-        }
-    }
-    // tiny helper
-    private func Stat(_ label: String, _ value: Int) -> some View {
-        VStack {
-            Text("\(value)").bold()
-            Text(label).font(.caption).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-    private extension Array {
-        subscript(safe index: Index) -> Element? {
-            indices.contains(index) ? self[index] : nil
-        }
-    }
 
+private extension Array {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
+}

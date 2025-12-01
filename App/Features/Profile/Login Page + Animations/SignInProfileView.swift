@@ -42,15 +42,9 @@ struct SignInProfileView: View {
                         } label: {
                             Text("Sign In")
                                 .font(.headline)
-                                .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 38)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.accentColor)
-                                )
                         }
-                        .padding(.top, 8)
+                        .buttonStyle(.glassProminent)
                     }
                     .frame(maxWidth: 340)
                     .padding(.horizontal)

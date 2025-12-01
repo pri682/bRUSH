@@ -31,6 +31,11 @@ class SignUpViewModel: ObservableObject {
     var passwordsMatch: Bool {
         password == confirmPassword
     }
+    
+    // 🔑 KAN-157: Property for basic length validation on password
+    var isPasswordTooShort: Bool {
+        return !password.isEmpty && password.count < 6
+    }
 
     private let auth = AuthService.shared
     private let userService = UserService.shared
@@ -106,7 +111,17 @@ class SignUpViewModel: ObservableObject {
         currentStep = .avatar
     }
     
-    // MARK: - Step 3 Avatar Selection
+    func goBack() {
+        errorMessage = nil
+        switch currentStep {
+        case .username:
+            currentStep = .input
+        case .avatar:
+            currentStep = .username
+        default:
+            break
+        }
+    }
     
     func submitStep3() async { // wait for step 3 - avatar completion
         await completeSignUp()
@@ -139,11 +154,14 @@ class SignUpViewModel: ObservableObject {
                     lastName: lastName,
                     displayName: displayName,
                     email: email,
+                    avatarType: selectedAvatar?.avatarType.rawValue ?? "personal",
                     avatarBackground: selectedAvatar?.background,
-                    avatarFace: selectedAvatar?.face,
+                    avatarBody: selectedAvatar?.body,
+                    avatarShirt: selectedAvatar?.shirt,
                     avatarEyes: selectedAvatar?.eyes,
                     avatarMouth: selectedAvatar?.mouth,
                     avatarHair: selectedAvatar?.hair,
+                    avatarFacialHair: selectedAvatar?.facialHair,
                     // Initialize all medal and statistics fields to 0
                     goldMedalsAccumulated: 0,
                     silverMedalsAccumulated: 0,
@@ -153,8 +171,26 @@ class SignUpViewModel: ObservableObject {
                     bronzeMedalsAwarded: 0,
                     totalDrawingCount: 0,
                     streakCount: 0,
-                    memberSince: Date()
+                    memberSince: Date(),
+                    lastCompletedDate: nil,
+                    lastAttemptedDate: nil
                 )
+
+                // DEBUG: print the profile payload keys/values before saving to Firestore.
+                // This helps verify that avatarHair / avatarMouth / etc. are present and correctly named.
+                do {
+                    let mirror = Mirror(reflecting: profile)
+                    let fields = mirror.children.compactMap { child in
+                        if let label = child.label {
+                            return "\(label)=\(String(describing: child.value))"
+                        }
+                        return nil
+                    }.joined(separator: ", ")
+                    print("[DEBUG] Creating UserProfile -> \(fields)")
+                } catch {
+                    print("[DEBUG] Creating UserProfile -> (failed to reflect): \(error)")
+                }
+
                 try await userService.createProfile(userProfile: profile)
                 
                 // 3. Save profile locally for fast access

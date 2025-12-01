@@ -3,6 +3,7 @@ import PencilKit
 import Combine
 import FirebaseFirestore
 import FirebaseAuth
+import Lottie
 
 struct DrawingView: View {
     var onSave: (Item) -> Void = { _ in }
@@ -123,6 +124,7 @@ struct DrawingView: View {
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
                 )
                 .onAppear {
                     setupCanvas()
@@ -143,35 +145,44 @@ struct DrawingView: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") { showCancelAlert = true }
+                            .confirmationDialog(
+                                "Cancel Drawing",
+                                isPresented: $showCancelAlert,
+//                                titleVisibility: .visible
+                            ) {
+                                Button("Cancel", role: .destructive) {
+                                    dismiss()
+                                }
+                                .keyboardShortcut(.defaultAction)
+                            } message: {
+                                Text("If you cancel, you won't get another chance to draw today.")
+                            }
                     }
+                    
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") { showDoneAlert = true }
+                            .confirmationDialog(
+                                "Submit Early",
+                                isPresented: $showDoneAlert,
+//                                titleVisibility: .visible
+                            ) {
+                                Button("Submit", role: .confirm) {
+                                    submitDrawing()
+                                }
+                                .keyboardShortcut(.defaultAction)
+                            } message: {
+                                Text("You won't be able to edit this after submitting.")
+                            }
                     }
-                }
-                .alert("Submit Early?", isPresented: $showDoneAlert) {
-                    Button("Submit", role: .destructive) {
-                        submitDrawing()
-                    }
-                    Button("Keep Drawing", role: .cancel) { }
-                } message: {
-                    Text("Are you sure you want to finish? You won't be able to edit this after submitting.")
-                }
-                .alert("Cancel Drawing?", isPresented: $showCancelAlert) {
-                    Button("Yes, Cancel", role: .destructive) {
-                        dismiss()
-                    }
-                    Button("Keep Drawing", role: .cancel) { }
-                } message: {
-                    Text("If you cancel, you won't get another chance to draw today. Are you sure?")
                 }
                 .disabled(hasSubmitted)
                 .toolbar(.hidden, for: .tabBar)
                 .navigationBarBackButtonHidden(true)
 
             if showSubmittedPopup {
-                submittedPopup
+                SubmittedAnimationView(isShowing: $showSubmittedPopup)
                     .zIndex(1)
-                    .transition(.scale.combined(with: .opacity))
+                    .transition(.opacity)
             }
         }
     }
@@ -258,8 +269,8 @@ struct DrawingView: View {
                         isPromptPresented.toggle()
                     } label: {
                         Image(systemName: "lightbulb")
-                            .font(.title3)
-                            .frame(width: 44, height: 44)
+                            .font(.title)
+                            .frame(width: 54, height: 54)
                             .glassEffect(.regular.interactive())
                     }
                     .popover(isPresented: $isPromptPresented, arrowEdge: .top) {
@@ -332,7 +343,7 @@ struct DrawingView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { isThemePickerPresented = false }
+                    Button(role: .confirm) { isThemePickerPresented = false }
                 }
             }
         }
@@ -391,22 +402,6 @@ struct DrawingView: View {
         }
     }
     
-    @ViewBuilder
-    private var submittedPopup: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 70))
-                .foregroundColor(.green)
-            
-            Text("Submitted!")
-                .font(.title)
-                .fontWeight(.bold)
-        }
-        .padding(35)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 25))
-        .transition(.scale(scale: 0.5).combined(with: .opacity))
-    }
-    
     // MARK: - Functions
     
     private func setupCanvas() {
@@ -430,13 +425,13 @@ struct DrawingView: View {
         saveDrawingLocallyAndUpload()
 
         streakManager.markCompletedToday()
-        NotificationManager.shared.resetDailyReminders(hour: 20, minute: 0)
+        NotificationManager.shared.markTodayCompleted()
 
         withAnimation(.spring()) {
             showSubmittedPopup = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.1) { // Adjusted delay slightly
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             dismiss()
         }
     }
