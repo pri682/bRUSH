@@ -1,6 +1,14 @@
 import SwiftUI
 import Vortex
 
+struct ViewOffsetKey: PreferenceKey {
+    typealias Value = [Int: CGFloat]
+    static var defaultValue: [Int: CGFloat] = [:]
+    static func reduce(value: inout [Int: CGFloat], nextValue: () -> [Int: CGFloat]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
 struct HomeView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @State private var showOnboarding: Bool = false
@@ -29,9 +37,7 @@ struct HomeView: View {
 
     @EnvironmentObject var dataModel: DataModel
     @State private var currentFeedIndex: Int = 0
-    @State private var currentItemID: Int? = 0
     
-    // Changed from @AppStorage to @State to rely on backend fetch only
     @State private var dailyGoldAwarded: Bool = false
     @State private var dailySilverAwarded: Bool = false
     @State private var dailyBronzeAwarded: Bool = false
@@ -94,115 +100,132 @@ struct HomeView: View {
                             let sidePadding: CGFloat = (UIDevice.current.userInterfaceIdiom == .pad ? 0 : 6)
                             let cardWidth = availableHeight * (9.0 / 16.0) - sidePadding
                             
-                            ZStack(alignment: .center) {
-                                ScrollView(.vertical) {
-                                    LazyVStack(spacing: 0) {
-                                        ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                            let item = viewModel.feedItems[index]
+                            ScrollViewReader { proxy in
+                                ZStack(alignment: .center) {
+                                    ScrollView(.vertical) {
+                                        LazyVStack(spacing: 0) {
+                                            ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                let item = viewModel.feedItems[index]
 
-                                            ZStack {
-                                                UserFeedItemView(
-                                                    item: item,
-                                                    prompt: viewModel.dailyPrompt,
-                                                    loadID: loadID,
-                                                    friendsViewModel: friendsViewModel,
-                                                    hasPostedToday: $viewModel.hasPostedToday,
-                                                    hasAttemptedDrawing: $viewModel.hasAttemptedDrawing,
-                                                    isPresentingCreate: $isPresentingCreate,
-                                                    isGoldDisabled: $dailyGoldAwarded,
-                                                    isSilverDisabled: $dailySilverAwarded,
-                                                    isBronzeDisabled: $dailyBronzeAwarded,
-                                                    onGoldTapped: { isSelected in dailyGoldAwarded = isSelected },
-                                                    onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
-                                                    onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected },
-                                                    onRefreshNeeded: {
-                                                        Task {
-                                                            await reloadFeed(showOverlay: true)
+                                                ZStack {
+                                                    UserFeedItemView(
+                                                        item: item,
+                                                        prompt: viewModel.dailyPrompt,
+                                                        loadID: loadID,
+                                                        friendsViewModel: friendsViewModel,
+                                                        hasPostedToday: $viewModel.hasPostedToday,
+                                                        hasAttemptedDrawing: $viewModel.hasAttemptedDrawing,
+                                                        isPresentingCreate: $isPresentingCreate,
+                                                        isGoldDisabled: $dailyGoldAwarded,
+                                                        isSilverDisabled: $dailySilverAwarded,
+                                                        isBronzeDisabled: $dailyBronzeAwarded,
+                                                        onGoldTapped: { isSelected in dailyGoldAwarded = isSelected },
+                                                        onSilverTapped: { isSelected in dailySilverAwarded = isSelected },
+                                                        onBronzeTapped: { isSelected in dailyBronzeAwarded = isSelected },
+                                                        onRefreshNeeded: {
+                                                            Task {
+                                                                await reloadFeed(showOverlay: true)
+                                                            }
                                                         }
+                                                    )
+                                                    .frame(width: cardWidth, height: availableHeight)
+                                                    .padding(.bottom, bottomPadding)
+                                                }
+                                                .containerRelativeFrame(.vertical)
+                                                .scrollTransition { content, phase in
+                                                    content
+                                                        .opacity(phase.isIdentity ? 1 : 0.8)
+                                                        .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                                                }
+                                                .id(index)
+                                                .background(
+                                                    GeometryReader { itemGeo in
+                                                        Color.clear
+                                                            .preference(
+                                                                key: ViewOffsetKey.self,
+                                                                value: [index: itemGeo.frame(in: .named("feedScroll")).midY]
+                                                            )
                                                     }
                                                 )
-                                                .frame(width: cardWidth, height: availableHeight)
-                                                .padding(.bottom, bottomPadding)
                                             }
-                                            .containerRelativeFrame(.vertical)
-                                            .scrollTransition { content, phase in
-                                                content
-                                                    .opacity(phase.isIdentity ? 1 : 0.8)
-                                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
-                                            }
-                                            .id(index)
                                         }
+                                        .scrollTargetLayout()
                                     }
-                                    .scrollTargetLayout()
-                                }
-                                .scrollTargetBehavior(.paging)
-                                .scrollBounceBehavior(.always)
-                                .scrollIndicators(.hidden)
-                                .ignoresSafeArea()
-                                .contentMargins(.top, topPadding, for: .scrollContent)
-                                .scrollPosition(id: $currentItemID)
-                                .onChange(of: currentItemID) { oldValue, newValue in
-                                    if let newIndex = newValue {
-                                        withAnimation {
-                                            currentFeedIndex = newIndex
-                                        }
-                                    }
-                                }
-                                .refreshable {
-                                    guard !viewModel.isLoadingFeed else { return }
-                                    isRefreshing = true
-                                    await reloadFeed(showOverlay: false)
-                                    isRefreshing = false
-                                    hasInitialLoadCompleted = true
-                                }
-
-                                if !viewModel.feedItems.isEmpty {
-                                    let itemCount = viewModel.feedItems.count
-                                    let capsuleWidth: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 10 : 6
-                                    let verticalSpacing: CGFloat = capsuleWidth
-                                    
-                                    let contentHeightBetweenBars = availableHeight
-                                    
-                                    let totalSpacing = CGFloat(max(0, itemCount - 1)) * verticalSpacing
-                                    let availableHeightForCapsules = contentHeightBetweenBars - totalSpacing
-                                    let capsuleHeight = max(4, availableHeightForCapsules / CGFloat(max(1, itemCount)))
-
-                                    HStack {
-                                        Spacer()
-                                        VStack {
-                                            VStack(spacing: verticalSpacing) {
-                                                ForEach(viewModel.feedItems.indices, id: \.self) { index in
-                                                    Button(action: {
-                                                        withAnimation(.spring()) {
-                                                            currentItemID = index
-                                                        }
-                                                    }) {
-                                                        Capsule()
-                                                            .fill(
-                                                                currentFeedIndex == index
-                                                                ? (colorScheme == .dark
-                                                                   ? Color(red: 0.65, green: 0.05, blue: 0.1)
-                                                                   : Color.red)
-                                                                : (colorScheme == .dark
-                                                                   ? Color(red: 0.6, green: 0.3, blue: 0.0)
-                                                                   : Color.accentColor)
-                                                            )
-                                                            .frame(width: capsuleWidth, height: capsuleHeight)
-                                                            .contentShape(Capsule())
-                                                            .frame(minWidth: (UIDevice.current.userInterfaceIdiom == .pad ? 30 : 24), alignment: .trailing)
-                                                            .padding(.trailing, 8)
+                                    .scrollTargetBehavior(.paging)
+                                    .scrollBounceBehavior(.always)
+                                    .scrollIndicators(.hidden)
+                                    .ignoresSafeArea()
+                                    .contentMargins(.top, topPadding, for: .scrollContent)
+                                    .coordinateSpace(name: "feedScroll")
+                                    .onPreferenceChange(ViewOffsetKey.self) { values in
+                                        DispatchQueue.main.async {
+                                            let scrollCenter = geometry.size.height / 2
+                                            
+                                            if let closest = values.min(by: { abs($0.value - scrollCenter) < abs($1.value - scrollCenter) }) {
+                                                if currentFeedIndex != closest.key {
+                                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                        currentFeedIndex = closest.key
                                                     }
                                                 }
                                             }
-                                            .frame(maxHeight: contentHeightBetweenBars)
-                                            .clipped()
                                         }
-                                        .frame(height: availableHeight)
-                                        .padding(.top, topPadding)
-                                        .padding(.bottom, bottomPadding)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                                    .zIndex(1)
+                                    .refreshable {
+                                        guard !viewModel.isLoadingFeed else { return }
+                                        isRefreshing = true
+                                        await reloadFeed(showOverlay: false)
+                                        isRefreshing = false
+                                        hasInitialLoadCompleted = true
+                                    }
+
+                                    if !viewModel.feedItems.isEmpty {
+                                        let itemCount = viewModel.feedItems.count
+                                        let capsuleWidth: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 10 : 6
+                                        let verticalSpacing: CGFloat = capsuleWidth
+                                        
+                                        let contentHeightBetweenBars = availableHeight
+                                        
+                                        let totalSpacing = CGFloat(max(0, itemCount - 1)) * verticalSpacing
+                                        let availableHeightForCapsules = contentHeightBetweenBars - totalSpacing
+                                        let capsuleHeight = max(4, availableHeightForCapsules / CGFloat(max(1, itemCount)))
+
+                                        HStack {
+                                            Spacer()
+                                            VStack {
+                                                VStack(spacing: verticalSpacing) {
+                                                    ForEach(viewModel.feedItems.indices, id: \.self) { index in
+                                                        Button(action: {
+                                                            withAnimation(.spring()) {
+                                                                proxy.scrollTo(index, anchor: .center)
+                                                            }
+                                                        }) {
+                                                            Capsule()
+                                                                .fill(
+                                                                    currentFeedIndex == index
+                                                                    ? (colorScheme == .dark
+                                                                       ? Color(red: 0.65, green: 0.05, blue: 0.1)
+                                                                       : Color.red)
+                                                                    : (colorScheme == .dark
+                                                                       ? Color(red: 0.6, green: 0.3, blue: 0.0)
+                                                                       : Color.accentColor)
+                                                                )
+                                                                .frame(width: capsuleWidth, height: capsuleHeight)
+                                                                .contentShape(Capsule())
+                                                                .frame(minWidth: (UIDevice.current.userInterfaceIdiom == .pad ? 30 : 24), alignment: .trailing)
+                                                                .padding(.trailing, 8)
+                                                        }
+                                                    }
+                                                }
+                                                .frame(maxHeight: contentHeightBetweenBars)
+                                                .clipped()
+                                            }
+                                            .frame(height: availableHeight)
+                                            .padding(.top, topPadding)
+                                            .padding(.bottom, bottomPadding)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                                        .zIndex(1)
+                                    }
                                 }
                             }
                             .frame(width: geometry.size.width, height: geometry.size.height)

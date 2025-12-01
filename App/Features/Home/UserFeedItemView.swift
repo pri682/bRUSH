@@ -345,7 +345,7 @@ struct UserFeedItemView: View {
     }
 
     private var actionsOverlay: some View {
-        VStack(spacing: 16) {
+        GlassEffectContainer {
             medalButton(assetName: "gold_medal",
                         color: Color(red: 0.8, green: 0.65, blue: 0.0),
                         type: .gold,
@@ -440,7 +440,7 @@ struct UserFeedItemView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .saturation(isDisabled && !isSelected.wrappedValue ? 0 : 1)
+                    .saturation(isDisabled && !isSelected.wrappedValue ? 0.4 : 1)
 
                 let text = Text("\(count.wrappedValue)")
                     .font(.caption)
@@ -456,7 +456,7 @@ struct UserFeedItemView: View {
         }
         .glassEffect(
             isSelected.wrappedValue
-                ? .regular.tint(color).interactive()
+                ? .clear.tint(color).interactive()
                 : (isDisabled ? .regular : .clear.tint(color.opacity(0.5)).interactive()),
             in: RoundedRectangle(cornerRadius: 12)
         )
