@@ -14,6 +14,13 @@ struct AwardCounts {
     let bronze: Int
 }
 
+struct AwardDetails {
+    let counts: AwardCounts
+    let didGiveGold: Bool
+    let didGiveSilver: Bool
+    let didGiveBronze: Bool
+}
+
 final class AwardServiceFirebase {
     
     static let shared = AwardServiceFirebase()
@@ -104,13 +111,15 @@ final class AwardServiceFirebase {
         }
     }
 
-    func fetchAwardCounts(forPostOwner userId: String) async throws -> AwardCounts {
+    // Updated to return details about what the current user gave
+    func fetchAwardDetails(forPostOwner userId: String) async throws -> AwardDetails {
         let snapshot = try await db.collection("dailyFeed")
                 .document(userId)
                 .collection("awards")
                 .getDocuments()
 
         let today = todayKey()
+        let currentUid = Auth.auth().currentUser?.uid
         
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -118,24 +127,47 @@ final class AwardServiceFirebase {
         formatter.timeZone = TimeZone(identifier: "America/Chicago")
         formatter.dateFormat = "yyyyMMdd"
         
-            var gold = 0
-            var silver = 0
-            var bronze = 0
-
-            for doc in snapshot.documents {
-                // only consider docs that have updatedAt timestamp
-                guard let ts = doc.get("updatedAt") as? Timestamp else { continue }
-                
-                let docDate = formatter.string(from: ts.dateValue())
-                // skip medals from previous days
-                guard docDate == today else { continue }
-                
-                if doc.get("gold") as? Bool ?? false { gold += 1 }
-                if doc.get("silver") as? Bool ?? false { silver += 1 }
-                if doc.get("bronze") as? Bool ?? false { bronze += 1 }
-            }
+        var gold = 0
+        var silver = 0
+        var bronze = 0
         
-        return AwardCounts(gold: gold, silver: silver, bronze: bronze)
+        var myGold = false
+        var mySilver = false
+        var myBronze = false
+
+        for doc in snapshot.documents {
+            // only consider docs that have updatedAt timestamp
+            guard let ts = doc.get("updatedAt") as? Timestamp else { continue }
+            
+            let docDate = formatter.string(from: ts.dateValue())
+            // skip medals from previous days
+            guard docDate == today else { continue }
+            
+            let isGold = doc.get("gold") as? Bool ?? false
+            let isSilver = doc.get("silver") as? Bool ?? false
+            let isBronze = doc.get("bronze") as? Bool ?? false
+            
+            if isGold { gold += 1 }
+            if isSilver { silver += 1 }
+            if isBronze { bronze += 1 }
+            
+            // Check if this award was given by the current user
+            // The document ID is the giverUid
+            if doc.documentID == currentUid {
+                myGold = isGold
+                mySilver = isSilver
+                myBronze = isBronze
+            }
+        }
+        
+        let counts = AwardCounts(gold: gold, silver: silver, bronze: bronze)
+        return AwardDetails(counts: counts, didGiveGold: myGold, didGiveSilver: mySilver, didGiveBronze: myBronze)
+    }
+    
+    // Kept for backward compatibility if needed, but delegates to details
+    func fetchAwardCounts(forPostOwner userId: String) async throws -> AwardCounts {
+        let details = try await fetchAwardDetails(forPostOwner: userId)
+        return details.counts
     }
     
     func fetchTodayUsage() async -> (gold: Bool, silver: Bool, bronze: Bool) {

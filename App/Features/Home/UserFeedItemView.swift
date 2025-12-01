@@ -71,6 +71,11 @@ struct UserFeedItemView: View {
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
+        
+        // Initialize state from FeedItem persistence
+        _goldSelected = State(initialValue: item.didGiveGold)
+        _silverSelected = State(initialValue: item.didGiveSilver)
+        _bronzeSelected = State(initialValue: item.didGiveBronze)
 
         self._hasPostedToday = hasPostedToday
         self._hasAttemptedDrawing = hasAttemptedDrawing
@@ -236,7 +241,6 @@ struct UserFeedItemView: View {
                 self.isContentLoaded = true
             }
         }
-        // Removed global .alert logic here
     }
     
     private func sendAward(for type: AwardType) {
@@ -436,13 +440,13 @@ struct UserFeedItemView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .saturation(isDisabled ? 0 : 1)
+                    .saturation(isDisabled && !isSelected.wrappedValue ? 0 : 1)
 
                 let text = Text("\(count.wrappedValue)")
                     .font(.caption)
                     .fontWeight(.semibold)
 
-                if isDisabled {
+                if isDisabled && !isSelected.wrappedValue {
                     text
                 } else {
                     text.foregroundColor(.white)
@@ -451,13 +455,9 @@ struct UserFeedItemView: View {
             .padding(8)
         }
         .glassEffect(
-            isDisabled
-                ? .clear
-                : (
-                    isSelected.wrappedValue
-                    ? .regular.tint(color).interactive()
-                    : .clear.tint(color.opacity(0.5)).interactive()
-                  ),
+            isSelected.wrappedValue
+                ? .regular.tint(color).interactive()
+                : (isDisabled ? .regular : .clear.tint(color.opacity(0.5)).interactive()),
             in: RoundedRectangle(cornerRadius: 12)
         )
         .contentShape(RoundedRectangle(cornerRadius: 12))
