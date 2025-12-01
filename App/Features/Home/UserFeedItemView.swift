@@ -345,49 +345,47 @@ struct UserFeedItemView: View {
     }
 
     private var actionsOverlay: some View {
-        GlassEffectContainer {
-            VStack(spacing: 12) {
-                medalButton(assetName: "gold_medal",
-                            color: Color(red: 0.8, green: 0.65, blue: 0.0),
-                            type: .gold,
-                            count: $goldCount,
-                            isSelected: $goldSelected,
-                            isDisabled: isGoldDisabled || isOwnPost,
-                            onTapped: onGoldTapped
-                        )
-                    .opacity(showOverlays ? 1 : 0)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
-                    .allowsHitTesting(showOverlays)
+        VStack(spacing: 12) {
+            medalButton(assetName: "gold_medal",
+                        color: Color(red: 0.8, green: 0.65, blue: 0.0),
+                        type: .gold,
+                        count: $goldCount,
+                        isSelected: $goldSelected,
+                        isDisabled: isGoldDisabled || isOwnPost,
+                        onTapped: onGoldTapped
+                    )
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
+                .allowsHitTesting(showOverlays)
 
-                medalButton(assetName: "silver_medal",
-                            color: Color.gray,
-                            type: .silver,
-                            count: $silverCount,
-                            isSelected: $silverSelected,
-                            isDisabled: isSilverDisabled || isOwnPost,
-                            onTapped: onSilverTapped
-                        )
-                    .opacity(showOverlays ? 1 : 0)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
-                    .allowsHitTesting(showOverlays)
-                
-                medalButton(assetName: "bronze_medal",
-                            color: Color(red: 0.6, green: 0.35, blue: 0.0),
-                            type: .bronze,
-                            count: $bronzeCount,
-                            isSelected: $bronzeSelected,
-                            isDisabled: isBronzeDisabled || isOwnPost,
-                            onTapped: onBronzeTapped
-                        )
-                    .opacity(showOverlays ? 1 : 0)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
-                    .allowsHitTesting(showOverlays)
-                
-                shareButton()
-                    .opacity(showOverlays ? 1 : 0)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
-                    .allowsHitTesting(showOverlays)
-            }
+            medalButton(assetName: "silver_medal",
+                        color: Color.gray,
+                        type: .silver,
+                        count: $silverCount,
+                        isSelected: $silverSelected,
+                        isDisabled: isSilverDisabled || isOwnPost,
+                        onTapped: onSilverTapped
+                    )
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
+                .allowsHitTesting(showOverlays)
+            
+            medalButton(assetName: "bronze_medal",
+                        color: Color(red: 0.6, green: 0.35, blue: 0.0),
+                        type: .bronze,
+                        count: $bronzeCount,
+                        isSelected: $bronzeSelected,
+                        isDisabled: isBronzeDisabled || isOwnPost,
+                        onTapped: onBronzeTapped
+                    )
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
+                .allowsHitTesting(showOverlays)
+            
+            shareButton()
+                .opacity(showOverlays ? 1 : 0)
+                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
+                .allowsHitTesting(showOverlays)
         }
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -442,14 +440,14 @@ struct UserFeedItemView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .saturation(isDisabled && !isSelected.wrappedValue ? 0.4 : 1)
+                    .saturation(isDisabled && !isSelected.wrappedValue ? 0.7 : 1)
 
                 let text = Text("\(count.wrappedValue)")
                     .font(.caption)
                     .fontWeight(.semibold)
 
                 if isDisabled && !isSelected.wrappedValue {
-                    text
+                    text.foregroundColor(.primary)
                 } else {
                     text.foregroundColor(.white)
                 }
@@ -459,7 +457,7 @@ struct UserFeedItemView: View {
         .glassEffect(
             isSelected.wrappedValue
                 ? .clear.tint(color).interactive()
-                : (isDisabled ? .regular : .clear.tint(color.opacity(0.5)).interactive()),
+            : (isDisabled ? .clear.tint(Color(UIColor.systemBackground).opacity(0.5)) : .clear.tint(color.opacity(0.5)).interactive()),
             in: RoundedRectangle(cornerRadius: 12)
         )
         .contentShape(RoundedRectangle(cornerRadius: 12))
