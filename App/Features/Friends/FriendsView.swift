@@ -48,7 +48,6 @@ struct FriendsView: View {
                             .listRowSeparator(.hidden)
                             .padding(.vertical, 20)
                         }
-                        // EMPTY STATE (Only if NOT loading)
                         else if vm.filteredFriends.isEmpty {
                             if vm.searchText.isEmpty {
                                 ContentUnavailableView {
@@ -56,21 +55,24 @@ struct FriendsView: View {
                                 } description: {
                                     Text("Add some friends to start competing!")
                                 }
+                                .listRowBackground(Color.clear)
                             } else {
                                 Text("No friends found for \"\(vm.searchText)\"")
                                     .foregroundStyle(.secondary)
+                                    .listRowBackground(Color.clear)
                             }
                         }
-                        // CONTENT STATE
                         else {
-                            ForEach(vm.filteredFriends, id: \.uid) { profile in
-                                friendRow(profile)
+                            // Group users in a section to club them together with dividers
+                            Section {
+                                ForEach(vm.filteredFriends, id: \.uid) { profile in
+                                    friendRow(profile)
+                                }
+                                .onDelete(perform: deleteFriends)
                             }
-                            .onDelete(perform: deleteFriends)
                         }
                         
                     } else if selectedTab == .requests {
-                        // LOADING STATE
                         if isInitiallyLoading && vm.requests.isEmpty {
                             HStack {
                                 Spacer()
@@ -80,7 +82,6 @@ struct FriendsView: View {
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                         }
-                        // EMPTY STATE
                         else if filteredRequests.isEmpty {
                             if vm.searchText.isEmpty {
                                 ContentUnavailableView {
@@ -88,25 +89,24 @@ struct FriendsView: View {
                                 } description: {
                                     Text("You're all caught up.")
                                 }
+                                .listRowBackground(Color.clear)
                             } else {
                                 Text("No requests found for \"\(vm.searchText)\"")
                                     .foregroundStyle(.secondary)
+                                    .listRowBackground(Color.clear)
                             }
                         }
-                        // CONTENT STATE
                         else {
-                            ForEach(filteredRequests) { req in
-                                requestRow(req)
+                            Section {
+                                ForEach(filteredRequests) { req in
+                                    requestRow(req)
+                                }
                             }
                         }
                     }
                 }
                 .listStyle(.insetGrouped)
-                .scrollContentBackground(.hidden)
-                .background(
-                    Color.accentColor.opacity(0.15)
-                    .clipShape(RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight]))
-                )
+                .scrollContentBackground(.visible)
                 .refreshable {
                     await vm.refreshAllData()
                 }
@@ -196,10 +196,7 @@ struct FriendsView: View {
             }
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
         .onTapGesture { vm.openProfile(for: profile) }
     }
@@ -230,10 +227,7 @@ struct FriendsView: View {
                 .buttonStyle(.glass)
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .padding(.vertical, 6)
     }
     
     private func deleteFriends(at offsets: IndexSet) {

@@ -7,22 +7,24 @@ struct InputField: View {
     @Binding var text: String
     let isSecure: Bool
     let hasError: Bool
+    let textContentType: UITextContentType?
     
-    init(placeholder: String, text: Binding<String>, isSecure: Bool = false, hasError: Bool = false) {
+    init(placeholder: String, text: Binding<String>, isSecure: Bool = false, hasError: Bool = false, textContentType: UITextContentType? = nil) {
         self.placeholder = placeholder
         self._text = text
         self.isSecure = isSecure
         self.hasError = hasError
+        self.textContentType = textContentType
     }
 
     var body: some View {
         Group {
             if isSecure {
                 SecureField(placeholder, text: $text)
-                    .textContentType(.password)
+                    .textContentType(textContentType ?? .password)
             } else {
                 TextField(placeholder, text: $text)
-                    .textContentType(.emailAddress)
+                    .textContentType(textContentType ?? .emailAddress)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .textInputAutocapitalization(.never)

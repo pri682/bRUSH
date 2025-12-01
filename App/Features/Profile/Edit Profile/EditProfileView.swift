@@ -270,20 +270,21 @@ struct EditProfileView: View {
                                 }
                             }
                             
-                            // THIS CALLS THE VIEWMODEL FUNCTION BELOW
-                            if let profile = userProfile {
-                                let avatarParts = AvatarParts(
-                                    avatarType: AvatarType(rawValue: profile.avatarType ?? "personal") ?? .personal,
-                                    background: profile.avatarBackground ?? "background_1",
-                                    body: profile.avatarBody,
-                                    shirt: profile.avatarShirt,
-                                    eyes: profile.avatarEyes,
-                                    mouth: profile.avatarMouth,
-                                    hair: profile.avatarHair,
-                                    facialHair: profile.avatarFacialHair
-                                )
+                            if let avatarParts = currentAvatarParts {
                                 let avatarSuccess = await viewModel.saveAvatarChanges(avatarParts: avatarParts)
                                 success = success && avatarSuccess
+                                
+                                if avatarSuccess, var profile = userProfile {
+                                    profile.avatarType = avatarParts.avatarType.rawValue
+                                    profile.avatarBackground = avatarParts.background
+                                    profile.avatarBody = avatarParts.body
+                                    profile.avatarShirt = avatarParts.shirt
+                                    profile.avatarEyes = avatarParts.eyes
+                                    profile.avatarMouth = avatarParts.mouth
+                                    profile.avatarHair = avatarParts.hair
+                                    profile.avatarFacialHair = avatarParts.facialHair
+                                    userProfile = profile
+                                }
                             }
                             
                             if success {

@@ -81,12 +81,17 @@ final class HomeViewModel: ObservableObject {
             let ownerId = enriched[index].userId
 
             do {
-                let counts = try await AwardServiceFirebase.shared
-                    .fetchAwardCounts(forPostOwner: ownerId)
+                let details = try await AwardServiceFirebase.shared
+                    .fetchAwardDetails(forPostOwner: ownerId)
 
-                enriched[index].medalGold = counts.gold
-                enriched[index].medalSilver = counts.silver
-                enriched[index].medalBronze = counts.bronze
+                enriched[index].medalGold = details.counts.gold
+                enriched[index].medalSilver = details.counts.silver
+                enriched[index].medalBronze = details.counts.bronze
+                
+                enriched[index].didGiveGold = details.didGiveGold
+                enriched[index].didGiveSilver = details.didGiveSilver
+                enriched[index].didGiveBronze = details.didGiveBronze
+                
             } catch {
                 print("Failed to load medal counts for \(ownerId): \(error.localizedDescription)")
                 // If it fails, we just leave the counts as whatever they were (likely 0)
@@ -170,6 +175,9 @@ final class HomeViewModel: ObservableObject {
                         medalGold: data["gold"] as? Int ?? 0,
                         medalSilver: data["silver"] as? Int ?? 0,
                         medalBronze: data["bronze"] as? Int ?? 0,
+                        didGiveGold: false,
+                        didGiveSilver: false,
+                        didGiveBronze: false,
                         date: date,
                         createdAt: (data["createdAt"] as? Timestamp)?.dateValue(),
                         lastName: lastName,

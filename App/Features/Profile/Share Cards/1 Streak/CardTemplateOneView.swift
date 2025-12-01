@@ -100,7 +100,7 @@ struct CardTemplateOneView: View {
                 }
                 .frame(width: cardWidth, height: cardHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
             }
         }
     }

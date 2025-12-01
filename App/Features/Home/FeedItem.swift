@@ -9,6 +9,11 @@ struct FeedItem: Identifiable {
     var medalGold: Int
     var medalSilver: Int
     var medalBronze: Int
+    
+    var didGiveGold: Bool = false
+    var didGiveSilver: Bool = false
+    var didGiveBronze: Bool = false
+    
     let date: String
     let createdAt: Date?
     

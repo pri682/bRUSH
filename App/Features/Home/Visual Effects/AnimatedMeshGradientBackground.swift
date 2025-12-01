@@ -3,6 +3,8 @@ import SwiftUI
 struct AnimatedMeshGradientBackground: View {
     let width: Int = 4
     let height: Int = 4
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         TimelineView(.animation) { context in
@@ -34,29 +36,54 @@ struct AnimatedMeshGradientBackground: View {
                     [1.0, 0.66],
                     [0.0, 1.0], [0.33, 1.0], [0.66, 1.0], [1.0, 1.0]
                 ],
-                colors: [
-                    Color(red: 1.0, green: 0.55, blue: 0.4),
-                    Color(red: 1.0, green: 0.7, blue: 0.5),
-                    Color(red: 0.9, green: 0.5, blue: 0.8),
-                    Color(red: 0.7, green: 0.7, blue: 1.0),
-                    Color(red: 0.55, green: 0.8, blue: 1.0),
-                    Color(red: 1.0, green: 0.55, blue: 0.4),
-                    Color(red: 1.0, green: 0.7, blue: 0.5),
-                    Color(red: 0.9, green: 0.5, blue: 0.8),
-                    Color(red: 0.7, green: 0.7, blue: 1.0),
-                    Color(red: 0.55, green: 0.8, blue: 1.0),
-                    Color(red: 1.0, green: 0.55, blue: 0.4),
-                    Color(red: 1.0, green: 0.7, blue: 0.5),
-                    Color(red: 0.9, green: 0.5, blue: 0.8),
-                    Color(red: 0.7, green: 0.7, blue: 1.0),
-                    Color(red: 0.55, green: 0.8, blue: 1.0),
-                    Color(red: 1.0, green: 0.55, blue: 0.4)
-                ]
+                colors: colorScheme == .dark ? darkColors : lightColors
             )
             .blur(radius: 40)
             .scaleEffect(1.6)
             .opacity(0.95)
             .ignoresSafeArea()
         }
+    }
+    
+    private var lightColors: [Color] {
+        [
+            Color(red: 1.0, green: 0.55, blue: 0.4),
+            Color(red: 1.0, green: 0.7, blue: 0.5),
+            Color(red: 0.9, green: 0.5, blue: 0.8),
+            Color(red: 0.7, green: 0.7, blue: 1.0),
+            Color(red: 0.55, green: 0.8, blue: 1.0),
+            Color(red: 1.0, green: 0.55, blue: 0.4),
+            Color(red: 1.0, green: 0.7, blue: 0.5),
+            Color(red: 0.9, green: 0.5, blue: 0.8),
+            Color(red: 0.7, green: 0.7, blue: 1.0),
+            Color(red: 0.55, green: 0.8, blue: 1.0),
+            Color(red: 1.0, green: 0.55, blue: 0.4),
+            Color(red: 1.0, green: 0.7, blue: 0.5),
+            Color(red: 0.9, green: 0.5, blue: 0.8),
+            Color(red: 0.7, green: 0.7, blue: 1.0),
+            Color(red: 0.55, green: 0.8, blue: 1.0),
+            Color(red: 1.0, green: 0.55, blue: 0.4)
+        ]
+    }
+    
+    private var darkColors: [Color] {
+        [
+            Color(red: 0.4, green: 0.2, blue: 0.1),
+            Color(red: 0.5, green: 0.25, blue: 0.15),
+            Color(red: 0.3, green: 0.1, blue: 0.3),
+            Color(red: 0.1, green: 0.1, blue: 0.4),
+            Color(red: 0.1, green: 0.2, blue: 0.4),
+            Color(red: 0.4, green: 0.2, blue: 0.1),
+            Color(red: 0.5, green: 0.25, blue: 0.15),
+            Color(red: 0.3, green: 0.1, blue: 0.3),
+            Color(red: 0.1, green: 0.1, blue: 0.4),
+            Color(red: 0.1, green: 0.2, blue: 0.4),
+            Color(red: 0.4, green: 0.2, blue: 0.1),
+            Color(red: 0.5, green: 0.25, blue: 0.15),
+            Color(red: 0.3, green: 0.1, blue: 0.3),
+            Color(red: 0.1, green: 0.1, blue: 0.4),
+            Color(red: 0.1, green: 0.2, blue: 0.4),
+            Color(red: 0.4, green: 0.2, blue: 0.1)
+        ]
     }
 }

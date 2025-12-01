@@ -42,12 +42,12 @@ struct ShareCardPreviewView: View {
             let height = geometry.size.height
             let width = geometry.size.width
             
-            let cardHeightFactor: CGFloat = 0.65
+            let cardHeightFactor: CGFloat = 0.7
             let cardHeight = height * cardHeightFactor
             let cardWidth = cardHeight * (2/3)
             
             let horizontalPadding = max(30, (width - cardWidth) / 2)
-            let verticalPadding: CGFloat = 50
+            let verticalPadding: CGFloat = 24
             
             let customizationBinding = Binding<CardCustomization>(
                 get: {
@@ -62,54 +62,90 @@ struct ShareCardPreviewView: View {
                 set: { _ in }
             )
             
-            ZStack {
-                TabView(selection: $currentPage) {
-                    CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(0)
-                    
-                    CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(1)
+            VStack(spacing: 20) {
+                
+                // MARK: - Layer 1: ScrollView
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 0) {
+                        CardTemplateOneView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(0)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
                         
-                    CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(2)
+                        CardTemplateTwoView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(1)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
                         
-                    CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
+                        CardTemplateThreeView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(2)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
+                        
+                        CardTemplateFourView(customization: customizationBinding, userProfile: userProfile)
+                            .frame(height: cardHeight)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.vertical, verticalPadding)
+                            .containerRelativeFrame(.horizontal)
+                            .id(3)
+                            .scrollTransition { content, phase in
+                                content
+                                    .opacity(phase.isIdentity ? 1 : 0.8)
+                                    .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                            }
+                        
+                        CardTemplateFiveView(
+                            customization: customizationBinding,
+                            selectedDrawing: $selectedDrawing,
+                            showUsername: showUsername,
+                            showPrompt: showPrompt,
+                            userProfile: userProfile,
+                            onTapAddDrawing: {
+                                showDrawingPicker = true
+                            }
+                        )
                         .frame(height: cardHeight)
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical, verticalPadding)
-                        .tag(3)
-                    
-                    CardTemplateFiveView(
-                        customization: customizationBinding,
-                        selectedDrawing: $selectedDrawing,
-                        showUsername: showUsername,
-                        showPrompt: showPrompt,
-                        userProfile: userProfile,
-                        onTapAddDrawing: {
-                            showDrawingPicker = true
+                        .containerRelativeFrame(.horizontal)
+                        .id(4)
+                        .scrollTransition { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.7)
+                                .scaleEffect(phase.isIdentity ? 1 : 0.9)
                         }
-                    )
-                        .frame(height: cardHeight)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.vertical, verticalPadding)
-                        .tag(4)
+                    }
+                    .scrollTargetLayout()
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .padding(.top, 20)
-                .padding(.bottom, height * 0.25)
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: Binding<Int?>(
+                    get: { currentPage },
+                    set: { if let val = $0 { currentPage = val } }
+                ))
                 
                 if showActions {
-                    VStack {
-                        Spacer()
+                    VStack(spacing: 0) {
                         
                         HStack(spacing: 8) {
                             ForEach(0..<5) { index in
@@ -122,41 +158,41 @@ struct ShareCardPreviewView: View {
                                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
                             }
                         }
-                        .padding(.bottom, 24)
-                        
-
+                        .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 40)
                         
                         GlassEffectContainer(spacing: 12.0) {
-                            HStack(alignment: .top, spacing: 12) {
-                                    Button(action: {
-                                        showShareMenu = true
-                                    }) {
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "square.and.arrow.up")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(.white)
-                                            Text("Share")
-                                                .font(.system(size: 18, weight: .semibold))
-                                                .foregroundColor(.white)
-                                        }
-                                        .padding(.horizontal, 30)
-                                        .padding(.vertical, 16)
-                                        .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
-                                        .glassEffectID("shareButton", in: namespace)
+                            HStack(alignment: .center, spacing: 12) {
+                                Button(action: {
+                                    showShareMenu = true
+                                }) {
+                                    HStack(alignment: .bottom, spacing: 8) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .padding(.bottom, 2)
+                                            .foregroundColor(.white)
+                                        Text("Share")
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(.white)
                                     }
-                                    .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
-                                        Button("Export as Image") {
-                                            exportImage()
-                                        }
-                                        
-                                        Button("Export as Video") {
-                                            exportVideo()
-                                        }
-                                        
-                                        Button("Cancel", role: .cancel) {}
+                                    .padding(.horizontal, 30)
+                                    .padding(.top, 14)
+                                    .padding(.bottom, 16)
+                                    .glassEffect(.clear.tint(buttonTintColor(for: currentPage).opacity(0.2)).interactive())
+                                    .glassEffectID("shareButton", in: namespace)
+                                }
+                                .confirmationDialog("Share Card", isPresented: $showShareMenu, titleVisibility: .visible) {
+                                    Button("Export as Image") {
+                                        exportImage()
                                     }
+                                    
+                                    Button("Export as Video") {
+                                        exportVideo()
+                                    }
+                                    
+                                    Button("Cancel", role: .cancel) {}
+                                }
                                 .disabled(currentPage == 4 && selectedDrawing == nil)
-                                                                
+                                
                                 if canEditTemplateFive {
                                     Button(action: {
                                         showTemplate5Edit = true
@@ -173,19 +209,18 @@ struct ShareCardPreviewView: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .padding(.bottom, height * 0.06)
                         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: canEditTemplateFive)
+                        
+                        Spacer(minLength: 0)
                     }
                 }
             }
             
+            // MARK: - Overlays
             if videoExporter.isExporting {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
-                    
                     CustomExportAnimation(progress: videoExporter.progress)
-                    
-
                 }
                 .transition(.opacity)
                 .zIndex(100)
@@ -222,9 +257,7 @@ struct ShareCardPreviewView: View {
     }
     
     // MARK: - Helper Functions
-    
-    // MARK: - Helper Functions
-    
+        
     /// Returns the tint color for the share button based on current template
     private func buttonTintColor(for templateIndex: Int) -> Color {
         switch templateIndex {

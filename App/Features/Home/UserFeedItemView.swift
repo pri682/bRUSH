@@ -71,6 +71,11 @@ struct UserFeedItemView: View {
         _goldCount = State(initialValue: item.medalGold)
         _silverCount = State(initialValue: item.medalSilver)
         _bronzeCount = State(initialValue: item.medalBronze)
+        
+        // Initialize state from FeedItem persistence
+        _goldSelected = State(initialValue: item.didGiveGold)
+        _silverSelected = State(initialValue: item.didGiveSilver)
+        _bronzeSelected = State(initialValue: item.didGiveBronze)
 
         self._hasPostedToday = hasPostedToday
         self._hasAttemptedDrawing = hasAttemptedDrawing
@@ -95,21 +100,33 @@ struct UserFeedItemView: View {
                         case .success(let image):
                             image
                                 .resizable()
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
                                 .modifier(RippleEffect(at: rippleOrigin, trigger: rippleCounter))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         case .failure:
                             Rectangle()
                                 .fill(Color(.secondarySystemBackground))
                                 .overlay(Image(systemName: "photo.fill").foregroundColor(.gray))
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         case .empty:
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         @unknown default:
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .contentShape(RoundedRectangle(cornerRadius: 16))
+                                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         }
                     }
 
@@ -224,20 +241,6 @@ struct UserFeedItemView: View {
                 self.isContentLoaded = true
             }
         }
-        .alert(
-            confirmTitle(for: pendingAwardType ?? .gold),
-            isPresented: $showAwardConfirmation
-        ) {
-            Button("Use", role: .destructive) {
-                if let type = pendingAwardType {
-                    applyAward(type: type)
-                }
-                pendingAwardType = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingAwardType = nil
-            }
-        }
     }
     
     private func sendAward(for type: AwardType) {
@@ -342,7 +345,7 @@ struct UserFeedItemView: View {
     }
 
     private var actionsOverlay: some View {
-        VStack(spacing: 16) {
+        GlassEffectContainer {
             medalButton(assetName: "gold_medal",
                         color: Color(red: 0.8, green: 0.65, blue: 0.0),
                         type: .gold,
@@ -417,45 +420,66 @@ struct UserFeedItemView: View {
     }
 
     @ViewBuilder
-    private func medalButton(assetName: String,
-                             color: Color,
-                             type: AwardType,
-                             count: Binding<Int>,
-                             isSelected: Binding<Bool>,
-                             isDisabled: Bool,
-                             onTapped: ((Bool) -> Void)?) -> some View {
-                Button {
-                    // Don’t allow taps when this medal is disabled (used today or own post)
-                    guard !isDisabled else { return }
-                    pendingAwardType = type
-                    showAwardConfirmation = true
-                } label: {
-                    VStack(spacing: 4) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(assetName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-                        Text("\(count.wrappedValue)")
-                            .foregroundColor(.white)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(8)
-                    .opacity(isDisabled ? 0.75 : 1.0) // slightly dim if disabled, but keep color
+    private func medalButton(
+        assetName: String,
+        color: Color,
+        type: AwardType,
+        count: Binding<Int>,
+        isSelected: Binding<Bool>,
+        isDisabled: Bool,
+        onTapped: ((Bool) -> Void)?
+    ) -> some View {
+        
+        Button {
+            guard !isDisabled else { return }
+            pendingAwardType = type
+            showAwardConfirmation = true
+        } label: {
+            VStack(spacing: 4) {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .saturation(isDisabled && !isSelected.wrappedValue ? 0.4 : 1)
+
+                let text = Text("\(count.wrappedValue)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+
+                if isDisabled && !isSelected.wrappedValue {
+                    text
+                } else {
+                    text.foregroundColor(.white)
                 }
-                .buttonStyle(.plain)
-                .glassEffect(
-                    isSelected.wrappedValue
-                        ? .regular.tint(color).interactive()
-                        : .clear.tint(color.opacity(0.5)).interactive(),
-                    in: RoundedRectangle(cornerRadius: 12)
-                )
-                .contentShape(RoundedRectangle(cornerRadius: 12))
-                .frame(minWidth: 48, minHeight: 48)
-                .disabled(isDisabled)
-                .animation(.easeInOut, value: isSelected.wrappedValue)
             }
+            .padding(8)
+        }
+        .glassEffect(
+            isSelected.wrappedValue
+                ? .clear.tint(color).interactive()
+                : (isDisabled ? .regular : .clear.tint(color.opacity(0.5)).interactive()),
+            in: RoundedRectangle(cornerRadius: 12)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .disabled(isDisabled)
+        .animation(.easeInOut, value: isSelected.wrappedValue)
+        .confirmationDialog(
+            confirmTitle(for: type),
+            isPresented: Binding(
+                get: { showAwardConfirmation && pendingAwardType == type },
+                set: { showAwardConfirmation = $0 }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Use", role: .confirm) {
+                applyAward(type: type)
+                pendingAwardType = nil
+            }
+            .keyboardShortcut(.defaultAction)
+            Button("Cancel", role: .cancel) {
+                pendingAwardType = nil
+            }
+        }
     }
 
     private func shareButton() -> some View {
