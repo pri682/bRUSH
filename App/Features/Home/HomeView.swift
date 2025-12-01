@@ -31,9 +31,10 @@ struct HomeView: View {
     @State private var currentFeedIndex: Int = 0
     @State private var currentItemID: Int? = 0
     
-    @AppStorage("dailyGoldAwarded") private var dailyGoldAwarded: Bool = false
-    @AppStorage("dailySilverAwarded") private var dailySilverAwarded: Bool = false
-    @AppStorage("dailyBronzeAwarded") private var dailyBronzeAwarded: Bool = false
+    // Changed from @AppStorage to @State to rely on backend fetch only
+    @State private var dailyGoldAwarded: Bool = false
+    @State private var dailySilverAwarded: Bool = false
+    @State private var dailyBronzeAwarded: Bool = false
     
     @State private var didJustPost: Bool = false
     @State private var actuallyShowStreakView: Bool = false
@@ -410,18 +411,15 @@ struct HomeView: View {
                             didJustPost = false
                         }
                     }
-                    .task {
-                        isInitialLoading = true
-                        await withTaskGroup(of: Void.self) { group in
-                            group.addTask { await viewModel.loadDailyPrompt() }
-                            group.addTask { await friendsViewModel.refreshFriends() }
-                        }
-                        await reloadFeed(showOverlay: true)
-                        await syncMedalUsageFromBackend()
-                        isInitialLoading = false
-                        hasInitialLoadCompleted = true
+                }
+                .task {
+                    isInitialLoading = true
+                    await withTaskGroup(of: Void.self) { group in
+                        group.addTask { await viewModel.loadDailyPrompt() }
+                        group.addTask { await friendsViewModel.refreshFriends() }
                     }
                     await reloadFeed(showOverlay: true)
+                    await syncMedalUsageFromBackend()
                     isInitialLoading = false
                     hasInitialLoadCompleted = true
                 }

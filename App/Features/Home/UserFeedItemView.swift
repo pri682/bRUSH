@@ -236,20 +236,7 @@ struct UserFeedItemView: View {
                 self.isContentLoaded = true
             }
         }
-        .alert(
-            confirmTitle(for: pendingAwardType ?? .gold),
-            isPresented: $showAwardConfirmation
-        ) {
-            Button("Use", role: .destructive) {
-                if let type = pendingAwardType {
-                    applyAward(type: type)
-                }
-                pendingAwardType = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingAwardType = nil
-            }
-        }
+        // Removed global .alert logic here
     }
     
     private func sendAward(for type: AwardType) {
@@ -429,45 +416,70 @@ struct UserFeedItemView: View {
     }
 
     @ViewBuilder
-    private func medalButton(assetName: String,
-                             color: Color,
-                             type: AwardType,
-                             count: Binding<Int>,
-                             isSelected: Binding<Bool>,
-                             isDisabled: Bool,
-                             onTapped: ((Bool) -> Void)?) -> some View {
-                Button {
-                    // Don’t allow taps when this medal is disabled (used today or own post)
-                    guard !isDisabled else { return }
-                    pendingAwardType = type
-                    showAwardConfirmation = true
-                } label: {
-                    VStack(spacing: 4) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(assetName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-                        Text("\(count.wrappedValue)")
-                            .foregroundColor(.white)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(8)
-                    .opacity(isDisabled ? 0.75 : 1.0) // slightly dim if disabled, but keep color
+    private func medalButton(
+        assetName: String,
+        color: Color,
+        type: AwardType,
+        count: Binding<Int>,
+        isSelected: Binding<Bool>,
+        isDisabled: Bool,
+        onTapped: ((Bool) -> Void)?
+    ) -> some View {
+        
+        Button {
+            guard !isDisabled else { return }
+            pendingAwardType = type
+            showAwardConfirmation = true
+        } label: {
+            VStack(spacing: 4) {
+                Image(assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .saturation(isDisabled ? 0 : 1)
+
+                let text = Text("\(count.wrappedValue)")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+
+                if isDisabled {
+                    text
+                } else {
+                    text.foregroundColor(.white)
                 }
-                .buttonStyle(.plain)
-                .glassEffect(
-                    isSelected.wrappedValue
-                        ? .regular.tint(color).interactive()
-                        : .clear.tint(color.opacity(0.5)).interactive(),
-                    in: RoundedRectangle(cornerRadius: 12)
-                )
-                .contentShape(RoundedRectangle(cornerRadius: 12))
-                .frame(minWidth: 48, minHeight: 48)
-                .disabled(isDisabled)
-                .animation(.easeInOut, value: isSelected.wrappedValue)
             }
+            .padding(8)
+        }
+        .glassEffect(
+            isDisabled
+                ? .clear
+                : (
+                    isSelected.wrappedValue
+                    ? .regular.tint(color).interactive()
+                    : .clear.tint(color.opacity(0.5)).interactive()
+                  ),
+            in: RoundedRectangle(cornerRadius: 12)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .disabled(isDisabled)
+        .animation(.easeInOut, value: isSelected.wrappedValue)
+        .confirmationDialog(
+            confirmTitle(for: type),
+            isPresented: Binding(
+                get: { showAwardConfirmation && pendingAwardType == type },
+                set: { showAwardConfirmation = $0 }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Use", role: .confirm) {
+                applyAward(type: type)
+                pendingAwardType = nil
+            }
+            .keyboardShortcut(.defaultAction)
+            Button("Cancel", role: .cancel) {
+                pendingAwardType = nil
+            }
+        }
     }
 
     private func shareButton() -> some View {
