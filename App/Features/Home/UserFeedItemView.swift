@@ -346,46 +346,48 @@ struct UserFeedItemView: View {
 
     private var actionsOverlay: some View {
         GlassEffectContainer {
-            medalButton(assetName: "gold_medal",
-                        color: Color(red: 0.8, green: 0.65, blue: 0.0),
-                        type: .gold,
-                        count: $goldCount,
-                        isSelected: $goldSelected,
-                        isDisabled: isGoldDisabled || isOwnPost,
-                        onTapped: onGoldTapped
-                    )
-                .opacity(showOverlays ? 1 : 0)
-                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
-                .allowsHitTesting(showOverlays)
+            VStack(spacing: 12) {
+                medalButton(assetName: "gold_medal",
+                            color: Color(red: 0.8, green: 0.65, blue: 0.0),
+                            type: .gold,
+                            count: $goldCount,
+                            isSelected: $goldSelected,
+                            isDisabled: isGoldDisabled || isOwnPost,
+                            onTapped: onGoldTapped
+                        )
+                    .opacity(showOverlays ? 1 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.4), value: showOverlays)
+                    .allowsHitTesting(showOverlays)
 
-            medalButton(assetName: "silver_medal",
-                        color: Color.gray,
-                        type: .silver,
-                        count: $silverCount,
-                        isSelected: $silverSelected,
-                        isDisabled: isSilverDisabled || isOwnPost,
-                        onTapped: onSilverTapped
-                    )
-                .opacity(showOverlays ? 1 : 0)
-                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
-                .allowsHitTesting(showOverlays)
-            
-            medalButton(assetName: "bronze_medal",
-                        color: Color(red: 0.6, green: 0.35, blue: 0.0),
-                        type: .bronze,
-                        count: $bronzeCount,
-                        isSelected: $bronzeSelected,
-                        isDisabled: isBronzeDisabled || isOwnPost,
-                        onTapped: onBronzeTapped
-                    )
-                .opacity(showOverlays ? 1 : 0)
-                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
-                .allowsHitTesting(showOverlays)
-            
-            shareButton()
-                .opacity(showOverlays ? 1 : 0)
-                .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
-                .allowsHitTesting(showOverlays)
+                medalButton(assetName: "silver_medal",
+                            color: Color.gray,
+                            type: .silver,
+                            count: $silverCount,
+                            isSelected: $silverSelected,
+                            isDisabled: isSilverDisabled || isOwnPost,
+                            onTapped: onSilverTapped
+                        )
+                    .opacity(showOverlays ? 1 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.55), value: showOverlays)
+                    .allowsHitTesting(showOverlays)
+                
+                medalButton(assetName: "bronze_medal",
+                            color: Color(red: 0.6, green: 0.35, blue: 0.0),
+                            type: .bronze,
+                            count: $bronzeCount,
+                            isSelected: $bronzeSelected,
+                            isDisabled: isBronzeDisabled || isOwnPost,
+                            onTapped: onBronzeTapped
+                        )
+                    .opacity(showOverlays ? 1 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.75), value: showOverlays)
+                    .allowsHitTesting(showOverlays)
+                
+                shareButton()
+                    .opacity(showOverlays ? 1 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.55).delay(0.90), value: showOverlays)
+                    .allowsHitTesting(showOverlays)
+            }
         }
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
