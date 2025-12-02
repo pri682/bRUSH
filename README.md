@@ -532,11 +532,25 @@ merge mistake that I wanted to add here for clarity.*
 - Ensured bidirectional Firestore cleanup and refreshed Friends list on delete.  
 🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-147-view-a-friends-profile-and-delete-friendship)
 
-#### **Next Steps** 
-- Enforce unique handle creation at signup to prevent duplicate display names.
-- Exclude current user from search results to avoid self-add.
-- Add leaderboard refresh and sorting unit tests.
-- Strengthen Firestore rules to block self-requests entirely.
+## Sprint 3: 
+
+#### **KAN-190 — Implement Medal Backend**
+- Designed and implemented the backend for the daily medal system using Firestore.
+- Added awardUsage documents to enforce the rule that each user gets one gold, one silver, and one bronze medal to give per day.
+- Created an awards subcollection under each dailyFeed/{userId} document to store which user gave which medal on which day.
+- Implemented AwardServiceFirebase with transactional logic to safely record medals and a fetchAwardCounts helper to aggregate medal counts per user for the feed/leaderboard.
+
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-190-implement-medal-backend)
+
+#### **KAN-192 — Implement Medal Frontend**
+- Integrated the medal system into the Home feed cards to show live gold/silver/bronze counts for each drawing.
+- Added medal buttons with confirmation alerts, self-award prevention, and one-per-day disabling.
+- Wired medal counts into the leaderboard and profile stats so that newly awarded medals are reflected in the UI after reload.
+
+🔗 [Bitbucket](https://bitbucket.org/cs3398-nemoidians-f25/brush/commits/branch/KAN-192-implement-medal-frontend)
+
+#### **Next Steps**
+- Ensure refresh of medal counts on all VM loading. Polish and prepare app for the App Store. 
 
 #### **Burnup chart for Sprint-1**
 ![Feed Preview](App/Resources/nemodians-burnup-chart-1.png)
